@@ -11,29 +11,28 @@ export default async function AdminPage() {
         <p className="eyebrow">{tenant.name}</p>
         <h1>Admin</h1>
         <p className="lede">
-          Tenant-level controls for access, billing, compliance, and
-          integrations.
+          Manage access, billing, integrations, and account controls.
         </p>
       </section>
       <section className="dashboard-grid">
         <article className="compact-card">
           <h2>Users and roles</h2>
-          <p>Memberships are tenant-scoped and enforced by Supabase RLS.</p>
-          <span className="muted">Your role: {membership.role}</span>
+          <p>Review who can access the workspace and adjust permissions.</p>
+          <span className="muted">Your access: {membership.role === "owner" ? "Owner" : membership.role}</span>
         </article>
         <article className="compact-card">
           <h2>Billing</h2>
-          <p>Stripe customer and subscription records belong to this tenant.</p>
-          <span className="muted">Ready for plan gating</span>
+          <p>Manage the workspace plan, payment method, and subscription status.</p>
+          <span className="muted">Plans and invoices</span>
         </article>
         <article className="compact-card">
           <h2>Integrations</h2>
-          <p>Slack, Telegram, Resend, and Roezan credentials stay server-side.</p>
-          <span className="muted">Events and messages are tenant logged</span>
+          <p>Connect the tools your team uses to keep metrics current.</p>
+          <span className="muted">Data and messaging channels</span>
         </article>
         <article className="compact-card">
           <h2>Legal and compliance</h2>
-          <p>Privacy, terms, authentication, reset password, and audit records.</p>
+          <p>Review policies and account controls for the workspace.</p>
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>
         </article>

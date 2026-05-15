@@ -1,4 +1,4 @@
-import { AppShell, MetricsSubnav } from "@/components/app-shell";
+import { AppShell } from "@/components/app-shell";
 import { saveBenchmarkTargetAction } from "@/app/metrics/actions";
 import { requireTenant } from "@/lib/auth/session";
 import { benchmarks } from "@/lib/metrics/benchmarks";
@@ -30,12 +30,11 @@ export default async function BenchmarkingPage({ searchParams }: PageProps) {
   const targetById = new Map((targets.data ?? []).map((target) => [target.benchmark_id, Number(target.target_value)]));
 
   return (
-    <AppShell active="metrics" tenantName={tenant.name}>
+    <AppShell active="metrics-most-important" tenantName={tenant.name}>
       <section className="page-header compact">
         <p className="eyebrow">Metrics</p>
         <h1>Benchmarking</h1>
-        <p className="lede">Compare current metric snapshots against recommended and tenant-specific targets.</p>
-        <MetricsSubnav active="benchmarking" />
+        <p className="lede">Compare current performance against recommended targets.</p>
         {message ? <p className="notice">{message}</p> : null}
       </section>
 

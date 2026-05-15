@@ -1,4 +1,4 @@
-import { AppShell, MetricsSubnav } from "@/components/app-shell";
+import { AppShell } from "@/components/app-shell";
 import { createMetricPrincipleAction } from "@/app/metrics/actions";
 import { requireTenant } from "@/lib/auth/session";
 
@@ -24,12 +24,11 @@ export default async function MetricPrinciplesPage({ searchParams }: PageProps) 
     .order("display_order", { ascending: true });
 
   return (
-    <AppShell active="metrics" tenantName={tenant.name}>
+    <AppShell active="metrics-most-important" tenantName={tenant.name}>
       <section className="page-header compact">
         <p className="eyebrow">Metrics</p>
         <h1>Principles</h1>
-        <p className="lede">Tenant-persisted operating principles for how metrics should be read and improved.</p>
-        <MetricsSubnav active="principles" />
+        <p className="lede">Shared rules for reading and improving your metrics.</p>
         {message ? <p className="notice">{message}</p> : null}
       </section>
 

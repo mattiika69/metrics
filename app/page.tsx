@@ -23,8 +23,8 @@ export default async function Home() {
         <p className="eyebrow">HyperOptimal Metrics</p>
         <h1>Metrics operations for secure teams.</h1>
         <p className="lede">
-          Sign in to manage a tenant-scoped workspace with Supabase Auth, RLS,
-          billing, messaging, email, and SMS foundations already in place.
+          Sign in to manage your workspace metrics, connected channels,
+          reporting, and team access in one place.
         </p>
         <div className="button-row">
           <Link href="/signup" className="button-primary">

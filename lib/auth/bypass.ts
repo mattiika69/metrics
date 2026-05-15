@@ -1,7 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const DEFAULT_BYPASS_EMAIL = "demo@hyperoptimal.local";
-const DEFAULT_BYPASS_TENANT_NAME = "HyperOptimal Demo";
+const DEFAULT_BYPASS_EMAIL = "matt@1000xleads.com";
+const DEFAULT_BYPASS_TENANT_NAME = "Matthew";
 
 type BypassUser = {
   id: string;

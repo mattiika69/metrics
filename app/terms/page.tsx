@@ -11,7 +11,7 @@ export default function TermsPage() {
         <p>Effective date: May 15, 2026</p>
         <h2>Use of the service</h2>
         <p>
-          HyperOptimal Metrics is a tenant-based SaaS application for metrics,
+          HyperOptimal Metrics is a workspace-based application for metrics,
           reporting, integrations, and operational workflows. Users must only
           access workspaces they are authorized to use.
         </p>
@@ -29,8 +29,8 @@ export default function TermsPage() {
         </p>
         <h2>Billing</h2>
         <p>
-          Paid features may be governed by Stripe subscription state at the
-          workspace level. Subscription changes may affect workspace access.
+          Paid features may be governed by subscription status at the workspace
+          level. Subscription changes may affect workspace access.
         </p>
         <h2>Acceptable use</h2>
         <p>

@@ -15,23 +15,21 @@ export default function PrivacyPage() {
           analytics data, integration events, messages, email delivery records,
           SMS delivery records, and billing state needed to operate the service.
         </p>
-        <h2>Tenant boundaries</h2>
+        <h2>Workspace boundaries</h2>
         <p>
-          Customer workspaces are tenant-scoped. Application data is protected by
-          authentication and row-level security policies designed to limit access
-          to authorized workspace members.
+          Customer workspaces are separated from each other. Application data is
+          protected by access controls designed to limit access to authorized
+          workspace members.
         </p>
         <h2>Service providers</h2>
         <p>
-          The service may use Supabase, Vercel, Stripe, Slack, Telegram, Resend,
-          Roezan, and similar providers to host, secure, bill, message, and
-          operate the product.
+          The service may use trusted providers to host, secure, bill, message,
+          and operate the product.
         </p>
         <h2>Security</h2>
         <p>
-          Secrets are kept server-side. Browser clients receive only public keys
-          intended for client use. Administrative access is restricted to trusted
-          server paths.
+          Sensitive credentials are protected, and administrative access is
+          limited to authorized operators.
         </p>
         <h2>Contact</h2>
         <p>

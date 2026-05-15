@@ -63,7 +63,7 @@ export default async function TeamSettingsPage({ searchParams }: PageProps) {
       <section className="page-header">
         <p className="eyebrow">{tenant.name}</p>
         <h1>Settings</h1>
-        <p className="lede">Manage workspace access and tenant controls.</p>
+        <p className="lede">Manage workspace access and team members.</p>
         {message ? <p className="notice">{message}</p> : null}
         {error ? <p className="notice error">{error}</p> : null}
       </section>
@@ -89,7 +89,7 @@ export default async function TeamSettingsPage({ searchParams }: PageProps) {
                 <div className="table-row" key={member.user_id}>
                   <div>
                     <strong>
-                      {profile?.full_name || profile?.email || member.user_id}
+                      {profile?.full_name || profile?.email || (member.user_id === user.id ? user.email : "Team member")}
                     </strong>
                     <span className="muted">
                       {member.user_id === user.id ? "You" : profile?.email}

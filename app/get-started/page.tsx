@@ -71,18 +71,18 @@ export default async function GetStartedPage({ searchParams }: PageProps) {
         <p className="eyebrow">Get started</p>
         <h1>Set up your account</h1>
         <p className="lede">
-          Finish the first account, billing, and workspace steps.
+          Finish the first workspace, plan, and team setup steps.
         </p>
         {message ? <p className="notice">{message}</p> : null}
         {error ? <p className="notice error">{error}</p> : null}
         {billing === "success" ? (
           <p className="notice">
-            Stripe returned successfully
+            Billing setup returned successfully
             {checkoutSessionId ? ` for ${checkoutSessionId}` : ""}.
           </p>
         ) : null}
         {billing === "cancelled" ? (
-          <p className="notice">Stripe checkout was cancelled.</p>
+          <p className="notice">Billing setup was cancelled.</p>
         ) : null}
       </section>
       <section className="dashboard-grid">
@@ -90,27 +90,27 @@ export default async function GetStartedPage({ searchParams }: PageProps) {
           <p className="step-label">Step 1</p>
           <h2>Account</h2>
           <p>{user.email}</p>
-          <span className="muted">Signed in</span>
+          <span className="muted">Ready</span>
         </article>
         <article className="compact-card">
           <p className="step-label">Step 2</p>
           <h2>Billing</h2>
           {subscription ? (
             <>
-              <p>Stripe subscription: {subscription.status}</p>
-              <span className="muted">Webhook-managed billing state</span>
+              <p>Subscription: {subscription.status}</p>
+              <span className="muted">Plan details are up to date</span>
             </>
           ) : tenant ? (
             <>
-              <p>Stripe checkout placeholder</p>
+              <p>Choose a plan when you are ready.</p>
               <form action={startStripeCheckoutAction} className="card-action">
-                <button type="submit">Continue to Stripe</button>
+                <button type="submit">Continue to billing</button>
               </form>
             </>
           ) : (
             <>
-              <p>Stripe will return here after checkout.</p>
-              <span className="muted">Create a workspace first.</span>
+              <p>Billing will be available after the workspace is created.</p>
+              <span className="muted">Create a workspace first</span>
             </>
           )}
         </article>
@@ -120,7 +120,7 @@ export default async function GetStartedPage({ searchParams }: PageProps) {
           {tenant ? (
             <>
               <p>{tenant.name}</p>
-              <span className="muted">Role: {membership?.role}</span>
+              <span className="muted">{membership?.role === "owner" ? "Owner access" : "Team access"}</span>
               <Link href="/dashboard">Open dashboard</Link>
             </>
           ) : (

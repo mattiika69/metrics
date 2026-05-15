@@ -79,7 +79,6 @@ export default async function IntegrationDetailPage({ params, searchParams }: Pa
           <h2>Status</h2>
           <div className="status-list">
             <p><strong>Connection:</strong> {definition.comingSoon ? "Coming soon" : connection ? connection.status : "Not connected"}</p>
-            <p><strong>Provider:</strong> {definition.id}</p>
             <p><strong>Last updated:</strong> {connection?.updated_at ? new Date(connection.updated_at).toLocaleString() : "Never"}</p>
             {lastSyncAt !== null ? (
               <p><strong>Last sync:</strong> {new Date(lastSyncAt).toLocaleString()}</p>
@@ -93,16 +92,14 @@ export default async function IntegrationDetailPage({ params, searchParams }: Pa
         <aside className="compact-card">
           {definition.id === "slack" ? (
             <>
-              <h2>Slack OAuth</h2>
-              <p className="muted">Install Slack, then use /metrics or /constraints.</p>
+              <h2>Connect Slack</h2>
+              <p className="muted">Install Slack to ask for metrics and constraints from your workspace.</p>
               <Link href="/api/integrations/slack/oauth/start" className="button-primary">Connect Slack</Link>
-              <p className="muted">Event URL: /api/integrations/slack/events</p>
-              <p className="muted">Slash command URL: /api/integrations/slack/commands</p>
             </>
           ) : definition.id === "telegram" ? (
             <>
-              <h2>Telegram Link</h2>
-              <p className="muted">Generate a code, then send /link CODE to the bot.</p>
+              <h2>Connect Telegram</h2>
+              <p className="muted">Generate a link code, then send it to the bot to connect this workspace.</p>
               {code ? (
                 <p className="notice">
                   Code: <strong>{code}</strong>
@@ -112,12 +109,11 @@ export default async function IntegrationDetailPage({ params, searchParams }: Pa
               <form action={createTelegramLinkCodeAction}>
                 <button type="submit">Generate link code</button>
               </form>
-              <p className="muted">Webhook URL: /api/integrations/telegram/webhook</p>
             </>
           ) : definition.comingSoon ? (
             <>
               <h2>Coming Soon</h2>
-              <p className="muted">This integration is listed for visibility but is not connectable yet.</p>
+              <p className="muted">This connection will be available soon.</p>
             </>
           ) : (
             <>
@@ -130,7 +126,7 @@ export default async function IntegrationDetailPage({ params, searchParams }: Pa
                     <input name={field.name} type={field.type} placeholder={field.placeholder} required />
                   </label>
                 ))}
-                {definition.fields.length === 0 ? <p className="muted">No credentials are required for this integration shell.</p> : null}
+                {definition.fields.length === 0 ? <p className="muted">No credentials are required for this connection.</p> : null}
                 <button type="submit">Save connection</button>
               </form>
               <form action={syncIntegrationAction} className="card-action">

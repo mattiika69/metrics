@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { requireTenant } from "@/lib/auth/session";
-import { integrationCatalog, integrationGroups } from "@/lib/integrations/catalog";
+import { integrationCatalog } from "@/lib/integrations/catalog";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +12,49 @@ type PageProps = {
 function param(params: Record<string, string | string[] | undefined>, key: string) {
   const value = params[key];
   return Array.isArray(value) ? value[0] : value;
+}
+
+const integrationSections = [
+  { title: "Calendar", ids: ["calendly", "calcom", "iclosed"] },
+  { title: "Call Notes & Recordings", ids: ["readai", "fathom", "fireflies"] },
+  { title: "Sales", ids: ["typeform", "heyflow"] },
+  { title: "Social", ids: ["linkedin", "twitter", "instagram", "facebook"] },
+  { title: "Payment Processors", ids: ["stripe", "fanbasis", "whop"] },
+  { title: "Banking", ids: ["plaid", "csv-banking", "quickbooks"] },
+  { title: "Messaging", ids: ["slack", "telegram"] },
+] as const;
+
+const logoColors: Record<string, string> = {
+  stripe: "#635bff",
+  fanbasis: "#7138e8",
+  whop: "#f45d48",
+  plaid: "#4fd26b",
+  "csv-banking": "#1f2937",
+  quickbooks: "#98a2b3",
+  calendly: "#146ef5",
+  calcom: "#111827",
+  iclosed: "#635bff",
+  readai: "#7c3aed",
+  fathom: "#319795",
+  fireflies: "#ff7816",
+  typeform: "#111827",
+  heyflow: "#3867e8",
+  linkedin: "#0a66c2",
+  twitter: "#000000",
+  instagram: "#e4405f",
+  facebook: "#1877f2",
+  slack: "#4a154b",
+  telegram: "#229ed9",
+};
+
+function initials(name: string) {
+  return name
+    .split(/[\s./-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
 }
 
 export default async function IntegrationsPage({ searchParams }: PageProps) {
@@ -30,39 +73,73 @@ export default async function IntegrationsPage({ searchParams }: PageProps) {
   ]);
   const metricByProvider = new Map((metricConnections ?? []).map((connection) => [connection.provider, connection]));
   const messageByProvider = new Map((messagingConnections ?? []).map((connection) => [connection.provider, connection]));
+  const connectedCount =
+    [...metricByProvider.values(), ...messageByProvider.values()].filter((connection) => connection.status !== "disabled").length;
+  const catalogById = new Map(integrationCatalog.map((integration) => [integration.id, integration]));
 
   return (
     <AppShell active="integrations" tenantName={tenant.name}>
       <section className="page-header compact">
-        <p className="eyebrow">Integrations</p>
-        <h1>Connections</h1>
-        <p className="lede">Connect only the providers that feed metrics, constraints, Slack, and Telegram.</p>
+        <h1>Integrations</h1>
+        <p className="lede">Connect the data sources and messaging channels that keep your workspace current.</p>
         {message ? <p className="notice">{message}</p> : null}
       </section>
 
+      <section className="integration-toolbar">
+        <input className="integration-search" placeholder="Search integrations..." readOnly />
+        <span className="integration-count">{connectedCount} connected</span>
+        <span className="integration-count muted-count">{integrationCatalog.length} shown</span>
+      </section>
+
       <div className="integration-sections">
-        {integrationGroups.map((group) => (
-          <section className="wide-panel" key={group}>
-            <h2>{group}</h2>
+        {integrationSections.map((section) => (
+          <section className="integration-section" key={section.title}>
+            <h2>{section.title}</h2>
             <div className="integration-grid">
-              {integrationCatalog.filter((integration) => integration.group === group).map((integration) => {
-                const row = group === "Messaging"
+              {section.ids.map((id) => {
+                const integration = catalogById.get(id);
+                if (!integration) return null;
+                const row = integration.group === "Messaging"
                   ? messageByProvider.get(integration.id)
                   : metricByProvider.get(integration.id);
                 const rowRecord = row as Record<string, unknown> | undefined;
                 const lastSyncAt = typeof rowRecord?.last_sync_at === "string" ? rowRecord.last_sync_at : null;
+                const updatedAt = typeof rowRecord?.updated_at === "string" ? rowRecord.updated_at : null;
                 const connected = Boolean(row && row.status !== "disabled");
+                const cardClass = integration.comingSoon
+                  ? "integration-card disabled"
+                  : connected
+                    ? "integration-card connected"
+                    : "integration-card";
                 return (
-                  <Link href={`/integrations/${integration.id}`} className="integration-card" key={integration.id}>
-                    <div className="card-topline">
-                      <span>{integration.group}</span>
-                      <strong>{integration.comingSoon ? "Coming soon" : connected ? "Connected" : "Not connected"}</strong>
+                  <Link href={`/integrations/${integration.id}`} className={cardClass} key={integration.id}>
+                    <span
+                      className="integration-logo"
+                      style={{ background: logoColors[integration.id] ?? "#2f7dff" }}
+                      aria-hidden="true"
+                    >
+                      {initials(integration.name)}
+                    </span>
+                    <div className="integration-card-body">
+                      <div className="integration-name-row">
+                        <h3>{integration.name}</h3>
+                        {integration.comingSoon ? (
+                          <span className="status-badge soon">Coming soon</span>
+                        ) : connected ? (
+                          <span className="status-badge">Connected</span>
+                        ) : null}
+                      </div>
+                      <p className="integration-description">{integration.description}</p>
+                      {connected ? (
+                        <p className="integration-meta">
+                          Connected {new Date(lastSyncAt ?? updatedAt ?? Date.now()).toLocaleDateString()}
+                        </p>
+                      ) : null}
                     </div>
-                    <h2>{integration.name}</h2>
-                    <p>{integration.description}</p>
-                    {lastSyncAt ? (
-                      <span className="muted">Last sync {new Date(lastSyncAt).toLocaleString()}</span>
-                    ) : null}
+                    <span className="integration-category">{section.title}</span>
+                    <span className="integration-action">
+                      {integration.comingSoon ? "Unavailable" : connected ? "Manage" : "Connect"}
+                    </span>
                   </Link>
                 );
               })}

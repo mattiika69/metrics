@@ -1,4 +1,4 @@
-import { AppShell, MetricsSubnav } from "@/components/app-shell";
+import { AppShell } from "@/components/app-shell";
 import { saveQualityChecklistAction } from "@/app/metrics/actions";
 import { requireTenant } from "@/lib/auth/session";
 
@@ -49,12 +49,11 @@ export default async function QualityAssurancePage({ searchParams }: PageProps) 
   );
 
   return (
-    <AppShell active="metrics" tenantName={tenant.name}>
+    <AppShell active="metrics-quality-assurance" tenantName={tenant.name}>
       <section className="page-header compact">
-        <p className="eyebrow">Metrics</p>
         <h1>Quality Assurance</h1>
+        <p className="eyebrow">Member since March 2026</p>
         <p className="lede">Weekly checklist for keeping metric inputs aligned before decisions are made.</p>
-        <MetricsSubnav active="quality-assurance" />
         {message ? <p className="notice">{message}</p> : null}
       </section>
 

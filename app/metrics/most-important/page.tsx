@@ -1,4 +1,4 @@
-import { AppShell, MetricsSubnav } from "@/components/app-shell";
+import { AppShell } from "@/components/app-shell";
 import { requireTenant } from "@/lib/auth/session";
 import { formatMetricValue } from "@/lib/metrics/format";
 import { loadMetricSnapshotPayload, periodFromSearch } from "@/lib/metrics/server";
@@ -28,20 +28,19 @@ export default async function MostImportantMetricsPage({ searchParams }: PagePro
   const visibleDefinitions = payload.definitions.slice(0, 48);
 
   return (
-    <AppShell active="metrics" tenantName={tenant.name}>
+    <AppShell active="metrics-most-important" tenantName={tenant.name}>
       <section className="page-header compact">
-        <p className="eyebrow">Metrics</p>
         <div className="header-row">
           <div>
-            <h1>Most Important</h1>
-            <p className="lede">Canonical tenant metrics from persisted integration source data.</p>
+            <h1>Most Important Metrics</h1>
+            <p className="eyebrow">Member since March 2026</p>
+            <p className="lede">Your most important operating metrics from connected sources.</p>
           </div>
           <form action={recalculateMetricsAction} className="toolbar-form">
             <input type="hidden" name="period" value={period} />
             <button type="submit">Recalculate</button>
           </form>
         </div>
-        <MetricsSubnav active="most-important" />
         {message ? <p className="notice">{message}</p> : null}
         <div className="filter-row">
           {["7d", "30d", "90d", "mtd", "qtd", "ytd", "all"].map((option) => (
@@ -51,7 +50,7 @@ export default async function MostImportantMetricsPage({ searchParams }: PagePro
           ))}
           <span className="muted">
             {payload.window.startDate} to {payload.window.endDate}
-            {payload.calculatedAt ? ` | calculated ${new Date(payload.calculatedAt).toLocaleString()}` : " | no snapshot yet"}
+            {payload.calculatedAt ? ` | updated ${new Date(payload.calculatedAt).toLocaleString()}` : " | no data yet"}
           </span>
         </div>
       </section>
@@ -64,7 +63,7 @@ export default async function MostImportantMetricsPage({ searchParams }: PagePro
             <article className="metric-card" key={definition.id}>
               <div className="card-topline">
                 <span>{definition.category}</span>
-                {overridden ? <strong>Override</strong> : <span>{definition.formulaType}</span>}
+                {overridden ? <strong>Adjusted</strong> : <span>{definition.formulaType === "derived" ? "Calculated" : "Synced"}</span>}
               </div>
               <h2>{definition.name}</h2>
               <p className="metric-value">{formatMetricValue(definition.format, snapshot?.value ?? null)}</p>
@@ -72,7 +71,6 @@ export default async function MostImportantMetricsPage({ searchParams }: PagePro
               <details>
                 <summary>Details</summary>
                 <p>{definition.formula}</p>
-                <pre>{JSON.stringify(snapshot?.raw_inputs ?? {}, null, 2)}</pre>
               </details>
             </article>
           );
@@ -80,8 +78,8 @@ export default async function MostImportantMetricsPage({ searchParams }: PagePro
       </section>
 
       <section className="wide-panel">
-        <h2>Manual Override</h2>
-        <p className="muted">Overrides are audited and applied on top of stored snapshots for this period.</p>
+        <h2>Adjust a metric</h2>
+        <p className="muted">Use adjustments when a value needs a reviewed correction for the selected period.</p>
         <form action={createMetricOverrideAction} className="inline-form">
           <input type="hidden" name="period" value={period} />
           <label>
@@ -100,9 +98,9 @@ export default async function MostImportantMetricsPage({ searchParams }: PagePro
           </label>
           <label>
             Reason
-            <input name="reason" placeholder="Why this value is being overridden" />
+            <input name="reason" placeholder="Add context for the adjustment" />
           </label>
-          <button type="submit">Save override</button>
+          <button type="submit">Save adjustment</button>
         </form>
       </section>
     </AppShell>

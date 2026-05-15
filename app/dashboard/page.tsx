@@ -15,7 +15,7 @@ function getParam(
 }
 
 export default async function DashboardPage({ searchParams }: PageProps) {
-  const { user, tenant, membership } = await requireTenant();
+  const { tenant, membership } = await requireTenant();
   const params = await searchParams;
   const message = getParam(params, "message");
 
@@ -47,8 +47,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
               M
             </span>
             <div>
-              <h2>{tenant.name}</h2>
-              <p>{user.email}</p>
+              <h2>Matthew</h2>
+              <p>Primary workspace</p>
             </div>
           </article>
 
@@ -70,7 +70,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
             </span>
             <div>
               <h2>HyperOptimal</h2>
-              <p>Workspace role: {membership.role}</p>
+              <p>{membership.role === "owner" ? "Owner access" : "Team access"}</p>
             </div>
             <span className="progress-count">0/3</span>
           </article>
