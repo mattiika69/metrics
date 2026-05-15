@@ -54,7 +54,7 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
           </div>
           <div className="settings-list">
             <div>
-              <span>Stripe customer</span>
+              <span>Billing account</span>
               <strong>{customer?.stripe_customer_id ? "Connected" : "Not connected"}</strong>
             </div>
             <div>
@@ -74,11 +74,11 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
         <article className="settings-panel">
           <div className="panel-heading">
             <div>
-              <p className="step-label">Stripe</p>
+              <p className="step-label">Checkout</p>
               <h2>Checkout</h2>
             </div>
           </div>
-          <p className="muted">Start or update billing through the connected Stripe checkout flow.</p>
+          <p className="muted">Start or update billing for this workspace.</p>
           <form action={startStripeCheckoutAction} className="card-action">
             <button type="submit">Continue to billing</button>
           </form>
