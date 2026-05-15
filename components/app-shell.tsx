@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { signOutAction } from "@/lib/auth/actions";
+import { isAuthBypassEnabled } from "@/lib/auth/bypass";
 
 type AppShellProps = {
   active: "dashboard" | "metrics" | "integrations" | "constraints" | "settings" | "account" | "admin";
@@ -17,6 +18,8 @@ const navItems = [
 ] as const;
 
 export function AppShell({ active, tenantName, children }: AppShellProps) {
+  const authBypassEnabled = isAuthBypassEnabled();
+
   return (
     <main className="app-shell">
       <nav className="top-nav">
@@ -33,11 +36,13 @@ export function AppShell({ active, tenantName, children }: AppShellProps) {
               {item.label}
             </Link>
           ))}
-          <form action={signOutAction}>
-            <button type="submit" className="link-button">
-              Sign out
-            </button>
-          </form>
+          {authBypassEnabled ? null : (
+            <form action={signOutAction}>
+              <button type="submit" className="link-button">
+                Sign out
+              </button>
+            </form>
+          )}
         </div>
       </nav>
       {tenantName ? <p className="workspace-label">{tenantName}</p> : null}

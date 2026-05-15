@@ -1,8 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { isAuthBypassEnabled } from "@/lib/auth/bypass";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function Home() {
+  if (isAuthBypassEnabled()) {
+    redirect("/dashboard");
+  }
+
   const supabase = await createClient();
   const {
     data: { user },

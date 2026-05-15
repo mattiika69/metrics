@@ -1,6 +1,11 @@
+import { getAuthBypassContext, isAuthBypassEnabled } from "@/lib/auth/bypass";
 import { createClient } from "@/lib/supabase/server";
 
 export async function requireApiTenant() {
+  if (isAuthBypassEnabled()) {
+    return getAuthBypassContext();
+  }
+
   const supabase = await createClient();
   const {
     data: { user },

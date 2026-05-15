@@ -1,7 +1,16 @@
 import { redirect } from "next/navigation";
+import { getAuthBypassContext, isAuthBypassEnabled } from "@/lib/auth/bypass";
 import { createClient } from "@/lib/supabase/server";
 
 export async function requireUser() {
+  if (isAuthBypassEnabled()) {
+    const context = await getAuthBypassContext();
+    return {
+      supabase: context.supabase,
+      user: context.user,
+    };
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -16,6 +25,10 @@ export async function requireUser() {
 }
 
 export async function requireTenant() {
+  if (isAuthBypassEnabled()) {
+    return getAuthBypassContext();
+  }
+
   const { supabase, user } = await requireUser();
   const { data: memberships } = await supabase
     .from("tenant_memberships")

@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { updatePasswordAction } from "@/lib/auth/actions";
+import { isAuthBypassEnabled } from "@/lib/auth/bypass";
 import { requireUser } from "@/lib/auth/session";
 
 type PageProps = {
@@ -14,6 +16,10 @@ function getParam(
 }
 
 export default async function ResetPasswordPage({ searchParams }: PageProps) {
+  if (isAuthBypassEnabled()) {
+    redirect("/dashboard");
+  }
+
   await requireUser();
   const params = await searchParams;
   const error = getParam(params, "error");
