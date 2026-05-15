@@ -12,3 +12,5 @@ Next.js application wired for Vercel deployment and Supabase.
 ## Deployment
 
 The Vercel project is configured for Next.js. Set the same Supabase environment variables in Vercel for Production, Preview, and Development.
+
+AI-assisted workflows use the Claude API through Anthropic, not OpenAI. Set `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL` as server-only Vercel environment variables before enabling AI responses.

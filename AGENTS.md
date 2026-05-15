@@ -79,6 +79,15 @@ Every workflow must be designed so it can eventually be used from the web app, S
 - Persisted messages, events, commands, and integration state must be tenant-scoped and protected by RLS.
 - If an event cannot be mapped to a tenant, acknowledge safely and do not persist private data.
 
+## AI Provider
+
+HyperOptimal Metrics uses Claude through Anthropic for AI-assisted workflows.
+
+- Do not add OpenAI API keys, OpenAI SDKs, GPT model names, or OpenAI-specific environment variables.
+- Claude credentials must be server-only and must never be exposed to browser code.
+- AI actions must resolve an authenticated tenant context before reading or writing tenant data.
+- AI outputs that matter to the product must be persisted to Supabase before reporting success.
+
 ## Email
 
 Every workflow that sends email must be tenant-scoped and logged.
