@@ -2,6 +2,12 @@
 
 Next.js application wired for Vercel deployment and Supabase.
 
+## Infrastructure Status
+
+Current infrastructure rules, connection confirmations, security posture, API inventory, and remaining required external API keys are documented in [docs/infrastructure-status.md](docs/infrastructure-status.md).
+
+The product source of truth is Supabase. Do not build durable product workflows that save user, tenant, billing, integration, messaging, AI, or operational state only to local files, browser storage, memory, or build artifacts.
+
 ## Local setup
 
 1. Copy `.env.example` to `.env.local`.

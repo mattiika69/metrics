@@ -4,6 +4,9 @@
 
 Everything durable must be written to and synced with the cloud.
 
+- Product data, user data, tenant data, integration data, billing state, audit records, generated AI outputs, uploads, messages, and operational state must never be saved only to local files, browser storage, memory, or build artifacts.
+- New product workflows must be built database-first against Supabase tables, RPCs, storage, or trusted server APIs that persist to Supabase before reporting success.
+- Local files may only be used for code, migrations, documentation, dependency installs, build output, caches, or temporary tooling state required to develop and deploy the product. They are never the product data source of truth.
 - The utmost priority is data persistence and preventing data loss.
 - Cloud persistence is mandatory for user data, tenant data, operational state, configuration, migrations, and completed work.
 - Prefer durable cloud writes over temporary local state whenever there is any tradeoff.
