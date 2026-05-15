@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { getRequestIp } from "@/lib/request/ip";
 import { logAuditEvent } from "@/lib/security/audit";
 import { checkRateLimit } from "@/lib/security/rate-limit";
+import { createStripeClient } from "@/lib/stripe/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 function formValue(formData: FormData, key: string) {
@@ -14,6 +16,38 @@ function formValue(formData: FormData, key: string) {
 
 function redirectWith(path: string, key: "error" | "message", value: string): never {
   redirect(`${path}?${key}=${encodeURIComponent(value)}`);
+}
+
+function getMembershipTenant(
+  membership:
+    | {
+        tenant_id: string;
+        tenants:
+          | {
+              id: string;
+              name: string;
+            }
+          | {
+              id: string;
+              name: string;
+            }[]
+          | null;
+      }
+    | undefined,
+) {
+  const tenant = Array.isArray(membership?.tenants)
+    ? membership.tenants[0]
+    : membership?.tenants;
+
+  if (!membership || !tenant) {
+    return null;
+  }
+
+  return {
+    id: tenant.id,
+    name: tenant.name,
+    membershipTenantId: membership.tenant_id,
+  };
 }
 
 async function getOrigin() {
@@ -65,7 +99,7 @@ export async function signUpAction(formData: FormData) {
     email,
     password,
     options: {
-      emailRedirectTo: `${await getOrigin()}/auth/callback?next=/onboarding`,
+      emailRedirectTo: `${await getOrigin()}/auth/callback?next=/get-started`,
     },
   });
 
@@ -93,7 +127,7 @@ export async function signUpAction(formData: FormData) {
   });
 
   if (data.session) {
-    redirect("/onboarding");
+    redirect("/get-started");
   }
 
   redirectWith(
@@ -242,7 +276,7 @@ export async function createTenantAction(formData: FormData) {
   const name = formValue(formData, "name");
 
   if (!name) {
-    redirectWith("/onboarding", "error", "Workspace name is required.");
+    redirectWith("/get-started", "error", "Workspace name is required.");
   }
 
   const supabase = await createClient();
@@ -274,7 +308,7 @@ export async function createTenantAction(formData: FormData) {
         error: error.message,
       },
     });
-    redirectWith("/onboarding", "error", error.message);
+    redirectWith("/get-started", "error", error.message);
   }
 
   await logAuditEvent({
@@ -288,7 +322,7 @@ export async function createTenantAction(formData: FormData) {
     },
   });
 
-  redirectWith("/dashboard", "message", "Workspace created.");
+  redirectWith("/get-started", "message", "Workspace created.");
 }
 
 export async function skipOnboardingAction() {
@@ -310,4 +344,158 @@ export async function skipOnboardingAction() {
   });
 
   redirectWith("/dashboard", "message", "Workspace setup skipped.");
+}
+
+export async function startStripeCheckoutAction() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    redirectWith("/login", "error", "Log in to continue.");
+  }
+
+  const { data: memberships } = await supabase
+    .from("tenant_memberships")
+    .select("tenant_id, tenants(id, name)")
+    .order("created_at", { ascending: true })
+    .limit(1);
+  const tenant = getMembershipTenant(memberships?.[0]);
+
+  if (!tenant) {
+    redirectWith(
+      "/get-started",
+      "error",
+      "Create a workspace before starting billing.",
+    );
+  }
+
+  const limit = await checkRateLimit({
+    route: "billing:checkout",
+    key: `${tenant.id}:${user.id}`,
+    limit: 10,
+    windowSeconds: 600,
+    tenantId: tenant.id,
+    actorUserId: user.id,
+  });
+
+  if (!limit.allowed) {
+    redirectWith(
+      "/get-started",
+      "error",
+      "Too many checkout attempts. Try again later.",
+    );
+  }
+
+  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_PRICE_ID) {
+    await logAuditEvent({
+      tenantId: tenant.id,
+      actorUserId: user.id,
+      eventType: "stripe_checkout_placeholder",
+      targetType: "tenant",
+      targetId: tenant.id,
+      metadata: {
+        reason: "stripe_env_not_configured",
+      },
+    });
+    redirectWith(
+      "/get-started",
+      "message",
+      "Stripe checkout is ready for configuration.",
+    );
+  }
+
+  const admin = createAdminClient();
+  const stripe = createStripeClient();
+  const origin = await getOrigin();
+  const { data: existingCustomer } = await admin
+    .from("billing_customers")
+    .select("stripe_customer_id")
+    .eq("tenant_id", tenant.id)
+    .maybeSingle();
+
+  let stripeCustomerId = existingCustomer?.stripe_customer_id as
+    | string
+    | undefined;
+
+  let checkoutUrl: string | null = null;
+
+  try {
+    if (!stripeCustomerId) {
+      const customer = await stripe.customers.create({
+        email: user.email ?? undefined,
+        name: tenant.name,
+        metadata: {
+          tenant_id: tenant.id,
+          created_by: user.id,
+        },
+      });
+      stripeCustomerId = customer.id;
+
+      await admin.from("billing_customers").upsert({
+        tenant_id: tenant.id,
+        stripe_customer_id: stripeCustomerId,
+        updated_at: new Date().toISOString(),
+      });
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer: stripeCustomerId,
+      line_items: [
+        {
+          price: process.env.STRIPE_PRICE_ID,
+          quantity: 1,
+        },
+      ],
+      client_reference_id: tenant.id,
+      success_url: `${origin}/get-started?billing=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/get-started?billing=cancelled`,
+      metadata: {
+        tenant_id: tenant.id,
+        user_id: user.id,
+      },
+      subscription_data: {
+        metadata: {
+          tenant_id: tenant.id,
+          user_id: user.id,
+        },
+      },
+    });
+
+    await logAuditEvent({
+      tenantId: tenant.id,
+      actorUserId: user.id,
+      eventType: "stripe_checkout_started",
+      targetType: "tenant",
+      targetId: tenant.id,
+      metadata: {
+        checkoutSessionId: session.id,
+      },
+    });
+
+    checkoutUrl = session.url;
+
+    if (!checkoutUrl) {
+      throw new Error("Stripe did not return a checkout URL.");
+    }
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Stripe checkout failed.";
+    await logAuditEvent({
+      tenantId: tenant.id,
+      actorUserId: user.id,
+      eventType: "stripe_checkout_failed",
+      targetType: "tenant",
+      targetId: tenant.id,
+      metadata: {
+        error: message,
+      },
+    });
+    redirectWith("/get-started", "error", message);
+  }
+
+  redirect(checkoutUrl);
 }

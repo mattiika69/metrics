@@ -13,7 +13,8 @@ HyperOptimal Metrics includes baseline SaaS account and admin flows from the sta
 
 ## Authenticated Flows
 
-- `/onboarding`: create the first tenant workspace.
+- `/get-started`: post-signup onboarding for account, Stripe billing handoff, and workspace setup.
+- `/onboarding`: compatibility redirect to `/get-started`.
 - `/dashboard`: protected tenant workspace home.
 - `/account`: user profile, membership, and password reset entry point.
 - `/admin`: tenant-level admin readiness for users, billing, integrations, and compliance.

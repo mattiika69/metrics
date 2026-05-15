@@ -23,3 +23,10 @@ Both tables have RLS enabled. Authenticated tenant members may read billing stat
 - Gate paid features by tenant subscription status.
 - Treat Stripe webhooks as the source of truth for subscription state.
 - Never expose Stripe secret keys or Supabase service-role credentials to the browser.
+
+## Onboarding Handoff
+
+- New signups land in `/get-started` after Supabase confirmation.
+- Stripe Checkout success returns to `/get-started?billing=success&session_id={CHECKOUT_SESSION_ID}`.
+- Stripe Checkout cancellation returns to `/get-started?billing=cancelled`.
+- The MVP onboarding screen keeps a visible Stripe placeholder until live Stripe keys and a price ID are configured.

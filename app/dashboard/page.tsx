@@ -41,7 +41,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
               <Link href="/account">Account</Link>
             </>
           ) : (
-            <Link href="/onboarding">Create workspace</Link>
+            <Link href="/get-started">Create workspace</Link>
           )}
           <form action={signOutAction}>
             <button type="submit" className="link-button">
@@ -72,7 +72,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
               <span className="muted">
                 You can create a tenant-scoped workspace when you are ready.
               </span>
-              <Link href="/onboarding">Create workspace</Link>
+              <Link href="/get-started">Create workspace</Link>
             </>
           )}
         </article>

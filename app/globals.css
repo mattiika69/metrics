@@ -161,8 +161,26 @@ button,
   margin-top: 28px;
 }
 
+.form-stack.compact {
+  gap: 12px;
+  margin-top: 16px;
+}
+
 .skip-form {
   margin-top: 14px;
+}
+
+.card-action {
+  margin-top: 16px;
+}
+
+.step-label {
+  margin: 0 0 8px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
 }
 
 label {

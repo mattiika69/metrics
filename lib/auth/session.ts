@@ -25,7 +25,7 @@ export async function requireTenant() {
   const membership = memberships?.[0];
 
   if (!membership) {
-    redirect("/onboarding");
+    redirect("/get-started");
   }
 
   const tenant = Array.isArray(membership.tenants)
@@ -33,7 +33,7 @@ export async function requireTenant() {
     : membership.tenants;
 
   if (!tenant) {
-    redirect("/onboarding");
+    redirect("/get-started");
   }
 
   return {
