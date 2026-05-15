@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { isAuthBypassEnabled } from "@/lib/auth/bypass";
 import { signUpAction } from "@/lib/auth/actions";
 
 type PageProps = {
@@ -16,10 +14,6 @@ function getParam(
 }
 
 export default async function SignupPage({ searchParams }: PageProps) {
-  if (isAuthBypassEnabled()) {
-    redirect("/dashboard");
-  }
-
   const params = await searchParams;
   const error = getParam(params, "error");
   const next = getParam(params, "next");
