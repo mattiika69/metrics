@@ -55,6 +55,8 @@ HyperOptimal Metrics is primarily a desktop web application.
 
 Every durable feature must support user authentication, row-level security, multi-tenancy, Stripe-ready billing, Slack/Telegram-ready messaging, Resend-ready email, and Roezan-ready SMS from day one.
 
+- The authoritative org/user architecture and RLS source of truth is `docs/architecture-rls-source-of-truth.md`.
+- In code and database schema, an "org" means a tenant/workspace and must be represented by `public.tenants` plus `tenant_id`; do not introduce `org_id`, `organization_id`, or a separate organizations table unless an explicit migration plan replaces the tenant model everywhere.
 - Do not add user-facing functionality that assumes anonymous access unless the task explicitly requires a public surface.
 - Do not add application tables without enabling RLS.
 - Every tenant-owned table must include a `tenant_id` column and policies that restrict access to members of that tenant.

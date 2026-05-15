@@ -2,28 +2,36 @@ import Link from "next/link";
 import { signOutAction } from "@/lib/auth/actions";
 import { isAuthBypassEnabled } from "@/lib/auth/bypass";
 
+type ActiveRoute =
+  | "dashboard"
+  | "integrations"
+  | "constraints"
+  | "ai-context"
+  | "metrics-most-important"
+  | "metrics-reverse-engineering"
+  | "metrics-financial"
+  | "metrics-churn-ltv"
+  | "metrics-sales"
+  | "metrics-cost-per-call"
+  | "metrics-inputs"
+  | "metrics-raw-data"
+  | "metrics-benchmarking"
+  | "metrics-principles"
+  | "metrics-quality-assurance"
+  | "settings"
+  | "account"
+  | "admin";
+
 type AppShellProps = {
-  active:
-    | "dashboard"
-    | "integrations"
-    | "constraints"
-    | "ai-context"
-    | "metrics-most-important"
-    | "metrics-reverse-engineering"
-    | "metrics-financial"
-    | "metrics-churn-ltv"
-    | "metrics-sales"
-    | "metrics-cost-per-call"
-    | "metrics-inputs"
-    | "metrics-raw-data"
-    | "metrics-benchmarking"
-    | "metrics-principles"
-    | "metrics-quality-assurance"
-    | "settings"
-    | "account"
-    | "admin";
+  active: ActiveRoute;
   tenantName?: string | null;
   children: React.ReactNode;
+};
+
+type NavItem = {
+  id: ActiveRoute;
+  label: string;
+  href: string;
 };
 
 const primaryItems = [
@@ -51,10 +59,53 @@ const settingsItems = [
   { id: "settings", label: "Team", href: "/settings/team" },
 ] as const;
 
+function SectionChevron() {
+  return (
+    <svg className="sidebar-label-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+    </svg>
+  );
+}
+
+function SidebarSection({
+  title,
+  items,
+  active,
+}: {
+  title: string;
+  items: readonly NavItem[];
+  active: ActiveRoute;
+}) {
+  return (
+    <div className="sidebar-group">
+      <div className="sidebar-label-row">
+        <button type="button" className="sidebar-label-button" aria-expanded="true">
+          <SectionChevron />
+          <span>{title}</span>
+        </button>
+      </div>
+      <div className="sidebar-subnav">
+        {items.map((item) => (
+          <div className="sidebar-menu-row" key={item.id}>
+            <Link
+              href={item.href}
+              prefetch
+              className={active === item.id ? "sidebar-sub-link active" : "sidebar-sub-link"}
+            >
+              {item.label}
+            </Link>
+            <span className="sidebar-drag-handle" title="Drag to reorder" aria-hidden="true">
+              ⋮⋮
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function AppShell({ active, children }: AppShellProps) {
   const authBypassEnabled = isAuthBypassEnabled();
-  const metricsActive = active.startsWith("metrics-");
-  const settingsActive = active === "settings" || active === "admin" || active === "account";
 
   return (
     <main className="app-shell">
@@ -72,56 +123,20 @@ export function AppShell({ active, children }: AppShellProps) {
         </div>
 
         <nav className="sidebar-sections" aria-label="Primary navigation">
-          {primaryItems.map((item) => (
-            <Link
-              key={item.id}
-              href={item.href}
-              className={active === item.id ? "sidebar-link active" : "sidebar-link"}
-            >
-              {item.label}
-            </Link>
-          ))}
+          <SidebarSection title="App" items={primaryItems} active={active} />
 
           <div className="sidebar-divider" />
-          <div className="sidebar-group">
-            <p className={metricsActive ? "sidebar-label expanded" : "sidebar-label"}>Metrics</p>
-            <div className="sidebar-subnav">
-              {metricItems.map((item) => (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  className={active === item.id ? "sidebar-sub-link active" : "sidebar-sub-link"}
-                >
-                  {item.label}
-                  <span aria-hidden="true">⋮⋮</span>
-                </Link>
-              ))}
-            </div>
-          </div>
+          <SidebarSection title="Metrics" items={metricItems} active={active} />
 
           <div className="sidebar-divider" />
-          <div className="sidebar-group">
-            <p className={settingsActive ? "sidebar-label expanded" : "sidebar-label"}>Settings</p>
-            <div className="sidebar-subnav">
-              {settingsItems.map((item) => (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  className={active === item.id ? "sidebar-sub-link active" : "sidebar-sub-link"}
-                >
-                  {item.label}
-                  <span aria-hidden="true">⋮⋮</span>
-                </Link>
-              ))}
-              {authBypassEnabled ? null : (
-                <form action={signOutAction}>
-                  <button type="submit" className="sidebar-logout">
-                    Log Out
-                  </button>
-                </form>
-              )}
-            </div>
-          </div>
+          <SidebarSection title="Settings" items={settingsItems} active={active} />
+          {authBypassEnabled ? null : (
+            <form action={signOutAction}>
+              <button type="submit" className="sidebar-logout">
+                Log Out
+              </button>
+            </form>
+          )}
         </nav>
       </aside>
       <section className="app-main">
