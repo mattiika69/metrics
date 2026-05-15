@@ -19,9 +19,9 @@ Everything durable must be written to and synced with the cloud.
 - Run the smallest relevant verification before pushing.
 - Prefer cloud-connected workflows: GitHub for source, Vercel for deployment, and Supabase for database/configuration.
 
-## Auth, RLS, Multi-Tenancy, Billing, Messaging, and Email
+## Auth, RLS, Multi-Tenancy, Billing, Messaging, Email, and SMS
 
-Every durable feature must support user authentication, row-level security, multi-tenancy, Stripe-ready billing, Slack/Telegram-ready messaging, and Resend-ready email from day one.
+Every durable feature must support user authentication, row-level security, multi-tenancy, Stripe-ready billing, Slack/Telegram-ready messaging, Resend-ready email, and Roezan-ready SMS from day one.
 
 - Do not add user-facing functionality that assumes anonymous access unless the task explicitly requires a public surface.
 - Do not add application tables without enabling RLS.
@@ -61,3 +61,13 @@ Every workflow that sends email must be tenant-scoped and logged.
 - Email delivery records must include `tenant_id` and have RLS enabled.
 - Do not expose `RESEND_API_KEY` to the browser.
 - If a tenant-specific sender/domain is required later, store that configuration server-side and protect it with tenant RLS.
+
+## SMS
+
+Every workflow that sends SMS must be tenant-scoped, logged, and compliance-aware.
+
+- Roezan API keys are server-only.
+- SMS sends must resolve an authenticated user and tenant membership before sending tenant-owned SMS.
+- SMS delivery records must include `tenant_id` and have RLS enabled.
+- Do not expose `ROEZAN_API_KEY` to the browser.
+- Respect SMS compliance requirements, opt-outs, and quiet-hour decisions before adding automated sends.
