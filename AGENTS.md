@@ -19,9 +19,9 @@ Everything durable must be written to and synced with the cloud.
 - Run the smallest relevant verification before pushing.
 - Prefer cloud-connected workflows: GitHub for source, Vercel for deployment, and Supabase for database/configuration.
 
-## Auth, RLS, Multi-Tenancy, Billing, and Messaging
+## Auth, RLS, Multi-Tenancy, Billing, Messaging, and Email
 
-Every durable feature must support user authentication, row-level security, multi-tenancy, Stripe-ready billing, and Slack/Telegram-ready messaging from day one.
+Every durable feature must support user authentication, row-level security, multi-tenancy, Stripe-ready billing, Slack/Telegram-ready messaging, and Resend-ready email from day one.
 
 - Do not add user-facing functionality that assumes anonymous access unless the task explicitly requires a public surface.
 - Do not add application tables without enabling RLS.
@@ -51,3 +51,13 @@ Every workflow must be designed so it can eventually be used from the web app, S
 - Read/write actions performed from Slack or Telegram must resolve the tenant and authenticated/authorized actor before touching tenant data.
 - Persisted messages, events, commands, and integration state must be tenant-scoped and protected by RLS.
 - If an event cannot be mapped to a tenant, acknowledge safely and do not persist private data.
+
+## Email
+
+Every workflow that sends email must be tenant-scoped and logged.
+
+- Resend API keys and sender configuration are server-only unless explicitly documented as public.
+- Email sends must resolve an authenticated user and tenant membership before sending tenant-owned email.
+- Email delivery records must include `tenant_id` and have RLS enabled.
+- Do not expose `RESEND_API_KEY` to the browser.
+- If a tenant-specific sender/domain is required later, store that configuration server-side and protect it with tenant RLS.
