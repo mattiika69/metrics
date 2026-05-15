@@ -1,32 +1,37 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function Home() {
-  const hasSupabaseEnv = Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  );
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (hasSupabaseEnv) {
-    const supabase = await createClient();
-    await supabase.from("_health").select("*").limit(1);
+  if (user) {
+    redirect("/dashboard");
   }
 
   return (
     <main className="page-shell">
       <section className="panel">
         <p className="eyebrow">HyperOptimal Metrics</p>
-        <h1>Vercel and Supabase are wired in.</h1>
+        <h1>Metrics operations for secure teams.</h1>
         <p className="lede">
-          This Next.js app is ready for dashboard work, with Supabase clients
-          configured for server and browser usage.
+          Sign in to manage a tenant-scoped workspace with Supabase Auth, RLS,
+          billing, messaging, email, and SMS foundations already in place.
         </p>
-        <div className="status-row">
-          <span className={hasSupabaseEnv ? "status ok" : "status warn"} />
-          <span>
-            {hasSupabaseEnv
-              ? "Supabase environment variables are present."
-              : "Add Supabase environment variables to finish setup."}
-          </span>
+        <div className="button-row">
+          <Link href="/signup" className="button-primary">
+            Create account
+          </Link>
+          <Link href="/login" className="button-secondary">
+            Log in
+          </Link>
+        </div>
+        <div className="link-row">
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
         </div>
       </section>
     </main>
