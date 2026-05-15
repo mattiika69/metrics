@@ -102,6 +102,17 @@ async function consumeLinkCode({
     .from("telegram_link_codes")
     .update({ consumed_at: new Date().toISOString(), consumed_chat_id: chatId })
     .eq("id", link.id);
+  await admin.from("telegram_links").upsert(
+    {
+      tenant_id: link.tenant_id,
+      telegram_chat_id: chatId,
+      telegram_user_id: fromUserId,
+      display_name: chatTitle ?? "Telegram",
+      status: "active",
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "tenant_id,telegram_chat_id" },
+  );
 
   await logAuditEvent({
     tenantId: link.tenant_id,
@@ -141,6 +152,14 @@ export async function POST(request: Request) {
   });
   if (webhook.duplicate) return Response.json({ received: true, duplicate: true });
 
+  const admin = createAdminClient();
+  await admin.from("integration_inbound_events").insert({
+    provider: "telegram",
+    external_event_id: externalEventId,
+    event_type: "telegram_update",
+    payload: { update_id: payload.update_id ?? null, chat_id: chatId || null },
+  });
+
   if (!chatId) {
     await markWebhookUnmapped(webhook.id);
     return Response.json({ received: true, mapped: false });
@@ -156,6 +175,16 @@ export async function POST(request: Request) {
     });
     await sendTelegramMessage({ chatId, text: result.message });
     if (result.ok) {
+      await admin.from("integration_outbound_messages").insert({
+        tenant_id: result.tenantId,
+        provider: "telegram",
+        target_id: chatId,
+        body: result.message,
+        payload: { linkCode },
+        status: "sent",
+      });
+    }
+    if (result.ok) {
       await markWebhookProcessed(webhook.id, result.tenantId);
       return Response.json({ received: true, linked: true });
     }
@@ -163,7 +192,6 @@ export async function POST(request: Request) {
     return Response.json({ received: true, linked: false });
   }
 
-  const admin = createAdminClient();
   const { data: integration } = await admin
     .from("tenant_integrations")
     .select("id, tenant_id")
@@ -184,6 +212,12 @@ export async function POST(request: Request) {
   }
 
   try {
+    await admin
+      .from("integration_inbound_events")
+      .update({ tenant_id: integration.tenant_id, status: "mapped" })
+      .eq("provider", "telegram")
+      .eq("external_event_id", externalEventId);
+
     await admin.from("integration_events").insert({
       tenant_id: integration.tenant_id,
       integration_id: integration.id,
@@ -223,6 +257,14 @@ export async function POST(request: Request) {
         external_channel_id: chatId,
         body: responseText,
         payload: { command },
+      });
+      await admin.from("integration_outbound_messages").insert({
+        tenant_id: integration.tenant_id,
+        provider: "telegram",
+        target_id: chatId,
+        body: responseText,
+        payload: { command },
+        status: "sent",
       });
     }
 

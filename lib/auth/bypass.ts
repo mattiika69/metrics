@@ -20,7 +20,10 @@ type BypassMembership = {
 };
 
 export function isAuthBypassEnabled() {
-  return process.env.AUTH_BYPASS_ENABLED === "true";
+  return (
+    process.env.DISABLE_LOGIN_AUTH === "true" ||
+    process.env.AUTH_BYPASS_ENABLED === "true"
+  );
 }
 
 async function findAuthUserByEmail(email: string) {
@@ -79,16 +82,21 @@ async function findAuthUserByEmail(email: string) {
 
 export async function getAuthBypassContext() {
   const admin = createAdminClient();
-  const email = process.env.AUTH_BYPASS_USER_EMAIL ?? DEFAULT_BYPASS_EMAIL;
+  const email =
+    process.env.AUTH_BYPASS_EMAIL ??
+    process.env.AUTH_BYPASS_USER_EMAIL ??
+    DEFAULT_BYPASS_EMAIL;
   const tenantName = process.env.AUTH_BYPASS_TENANT_NAME ?? DEFAULT_BYPASS_TENANT_NAME;
-  const user = (await findAuthUserByEmail(email)) as BypassUser;
+  const configuredUserId = process.env.AUTH_BYPASS_USER_ID;
+  const configuredTenantId = process.env.AUTH_BYPASS_TENANT_ID;
+  const user = configuredUserId
+    ? ({ id: configuredUserId, email } as BypassUser)
+    : ((await findAuthUserByEmail(email)) as BypassUser);
 
-  const { data: existingTenants, error: tenantReadError } = await admin
-    .from("tenants")
-    .select("id, name")
-    .eq("name", tenantName)
-    .order("created_at", { ascending: true })
-    .limit(1);
+  const tenantQuery = admin.from("tenants").select("id, name").limit(1);
+  const { data: existingTenants, error: tenantReadError } = configuredTenantId
+    ? await tenantQuery.eq("id", configuredTenantId)
+    : await tenantQuery.eq("name", tenantName).order("created_at", { ascending: true });
 
   if (tenantReadError) throw tenantReadError;
 

@@ -68,6 +68,10 @@ function getMembershipTenant(
   };
 }
 
+function getStripeOnboardingPriceId() {
+  return process.env.STRIPE_ONBOARDING_PRICE_ID ?? process.env.STRIPE_PRICE_ID;
+}
+
 async function getOrigin() {
   return (
     (await headers()).get("origin") ??
@@ -417,7 +421,9 @@ export async function startStripeCheckoutAction() {
     );
   }
 
-  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_PRICE_ID) {
+  const onboardingPriceId = getStripeOnboardingPriceId();
+
+  if (!process.env.STRIPE_SECRET_KEY || !onboardingPriceId) {
     await logAuditEvent({
       tenantId: tenant.id,
       actorUserId: user.id,
@@ -474,7 +480,7 @@ export async function startStripeCheckoutAction() {
       customer: stripeCustomerId,
       line_items: [
         {
-          price: process.env.STRIPE_PRICE_ID,
+          price: onboardingPriceId,
           quantity: 1,
         },
       ],

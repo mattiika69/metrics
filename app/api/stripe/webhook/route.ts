@@ -81,6 +81,19 @@ export async function POST(request: Request) {
 
   try {
     let tenantId: string | null = null;
+    const admin = createAdminClient();
+
+    await admin.from("billing_events").insert({
+      tenant_id: null,
+      stripe_event_id: event.id,
+      event_type: event.type,
+      status: "processing",
+      payload: {
+        id: event.id,
+        type: event.type,
+        created: event.created,
+      },
+    });
 
     if (
       event.type === "customer.subscription.created" ||
@@ -91,6 +104,14 @@ export async function POST(request: Request) {
     }
 
     await markWebhookProcessed(webhook.id, tenantId);
+    await admin
+      .from("billing_events")
+      .update({
+        tenant_id: tenantId,
+        status: "processed",
+        processed_at: new Date().toISOString(),
+      })
+      .eq("stripe_event_id", event.id);
     await logAuditEvent({
       tenantId,
       eventType: "stripe_webhook_processed",
@@ -104,6 +125,14 @@ export async function POST(request: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     await markWebhookFailed(webhook.id, message);
+    await createAdminClient()
+      .from("billing_events")
+      .update({
+        status: "failed",
+        error: message,
+        processed_at: new Date().toISOString(),
+      })
+      .eq("stripe_event_id", event.id);
     await logAuditEvent({
       eventType: "stripe_webhook_failed",
       targetType: "webhook_event",
@@ -143,7 +172,7 @@ async function syncSubscription(subscription: Stripe.Subscription) {
     updated_at: new Date().toISOString(),
   });
 
-  await supabase.from("billing_subscriptions").upsert(
+  const { data: billingSubscription } = await supabase.from("billing_subscriptions").upsert(
     {
       tenant_id: tenantId,
       stripe_subscription_id: subscription.id,
@@ -160,7 +189,28 @@ async function syncSubscription(subscription: Stripe.Subscription) {
     {
       onConflict: "stripe_subscription_id",
     },
-  );
+  ).select("id").single();
+
+  for (const item of subscription.items.data) {
+    await supabase.from("billing_subscription_items").upsert(
+      {
+        tenant_id: tenantId,
+        billing_subscription_id: billingSubscription?.id ?? null,
+        stripe_subscription_item_id: item.id,
+        stripe_subscription_id: subscription.id,
+        stripe_product_id:
+          typeof item.price.product === "string"
+            ? item.price.product
+            : item.price.product.id,
+        stripe_price_id: item.price.id,
+        quantity: item.quantity ?? 1,
+        status: subscription.status,
+        metadata: item.metadata ?? {},
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "stripe_subscription_item_id" },
+    );
+  }
 
   return tenantId;
 }

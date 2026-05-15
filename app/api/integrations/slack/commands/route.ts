@@ -58,6 +58,19 @@ export async function POST(request: Request) {
     body,
     payload: Object.fromEntries(params.entries()),
   });
+  await admin.from("integration_inbound_events").insert({
+    tenant_id: integration.tenant_id,
+    provider: "slack",
+    external_event_id: `${teamId}:${channelId}:${userId}:${Date.now()}`,
+    event_type: "slash_command",
+    payload: {
+      command: params.get("command"),
+      team_id: teamId,
+      channel_id: channelId,
+      user_id: userId,
+    },
+    status: "mapped",
+  });
 
   const text = await buildChannelCommandResponse(integration.tenant_id, command);
 
@@ -69,6 +82,14 @@ export async function POST(request: Request) {
     external_channel_id: channelId,
     body: text,
     payload: { command },
+  });
+  await admin.from("integration_outbound_messages").insert({
+    tenant_id: integration.tenant_id,
+    provider: "slack",
+    target_id: channelId ?? "unknown",
+    body: text,
+    payload: { command },
+    status: "sent",
   });
 
   await logAuditEvent({

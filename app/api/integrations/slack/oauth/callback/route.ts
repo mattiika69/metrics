@@ -6,6 +6,7 @@ import {
   slackOAuthTenantCookie,
 } from "@/lib/integrations/slack-oauth";
 import { logAuditEvent } from "@/lib/security/audit";
+import { encryptSecretJson } from "@/lib/security/secrets";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -83,6 +84,47 @@ export async function GET(request: Request) {
     provider: "slack",
     secret_values: { botToken },
   });
+  await admin.from("slack_installations").upsert(
+    {
+      tenant_id: tenantId,
+      tenant_integration_id: integration.id,
+      slack_team_id: teamId,
+      slack_team_name: oauth.team?.name ?? null,
+      slack_bot_user_id: oauth.bot_user_id ?? null,
+      slack_app_id: oauth.app_id ?? null,
+      status: "active",
+      settings: {
+        scope: oauth.scope ?? null,
+      },
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "tenant_id,slack_team_id" },
+  );
+  await admin.from("slack_links").upsert(
+    {
+      tenant_id: tenantId,
+      slack_team_id: teamId,
+      slack_user_id: oauth.authed_user?.id ?? null,
+      slack_channel_id: null,
+      status: "active",
+      settings: {
+        linkedBy: "oauth",
+      },
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "tenant_id,slack_team_id,slack_user_id,slack_channel_id" },
+  );
+  await admin.from("integration_secrets").upsert(
+    {
+      tenant_id: tenantId,
+      provider: "slack",
+      secret_name: "bot_token",
+      secret_ciphertext: encryptSecretJson({ botToken }),
+      key_version: "v1",
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "tenant_id,provider,secret_name" },
+  );
 
   await logAuditEvent({
     tenantId,

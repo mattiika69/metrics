@@ -7,13 +7,16 @@ Billing is tenant-scoped. A Stripe customer represents a tenant workspace, and s
 - `STRIPE_SECRET_KEY`: server-only Stripe API key.
 - `STRIPE_WEBHOOK_SECRET`: server-only webhook signing secret.
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`: browser-safe publishable key.
-- `STRIPE_PRICE_ID`: default subscription price used by checkout flows.
+- `STRIPE_ONBOARDING_PRICE_ID`: default subscription price used by checkout flows.
 - `SUPABASE_SERVICE_ROLE_KEY`: server-only key used by trusted webhook/admin paths.
 
 ## Data Model
 
 - `billing_customers`: maps a tenant to a Stripe customer.
 - `billing_subscriptions`: stores the current subscription state for a tenant.
+- `billing_subscription_items`: stores subscription item and seat/price details.
+- `billing_events`: stores verified Stripe webhook processing records.
+- `billing_usage_records`: stores tenant usage when plan limits or metering exist.
 
 Both tables have RLS enabled. Authenticated tenant members may read billing state for their tenant. Writes are reserved for trusted server-side Stripe webhook and admin flows.
 

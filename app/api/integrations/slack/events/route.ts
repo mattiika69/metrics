@@ -49,13 +49,24 @@ export async function POST(request: Request) {
   });
   if (webhook.duplicate) return Response.json({ received: true, duplicate: true });
 
+  const admin = createAdminClient();
+  await admin.from("integration_inbound_events").insert({
+    provider: "slack",
+    external_event_id: externalEventId,
+    event_type: eventType,
+    payload: {
+      event_id: payload.event_id ?? null,
+      team_id: payload.team_id ?? null,
+      event_type: payload.event?.type ?? null,
+    },
+  });
+
   const teamId = payload.team_id ?? payload.authorizations?.[0]?.team_id;
   if (!teamId) {
     await markWebhookUnmapped(webhook.id);
     return Response.json({ received: true, mapped: false });
   }
 
-  const admin = createAdminClient();
   const { data: integration } = await admin
     .from("tenant_integrations")
     .select("id, tenant_id")
@@ -70,6 +81,12 @@ export async function POST(request: Request) {
   }
 
   try {
+    await admin
+      .from("integration_inbound_events")
+      .update({ tenant_id: integration.tenant_id, status: "mapped" })
+      .eq("provider", "slack")
+      .eq("external_event_id", externalEventId);
+
     await admin.from("integration_events").insert({
       tenant_id: integration.tenant_id,
       integration_id: integration.id,
@@ -106,6 +123,14 @@ export async function POST(request: Request) {
         external_channel_id: channel,
         body: responseText,
         payload: { command },
+      });
+      await admin.from("integration_outbound_messages").insert({
+        tenant_id: integration.tenant_id,
+        provider: "slack",
+        target_id: channel,
+        body: responseText,
+        payload: { command },
+        status: "sent",
       });
     }
 

@@ -5,7 +5,7 @@ HyperOptimal Metrics uses the Claude API through Anthropic for any AI-assisted w
 ## Environment Variables
 
 - `ANTHROPIC_API_KEY`: server-only Anthropic API key.
-- `ANTHROPIC_MODEL`: server-only Claude model identifier selected for the deployed app.
+- `CLAUDE_MODEL`: server-only Claude model identifier selected for the deployed app.
 
 ## Rules
 

@@ -53,7 +53,7 @@ export default async function TeamSettingsPage({ searchParams }: PageProps) {
   const { data: invitations } = isAdmin
     ? await supabase
         .from("tenant_invitations")
-        .select("id, email, role, status, expires_at, created_at")
+        .select("id, email, role, status, email_delivery_status, email_delivery_error, expires_at, created_at")
         .eq("tenant_id", tenant.id)
         .order("created_at", { ascending: false })
     : { data: [] };
@@ -138,9 +138,12 @@ export default async function TeamSettingsPage({ searchParams }: PageProps) {
                     <div>
                       <strong>{invitation.email}</strong>
                       <span className="muted">
-                        {invitation.status} until{" "}
+                        {invitation.status} · email {invitation.email_delivery_status} · expires{" "}
                         {new Date(invitation.expires_at).toLocaleDateString()}
                       </span>
+                      {invitation.email_delivery_error ? (
+                        <span className="muted">{invitation.email_delivery_error}</span>
+                      ) : null}
                     </div>
                     <div className="row-actions">
                       <span className="pill">{invitation.role}</span>

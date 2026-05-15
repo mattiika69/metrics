@@ -95,6 +95,17 @@ async function sendInvitationEmail(input: {
     },
   });
 
+  await admin
+    .from("tenant_invitations")
+    .update({
+      email_delivery_status: result.error ? "failed" : "sent",
+      email_delivery_error: result.error?.message ?? null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("email", input.toEmail)
+    .eq("tenant_id", input.tenantId)
+    .eq("status", "pending");
+
   if (result.error) {
     throw new Error(result.error.message);
   }
@@ -249,6 +260,8 @@ export async function revokeTeamInvitationAction(formData: FormData) {
     .from("tenant_invitations")
     .update({
       status: "revoked",
+      cancelled_at: new Date().toISOString(),
+      cancelled_by_user_id: user.id,
       updated_at: new Date().toISOString(),
     })
     .eq("id", invitationId)

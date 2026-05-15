@@ -55,9 +55,11 @@ export async function generateAndStoreRecommendation({
   let body = deterministicRecommendation(constraintLines);
   let model: string | null = null;
 
-  if (process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_MODEL && top.length > 0) {
+  const claudeModel = process.env.CLAUDE_MODEL ?? process.env.ANTHROPIC_MODEL;
+
+  if (process.env.ANTHROPIC_API_KEY && claudeModel && top.length > 0) {
     try {
-      model = process.env.ANTHROPIC_MODEL;
+      model = claudeModel;
       body = await createClaudeText({
         system: "You are an operating metrics advisor for HyperOptimal Metrics. Use only the supplied tenant metric facts. Give concise, practical recommendations. Do not invent data.",
         messages: [

@@ -23,10 +23,10 @@ const ANTHROPIC_VERSION = "2023-06-01";
 
 function getClaudeConfig() {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  const model = process.env.ANTHROPIC_MODEL;
+  const model = process.env.CLAUDE_MODEL ?? process.env.ANTHROPIC_MODEL;
 
   if (!apiKey) throw new Error("Missing ANTHROPIC_API_KEY.");
-  if (!model) throw new Error("Missing ANTHROPIC_MODEL.");
+  if (!model) throw new Error("Missing CLAUDE_MODEL or ANTHROPIC_MODEL.");
 
   return { apiKey, model };
 }

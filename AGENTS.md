@@ -29,11 +29,19 @@ Everything durable must be written to and synced with the cloud.
 
 ## Git Authorship
 
-Every commit must use the author name `Matika69pushingtomain`.
+Every commit must use the author `mattiika69 <matt@1000xleads.com>`.
 
-- Use `Matika69pushingtomain <matt@1000xleads.com>` as the commit author unless the user explicitly changes it.
+- Use `mattiika69 <matt@1000xleads.com>` as the commit author unless the user explicitly changes it.
 - Apply the same identity to commit metadata created by local Git, temporary clones, scripts, or automated pushes.
 - If a tool cannot set this author, stop and report the limitation before pushing.
+
+## HyperOptimal SaaS Standard
+
+The authoritative cross-app standard is `docs/hyperoptimal-saas-standard.md`.
+
+- Inspect it before adding durable features.
+- Use `ARCHITECTURE.md` and `docs/architecture-rls-source-of-truth.md` as the repo-local implementation references.
+- The standard is not optional: if product state matters, it must save to Supabase or the correct cloud provider before success is shown.
 
 ## Naming
 
@@ -56,13 +64,15 @@ HyperOptimal Metrics is primarily a desktop web application.
 Every durable feature must support user authentication, row-level security, multi-tenancy, Stripe-ready billing, Slack/Telegram-ready messaging, Resend-ready email, and Roezan-ready SMS from day one.
 
 - The authoritative org/user architecture and RLS source of truth is `docs/architecture-rls-source-of-truth.md`.
+- Production auth uses Supabase Auth. Temporary login bypass may exist only behind `DISABLE_LOGIN_AUTH`, `AUTH_BYPASS_EMAIL`, `AUTH_BYPASS_TENANT_ID`, and `AUTH_BYPASS_USER_ID`; it must not remove tenant resolution or server-side authorization.
 - In code and database schema, an "org" means a tenant/workspace and must be represented by `public.tenants` plus `tenant_id`; do not introduce `org_id`, `organization_id`, or a separate organizations table unless an explicit migration plan replaces the tenant model everywhere.
 - Do not add user-facing functionality that assumes anonymous access unless the task explicitly requires a public surface.
 - Do not add application tables without enabling RLS.
 - Every tenant-owned table must include a `tenant_id` column and policies that restrict access to members of that tenant.
 - User identity must come from Supabase Auth (`auth.uid()`), not request-provided user IDs.
 - Tenant authorization must be enforced in Supabase policies, not only in application code.
-- Service-role access must only be used for trusted server-side administration paths and must never be exposed to the browser.
+- Service-role access is allowed only in trusted server code after the user was authenticated and tenant-checked, a provider webhook signature or secret was verified, or a controlled system job is intentionally running.
+- Service-role keys must never be exposed to the browser.
 - If a feature cannot be made tenant-aware in the current task, document the blocker and do not treat the feature as complete.
 
 ## Billing
