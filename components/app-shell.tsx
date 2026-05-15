@@ -15,6 +15,9 @@ type AppShellProps = {
     | "metrics-sales"
     | "metrics-cost-per-call"
     | "metrics-inputs"
+    | "metrics-raw-data"
+    | "metrics-benchmarking"
+    | "metrics-principles"
     | "metrics-quality-assurance"
     | "settings"
     | "account"
@@ -23,8 +26,8 @@ type AppShellProps = {
   children: React.ReactNode;
 };
 
-const topSections = [
-  { id: "dashboard", label: "Today", href: "/dashboard" },
+const primaryItems = [
+  { id: "dashboard", label: "Dashboard", href: "/dashboard" },
   { id: "ai-context", label: "AI Context Doc", href: "/ai-context-doc" },
   { id: "integrations", label: "Integrations", href: "/integrations" },
   { id: "constraints", label: "Constraints", href: "/constraints" },
@@ -38,16 +41,17 @@ const metricItems = [
   { id: "metrics-sales", label: "Sales", href: "/metrics/sales" },
   { id: "metrics-cost-per-call", label: "Cost Per Call", href: "/metrics/cost-per-call" },
   { id: "metrics-inputs", label: "Inputs", href: "/metrics/inputs" },
+  { id: "metrics-raw-data", label: "Raw Data", href: "/metrics/raw-data" },
+  { id: "metrics-benchmarking", label: "Benchmarking", href: "/metrics/benchmarking" },
+  { id: "metrics-principles", label: "Principles", href: "/metrics/principles" },
   { id: "metrics-quality-assurance", label: "Quality Assurance", href: "/metrics/quality-assurance" },
 ] as const;
 
 const settingsItems = [
-  { id: "settings", label: "Settings", href: "/settings/team" },
-  { id: "admin", label: "Admin", href: "/admin" },
-  { id: "account", label: "Account", href: "/account" },
+  { id: "settings", label: "Team", href: "/settings/team" },
 ] as const;
 
-export function AppShell({ active, tenantName, children }: AppShellProps) {
+export function AppShell({ active, children }: AppShellProps) {
   const authBypassEnabled = isAuthBypassEnabled();
   const metricsActive = active.startsWith("metrics-");
   const settingsActive = active === "settings" || active === "admin" || active === "account";
@@ -60,42 +64,25 @@ export function AppShell({ active, tenantName, children }: AppShellProps) {
             <span className="brand-mark" aria-hidden="true">
               H
             </span>
-            <span>HyperOptimal</span>
+            <span>HyperOptimal Metrics</span>
           </Link>
           <span className="collapse-dot" aria-hidden="true">
             ‹
           </span>
         </div>
-        <div className="org-select">
-          <span>Org:</span>
-          <strong>{tenantName ?? "Matthew"}</strong>
-        </div>
 
         <nav className="sidebar-sections" aria-label="Primary navigation">
-          <div className="sidebar-divider" />
-          <p className="sidebar-label">Most Viewed</p>
-          {topSections.map((item) => (
+          {primaryItems.map((item) => (
             <Link
               key={item.id}
               href={item.href}
               className={active === item.id ? "sidebar-link active" : "sidebar-link"}
             >
-              <span className="chevron" aria-hidden="true">
-                ›
-              </span>
               {item.label}
             </Link>
           ))}
 
           <div className="sidebar-divider" />
-          <p className="sidebar-label">Team</p>
-          <Link href="/settings/team" className={active === "settings" ? "sidebar-link active" : "sidebar-link"}>
-            <span className="chevron" aria-hidden="true">
-              ›
-            </span>
-            Team
-          </Link>
-
           <div className="sidebar-group">
             <p className={metricsActive ? "sidebar-label expanded" : "sidebar-label"}>Metrics</p>
             <div className="sidebar-subnav">
@@ -106,7 +93,7 @@ export function AppShell({ active, tenantName, children }: AppShellProps) {
                   className={active === item.id ? "sidebar-sub-link active" : "sidebar-sub-link"}
                 >
                   {item.label}
-                  <span aria-hidden="true">⋮</span>
+                  <span aria-hidden="true">⋮⋮</span>
                 </Link>
               ))}
             </div>
@@ -123,7 +110,7 @@ export function AppShell({ active, tenantName, children }: AppShellProps) {
                   className={active === item.id ? "sidebar-sub-link active" : "sidebar-sub-link"}
                 >
                   {item.label}
-                  <span aria-hidden="true">⋮</span>
+                  <span aria-hidden="true">⋮⋮</span>
                 </Link>
               ))}
               {authBypassEnabled ? null : (

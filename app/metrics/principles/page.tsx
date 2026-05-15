@@ -24,7 +24,7 @@ export default async function MetricPrinciplesPage({ searchParams }: PageProps) 
     .order("display_order", { ascending: true });
 
   return (
-    <AppShell active="metrics-most-important" tenantName={tenant.name}>
+    <AppShell active="metrics-principles" tenantName={tenant.name}>
       <section className="page-header compact">
         <p className="eyebrow">Metrics</p>
         <h1>Principles</h1>

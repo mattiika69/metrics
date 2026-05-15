@@ -30,7 +30,7 @@ export default async function BenchmarkingPage({ searchParams }: PageProps) {
   const targetById = new Map((targets.data ?? []).map((target) => [target.benchmark_id, Number(target.target_value)]));
 
   return (
-    <AppShell active="metrics-most-important" tenantName={tenant.name}>
+    <AppShell active="metrics-benchmarking" tenantName={tenant.name}>
       <section className="page-header compact">
         <p className="eyebrow">Metrics</p>
         <h1>Benchmarking</h1>

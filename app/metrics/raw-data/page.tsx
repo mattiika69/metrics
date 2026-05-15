@@ -9,7 +9,7 @@ export default async function MetricsRawDataPage() {
   const sources = await loadRawDataCounts(supabase, tenant.id);
 
   return (
-    <AppShell active="metrics-most-important" tenantName={tenant.name}>
+    <AppShell active="metrics-raw-data" tenantName={tenant.name}>
       <section className="page-header compact">
         <p className="eyebrow">Metrics</p>
         <h1>Raw Data</h1>
