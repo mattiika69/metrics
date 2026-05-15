@@ -1,21 +1,12 @@
 import Link from "next/link";
+import { AppShell } from "@/components/app-shell";
 import { requireTenant } from "@/lib/auth/session";
 
 export default async function AdminPage() {
   const { tenant, membership } = await requireTenant();
 
   return (
-    <main className="app-shell">
-      <nav className="top-nav">
-        <Link href="/dashboard" className="brand">
-          HyperOptimal Metrics
-        </Link>
-        <div className="nav-links">
-          <Link href="/settings/team">Settings</Link>
-          <Link href="/account">Account</Link>
-          <Link href="/dashboard">Dashboard</Link>
-        </div>
-      </nav>
+    <AppShell active="admin" tenantName={tenant.name}>
       <section className="page-header">
         <p className="eyebrow">{tenant.name}</p>
         <h1>Admin</h1>
@@ -47,6 +38,6 @@ export default async function AdminPage() {
           <Link href="/terms">Terms</Link>
         </article>
       </section>
-    </main>
+    </AppShell>
   );
 }

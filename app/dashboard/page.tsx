@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { signOutAction } from "@/lib/auth/actions";
+import { AppShell } from "@/components/app-shell";
 import { requireUser } from "@/lib/auth/session";
 
 type PageProps = {
@@ -29,28 +29,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const message = getParam(params, "message");
 
   return (
-    <main className="app-shell">
-      <nav className="top-nav">
-        <Link href="/dashboard" className="brand">
-          HyperOptimal Metrics
-        </Link>
-        <div className="nav-links">
-          {tenant ? (
-            <>
-              <Link href="/admin">Admin</Link>
-              <Link href="/settings/team">Settings</Link>
-              <Link href="/account">Account</Link>
-            </>
-          ) : (
-            <Link href="/get-started">Create workspace</Link>
-          )}
-          <form action={signOutAction}>
-            <button type="submit" className="link-button">
-              Sign out
-            </button>
-          </form>
-        </div>
-      </nav>
+    <AppShell active="dashboard" tenantName={tenant?.name}>
       <section className="page-header">
         <p className="eyebrow">{tenant?.name ?? "Personal dashboard"}</p>
         <h1>Today</h1>
@@ -86,12 +65,16 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           <h2>Admin readiness</h2>
           <p>RLS, tenant boundaries, billing, email, SMS, Slack, and Telegram.</p>
           {tenant ? (
-            <Link href="/admin">Open admin</Link>
+            <>
+              <Link href="/metrics">Open metrics</Link>
+              <Link href="/integrations">Open integrations</Link>
+              <Link href="/constraints">Open constraints</Link>
+            </>
           ) : (
             <span className="muted">Create a workspace to enable admin.</span>
           )}
         </article>
       </section>
-    </main>
+    </AppShell>
   );
 }

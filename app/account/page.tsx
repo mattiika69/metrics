@@ -1,26 +1,12 @@
 import Link from "next/link";
-import { signOutAction } from "@/lib/auth/actions";
+import { AppShell } from "@/components/app-shell";
 import { requireTenant } from "@/lib/auth/session";
 
 export default async function AccountPage() {
   const { user, tenant, membership } = await requireTenant();
 
   return (
-    <main className="app-shell">
-      <nav className="top-nav">
-        <Link href="/dashboard" className="brand">
-          HyperOptimal Metrics
-        </Link>
-        <div className="nav-links">
-          <Link href="/settings/team">Settings</Link>
-          <Link href="/admin">Admin</Link>
-          <form action={signOutAction}>
-            <button type="submit" className="link-button">
-              Sign out
-            </button>
-          </form>
-        </div>
-      </nav>
+    <AppShell active="account" tenantName={tenant.name}>
       <section className="page-header">
         <p className="eyebrow">Account</p>
         <h1>Profile and access</h1>
@@ -44,6 +30,6 @@ export default async function AccountPage() {
           <Link href="/forgot-password">Reset password</Link>
         </div>
       </section>
-    </main>
+    </AppShell>
   );
 }

@@ -1,0 +1,146 @@
+import Link from "next/link";
+import { AppShell } from "@/components/app-shell";
+import {
+  connectIntegrationAction,
+  createTelegramLinkCodeAction,
+  syncIntegrationAction,
+} from "@/app/metrics/actions";
+import { requireTenant } from "@/lib/auth/session";
+import { getIntegrationDefinition } from "@/lib/integrations/catalog";
+
+export const dynamic = "force-dynamic";
+
+type PageProps = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function param(params: Record<string, string | string[] | undefined>, key: string) {
+  const value = params[key];
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function IntegrationDetailPage({ params, searchParams }: PageProps) {
+  const { id } = await params;
+  const query = await searchParams;
+  const message = param(query, "message") ?? param(query, "error");
+  const code = param(query, "code");
+  const expires = param(query, "expires");
+  const definition = getIntegrationDefinition(id);
+  const { supabase, tenant } = await requireTenant();
+
+  if (!definition) {
+    return (
+      <AppShell active="integrations" tenantName={tenant.name}>
+        <section className="page-header compact">
+          <p className="eyebrow">Integrations</p>
+          <h1>Not found</h1>
+          <Link href="/integrations">Back to integrations</Link>
+        </section>
+      </AppShell>
+    );
+  }
+
+  const table = definition.group === "Messaging" ? "tenant_integrations" : "metric_integrations";
+  const { data: connection } = definition.group === "Messaging"
+    ? await supabase
+      .from(table)
+      .select("id, status, display_name, external_team_id, external_channel_id, settings, updated_at")
+      .eq("tenant_id", tenant.id)
+      .eq("provider", definition.id)
+      .neq("status", "disabled")
+      .maybeSingle()
+    : await supabase
+      .from(table)
+      .select("id, status, display_name, external_account_id, settings, last_sync_at, last_event_at, last_error, updated_at")
+      .eq("tenant_id", tenant.id)
+      .eq("provider", definition.id)
+      .maybeSingle();
+  const connectionRecord = connection as Record<string, unknown> | null;
+  const lastSyncAt = typeof connectionRecord?.last_sync_at === "string" ? connectionRecord.last_sync_at : null;
+  const lastError = typeof connectionRecord?.last_error === "string" ? connectionRecord.last_error : null;
+
+  return (
+    <AppShell active="integrations" tenantName={tenant.name}>
+      <section className="page-header compact">
+        <p className="eyebrow">{definition.group}</p>
+        <div className="header-row">
+          <div>
+            <h1>{definition.name}</h1>
+            <p className="lede">{definition.description}</p>
+          </div>
+          <Link href="/integrations" className="button-secondary">All integrations</Link>
+        </div>
+        {message ? <p className="notice">{message}</p> : null}
+      </section>
+
+      <section className="split-layout">
+        <article className="wide-panel">
+          <h2>Status</h2>
+          <div className="status-list">
+            <p><strong>Connection:</strong> {definition.comingSoon ? "Coming soon" : connection ? connection.status : "Not connected"}</p>
+            <p><strong>Provider:</strong> {definition.id}</p>
+            <p><strong>Last updated:</strong> {connection?.updated_at ? new Date(connection.updated_at).toLocaleString() : "Never"}</p>
+            {lastSyncAt !== null ? (
+              <p><strong>Last sync:</strong> {new Date(lastSyncAt).toLocaleString()}</p>
+            ) : null}
+            {lastError ? (
+              <p><strong>Last error:</strong> {lastError}</p>
+            ) : null}
+          </div>
+        </article>
+
+        <aside className="compact-card">
+          {definition.id === "slack" ? (
+            <>
+              <h2>Slack OAuth</h2>
+              <p className="muted">Install Slack, then use /metrics or /constraints.</p>
+              <Link href="/api/integrations/slack/oauth/start" className="button-primary">Connect Slack</Link>
+              <p className="muted">Event URL: /api/integrations/slack/events</p>
+              <p className="muted">Slash command URL: /api/integrations/slack/commands</p>
+            </>
+          ) : definition.id === "telegram" ? (
+            <>
+              <h2>Telegram Link</h2>
+              <p className="muted">Generate a code, then send /link CODE to the bot.</p>
+              {code ? (
+                <p className="notice">
+                  Code: <strong>{code}</strong>
+                  {expires ? ` | expires ${new Date(expires).toLocaleString()}` : null}
+                </p>
+              ) : null}
+              <form action={createTelegramLinkCodeAction}>
+                <button type="submit">Generate link code</button>
+              </form>
+              <p className="muted">Webhook URL: /api/integrations/telegram/webhook</p>
+            </>
+          ) : definition.comingSoon ? (
+            <>
+              <h2>Coming Soon</h2>
+              <p className="muted">This integration is listed for visibility but is not connectable yet.</p>
+            </>
+          ) : (
+            <>
+              <h2>Connect</h2>
+              <form action={connectIntegrationAction} className="form-stack compact">
+                <input type="hidden" name="provider" value={definition.id} />
+                {definition.fields.map((field) => (
+                  <label key={field.name}>
+                    {field.label}
+                    <input name={field.name} type={field.type} placeholder={field.placeholder} required />
+                  </label>
+                ))}
+                {definition.fields.length === 0 ? <p className="muted">No credentials are required for this integration shell.</p> : null}
+                <button type="submit">Save connection</button>
+              </form>
+              <form action={syncIntegrationAction} className="card-action">
+                <input type="hidden" name="provider" value={definition.id} />
+                <button type="submit" className="button-secondary">Sync now</button>
+              </form>
+            </>
+          )}
+        </aside>
+      </section>
+    </AppShell>
+  );
+}

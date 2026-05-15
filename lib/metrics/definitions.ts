@@ -1,0 +1,73 @@
+export type MetricFormat = "currency" | "percent" | "number" | "ratio" | "months" | "days";
+
+export type MetricDefinition = {
+  id: string;
+  name: string;
+  category: string;
+  format: MetricFormat;
+  formula: string;
+  formulaType: "raw" | "derived";
+  dependencies: string[];
+  sourceDescription: string;
+  isInverse: boolean;
+  displayOrder: number;
+};
+
+export const metricDefinitions: MetricDefinition[] = [
+  { id: "mrr", name: "MRR", category: "Revenue", format: "currency", formula: "Current active subscription monthly recurring revenue.", formulaType: "raw", dependencies: [], sourceDescription: "Stripe, Whop, Fanbasis", isInverse: false, displayOrder: 1 },
+  { id: "arr", name: "ARR", category: "Revenue", format: "currency", formula: "ARR = MRR x 12.", formulaType: "derived", dependencies: ["mrr"], sourceDescription: "Derived from MRR", isInverse: false, displayOrder: 2 },
+  { id: "revenue", name: "Revenue", category: "Revenue", format: "currency", formula: "Successful processor payments plus revenue-qualified bank inflows.", formulaType: "raw", dependencies: [], sourceDescription: "Payments and bank transactions", isInverse: false, displayOrder: 3 },
+  { id: "new_client_revenue", name: "New Client Revenue", category: "Revenue", format: "currency", formula: "Revenue from clients whose first payment date falls in the period.", formulaType: "derived", dependencies: ["new_clients", "revenue"], sourceDescription: "Client records and payments", isInverse: false, displayOrder: 4 },
+  { id: "recurring_revenue", name: "Recurring Revenue", category: "Revenue", format: "currency", formula: "Subscription and recurring-tagged revenue.", formulaType: "derived", dependencies: ["revenue"], sourceDescription: "Payments and recurring bank inflows", isInverse: false, displayOrder: 5 },
+  { id: "cash_in", name: "Cash In", category: "Cash", format: "currency", formula: "Sum of inbound bank transactions.", formulaType: "raw", dependencies: [], sourceDescription: "Plaid or CSV Banking", isInverse: false, displayOrder: 6 },
+  { id: "cash_out", name: "Cash Out", category: "Cash", format: "currency", formula: "Sum of outbound bank transactions.", formulaType: "raw", dependencies: [], sourceDescription: "Plaid or CSV Banking", isInverse: true, displayOrder: 7 },
+  { id: "net_cash_flow", name: "Net Cash Flow", category: "Cash", format: "currency", formula: "Net Cash Flow = Cash In - Cash Out.", formulaType: "derived", dependencies: ["cash_in", "cash_out"], sourceDescription: "Bank transactions", isInverse: false, displayOrder: 8 },
+  { id: "cash_margin", name: "Cash Margin", category: "Cash", format: "percent", formula: "Cash Margin = Net Cash Flow / Cash In x 100.", formulaType: "derived", dependencies: ["net_cash_flow", "cash_in"], sourceDescription: "Bank transactions", isInverse: false, displayOrder: 9 },
+  { id: "expenses", name: "Expenses", category: "Costs", format: "currency", formula: "Sum of outbound expense transactions.", formulaType: "raw", dependencies: [], sourceDescription: "Plaid or CSV Banking", isInverse: true, displayOrder: 10 },
+  { id: "net_profit", name: "Net Profit", category: "Revenue", format: "currency", formula: "Net Profit = Revenue - Expenses.", formulaType: "derived", dependencies: ["revenue", "expenses"], sourceDescription: "Revenue and expense sources", isInverse: false, displayOrder: 11 },
+  { id: "net_margin", name: "Net Margin", category: "Revenue", format: "percent", formula: "Net Margin = Net Profit / Revenue x 100.", formulaType: "derived", dependencies: ["net_profit", "revenue"], sourceDescription: "Net profit and revenue", isInverse: false, displayOrder: 12 },
+  { id: "gross_margin", name: "Gross Margin", category: "Revenue", format: "percent", formula: "Gross Margin = (Revenue - Fulfillment Costs) / Revenue x 100.", formulaType: "derived", dependencies: ["revenue", "fulfillment_costs"], sourceDescription: "Revenue and fulfillment costs", isInverse: false, displayOrder: 13 },
+  { id: "fixed_costs", name: "Fixed Costs", category: "Costs", format: "currency", formula: "Sum of fixed cost transactions.", formulaType: "raw", dependencies: [], sourceDescription: "Bank transaction cost mappings", isInverse: true, displayOrder: 20 },
+  { id: "variable_costs", name: "Variable Costs", category: "Costs", format: "currency", formula: "Sum of variable cost transactions.", formulaType: "raw", dependencies: [], sourceDescription: "Bank transaction cost mappings", isInverse: true, displayOrder: 21 },
+  { id: "fulfillment_costs", name: "Fulfillment Costs", category: "Costs", format: "currency", formula: "Sum of fulfillment cost transactions.", formulaType: "raw", dependencies: [], sourceDescription: "Bank transaction category mappings", isInverse: true, displayOrder: 22 },
+  { id: "wasted_money", name: "Wasted Money", category: "Costs", format: "currency", formula: "Sum of expense transactions tagged as waste.", formulaType: "raw", dependencies: [], sourceDescription: "Bank transaction waste mappings", isInverse: true, displayOrder: 23 },
+  { id: "acquisition_costs", name: "Acquisition Costs", category: "Costs", format: "currency", formula: "Sum of acquisition spend.", formulaType: "raw", dependencies: [], sourceDescription: "Bank transaction acquisition mappings", isInverse: true, displayOrder: 24 },
+  { id: "cac", name: "CAC", category: "Costs", format: "currency", formula: "CAC = acquisition spend / new clients.", formulaType: "derived", dependencies: ["acquisition_costs", "new_clients"], sourceDescription: "Acquisition spend and new clients", isInverse: true, displayOrder: 25 },
+  { id: "cost_per_call", name: "Cost Per Call", category: "Costs", format: "currency", formula: "Cost Per Call = acquisition spend / calls booked.", formulaType: "derived", dependencies: ["acquisition_costs", "calls_booked"], sourceDescription: "Acquisition spend and calls", isInverse: true, displayOrder: 26 },
+  { id: "bank_balance", name: "Bank Balance", category: "Cash", format: "currency", formula: "Latest available connected account balance or net tracked cash.", formulaType: "raw", dependencies: [], sourceDescription: "Bank integrations", isInverse: false, displayOrder: 27 },
+  { id: "runway", name: "Runway", category: "Cash", format: "months", formula: "Runway = Bank Balance / average monthly expenses.", formulaType: "derived", dependencies: ["bank_balance", "expenses"], sourceDescription: "Bank balance and expenses", isInverse: false, displayOrder: 28 },
+  { id: "active_clients", name: "Active Clients", category: "Clients", format: "number", formula: "Count of active clients at period end.", formulaType: "raw", dependencies: [], sourceDescription: "Client records", isInverse: false, displayOrder: 30 },
+  { id: "churned_clients", name: "Churned Clients", category: "Clients", format: "number", formula: "Count of clients churned in the period.", formulaType: "raw", dependencies: [], sourceDescription: "Client records", isInverse: true, displayOrder: 31 },
+  { id: "new_clients", name: "New Clients", category: "Clients", format: "number", formula: "Count of clients whose first payment falls in the period.", formulaType: "raw", dependencies: [], sourceDescription: "Client records", isInverse: false, displayOrder: 32 },
+  { id: "churn", name: "Churn Rate", category: "Clients", format: "percent", formula: "Churn = churned clients / active clients at period start x 100.", formulaType: "derived", dependencies: ["churned_clients", "active_clients"], sourceDescription: "Client records", isInverse: true, displayOrder: 33 },
+  { id: "nrr", name: "NRR", category: "Clients", format: "percent", formula: "Net revenue retention for the selected cohort.", formulaType: "derived", dependencies: ["mrr"], sourceDescription: "Payment processor subscription data", isInverse: false, displayOrder: 34 },
+  { id: "avg_relationship", name: "Average Client Relationship", category: "Clients", format: "months", formula: "Average relationship = 100 / monthly churn rate.", formulaType: "derived", dependencies: ["churn"], sourceDescription: "Churn rate", isInverse: false, displayOrder: 35 },
+  { id: "median_payment", name: "Median Payment", category: "Performance", format: "currency", formula: "Median successful payment amount.", formulaType: "raw", dependencies: [], sourceDescription: "Payment processors", isInverse: false, displayOrder: 36 },
+  { id: "monthly_client_payment", name: "Monthly Client Payment", category: "Performance", format: "currency", formula: "Monthly Client Payment = Recurring Revenue / Active Clients.", formulaType: "derived", dependencies: ["recurring_revenue", "active_clients"], sourceDescription: "Recurring revenue and active clients", isInverse: false, displayOrder: 37 },
+  { id: "revenue_ltv", name: "Revenue LTV", category: "Performance", format: "currency", formula: "Revenue LTV = Monthly Client Payment x Average Relationship.", formulaType: "derived", dependencies: ["monthly_client_payment", "avg_relationship"], sourceDescription: "Payment and churn metrics", isInverse: false, displayOrder: 38 },
+  { id: "gross_margin_ltv", name: "Gross Margin LTV", category: "Performance", format: "currency", formula: "Gross Margin LTV = Revenue LTV x Gross Margin.", formulaType: "derived", dependencies: ["revenue_ltv", "gross_margin"], sourceDescription: "Derived LTV metric", isInverse: false, displayOrder: 39 },
+  { id: "net_margin_ltv", name: "Net Margin LTV", category: "Performance", format: "currency", formula: "Net Margin LTV = Revenue LTV x Net Margin.", formulaType: "derived", dependencies: ["revenue_ltv", "net_margin"], sourceDescription: "Derived LTV metric", isInverse: false, displayOrder: 40 },
+  { id: "ltv_cac", name: "Revenue LTV:CAC", category: "Performance", format: "ratio", formula: "Revenue LTV:CAC = Revenue LTV / CAC.", formulaType: "derived", dependencies: ["revenue_ltv", "cac"], sourceDescription: "Derived ratio", isInverse: false, displayOrder: 41 },
+  { id: "gross_ltv_cac", name: "Gross LTV:CAC", category: "Performance", format: "ratio", formula: "Gross LTV:CAC = Gross Margin LTV / CAC.", formulaType: "derived", dependencies: ["gross_margin_ltv", "cac"], sourceDescription: "Derived ratio", isInverse: false, displayOrder: 42 },
+  { id: "net_ltv_cac", name: "Net LTV:CAC", category: "Performance", format: "ratio", formula: "Net LTV:CAC = Net Margin LTV / CAC.", formulaType: "derived", dependencies: ["net_margin_ltv", "cac"], sourceDescription: "Derived ratio", isInverse: false, displayOrder: 43 },
+  { id: "payback", name: "Payback Period", category: "Performance", format: "months", formula: "Payback = CAC / monthly gross profit per client.", formulaType: "derived", dependencies: ["cac", "monthly_client_payment", "gross_margin"], sourceDescription: "CAC and client margin", isInverse: true, displayOrder: 44 },
+  { id: "revenue_per_employee", name: "Revenue Per Employee", category: "Performance", format: "currency", formula: "Revenue / tenant team members.", formulaType: "derived", dependencies: ["revenue"], sourceDescription: "Revenue and team membership", isInverse: false, displayOrder: 45 },
+  { id: "calls_booked", name: "Calls Booked", category: "Sales", format: "number", formula: "Count of booked sales calls.", formulaType: "raw", dependencies: [], sourceDescription: "Calendly, Cal.com, iClosed", isInverse: false, displayOrder: 50 },
+  { id: "calls_shown", name: "Calls Shown", category: "Sales", format: "number", formula: "Count of sales calls that showed.", formulaType: "raw", dependencies: [], sourceDescription: "Sales call integrations", isInverse: false, displayOrder: 51 },
+  { id: "calls_closed", name: "Calls Closed", category: "Sales", format: "number", formula: "Count of sales calls closed.", formulaType: "raw", dependencies: [], sourceDescription: "Sales call integrations", isInverse: false, displayOrder: 52 },
+  { id: "calls_unqualified", name: "Calls Unqualified", category: "Sales", format: "number", formula: "Count of shown calls marked unqualified.", formulaType: "raw", dependencies: [], sourceDescription: "Sales call integrations", isInverse: true, displayOrder: 53 },
+  { id: "qualified_calls", name: "Qualified Calls", category: "Sales", format: "number", formula: "Qualified Calls = Calls Shown - Calls Unqualified.", formulaType: "derived", dependencies: ["calls_shown", "calls_unqualified"], sourceDescription: "Sales call outcomes", isInverse: false, displayOrder: 54 },
+  { id: "offers_sent", name: "Offers Sent", category: "Sales", format: "number", formula: "Count of sales calls where an offer was sent.", formulaType: "raw", dependencies: [], sourceDescription: "Sales call outcomes", isInverse: false, displayOrder: 55 },
+  { id: "call_show_rate", name: "Meeting Show Rate", category: "Sales", format: "percent", formula: "Show Rate = Calls Shown / Calls Booked x 100.", formulaType: "derived", dependencies: ["calls_shown", "calls_booked"], sourceDescription: "Sales call outcomes", isInverse: false, displayOrder: 56 },
+  { id: "call_close_rate", name: "Close Rate", category: "Sales", format: "percent", formula: "Close Rate = Calls Closed / Calls Booked x 100.", formulaType: "derived", dependencies: ["calls_closed", "calls_booked"], sourceDescription: "Sales call outcomes", isInverse: false, displayOrder: 57 },
+  { id: "no_show_rate", name: "No-Show Rate", category: "Sales", format: "percent", formula: "No-Show Rate = missed calls / calls booked x 100.", formulaType: "derived", dependencies: ["calls_booked", "calls_shown"], sourceDescription: "Sales call outcomes", isInverse: true, displayOrder: 58 },
+  { id: "call_offer_rate", name: "Offer Rate", category: "Sales", format: "percent", formula: "Offer Rate = Offers Sent / Calls Shown x 100.", formulaType: "derived", dependencies: ["offers_sent", "calls_shown"], sourceDescription: "Sales call outcomes", isInverse: false, displayOrder: 59 },
+  { id: "call_unqualified_rate", name: "Unqualified Rate", category: "Sales", format: "percent", formula: "Unqualified Rate = Calls Unqualified / Calls Shown x 100.", formulaType: "derived", dependencies: ["calls_unqualified", "calls_shown"], sourceDescription: "Sales call outcomes", isInverse: true, displayOrder: 60 },
+  { id: "sales_cycle", name: "Sales Cycle", category: "Sales", format: "days", formula: "Average days from booked call to first payment.", formulaType: "derived", dependencies: ["calls_booked", "new_clients"], sourceDescription: "Sales calls and client payments", isInverse: true, displayOrder: 61 },
+];
+
+export const defaultMetricIds = metricDefinitions.map((definition) => definition.id);
+
+export function getMetricDefinition(metricId: string) {
+  return metricDefinitions.find((definition) => definition.id === metricId) ?? null;
+}

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { signOutAction } from "@/lib/auth/actions";
+import { AppShell } from "@/components/app-shell";
 import { requireTenant } from "@/lib/auth/session";
 import {
   inviteTeamMemberAction,
@@ -59,22 +59,7 @@ export default async function TeamSettingsPage({ searchParams }: PageProps) {
     : { data: [] };
 
   return (
-    <main className="app-shell">
-      <nav className="top-nav">
-        <Link href="/dashboard" className="brand">
-          HyperOptimal Metrics
-        </Link>
-        <div className="nav-links">
-          <Link href="/dashboard">Dashboard</Link>
-          <Link href="/settings/team">Settings</Link>
-          <Link href="/account">Account</Link>
-          <form action={signOutAction}>
-            <button type="submit" className="link-button">
-              Sign out
-            </button>
-          </form>
-        </div>
-      </nav>
+    <AppShell active="settings" tenantName={tenant.name}>
       <section className="page-header">
         <p className="eyebrow">{tenant.name}</p>
         <h1>Settings</h1>
@@ -185,6 +170,6 @@ export default async function TeamSettingsPage({ searchParams }: PageProps) {
           </article>
         ) : null}
       </section>
-    </main>
+    </AppShell>
   );
 }
