@@ -19,9 +19,9 @@ Everything durable must be written to and synced with the cloud.
 - Run the smallest relevant verification before pushing.
 - Prefer cloud-connected workflows: GitHub for source, Vercel for deployment, and Supabase for database/configuration.
 
-## Auth, RLS, and Multi-Tenancy
+## Auth, RLS, Multi-Tenancy, Billing, and Messaging
 
-Every durable feature must support user authentication, row-level security, multi-tenancy, and Stripe-ready billing from day one.
+Every durable feature must support user authentication, row-level security, multi-tenancy, Stripe-ready billing, and Slack/Telegram-ready messaging from day one.
 
 - Do not add user-facing functionality that assumes anonymous access unless the task explicitly requires a public surface.
 - Do not add application tables without enabling RLS.
@@ -40,3 +40,14 @@ Every tenant-facing feature must be compatible with Stripe billing.
 - Stripe webhook handling must use trusted server-side code and the Supabase service-role key.
 - Browser code must never receive `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, or the Supabase service-role key.
 - Features that will eventually be plan-gated must include a clear tenant-level billing check point, even if plans are not enforced yet.
+
+## Slack and Telegram
+
+Every workflow must be designed so it can eventually be used from the web app, Slack, and Telegram.
+
+- Slack and Telegram connections belong to tenants.
+- Bot tokens, signing secrets, webhook secrets, and service-role credentials are server-only.
+- Inbound events must be verified before being processed.
+- Read/write actions performed from Slack or Telegram must resolve the tenant and authenticated/authorized actor before touching tenant data.
+- Persisted messages, events, commands, and integration state must be tenant-scoped and protected by RLS.
+- If an event cannot be mapped to a tenant, acknowledge safely and do not persist private data.
