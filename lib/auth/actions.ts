@@ -109,24 +109,43 @@ async function checkAuthRateLimit(
 export async function signUpAction(formData: FormData) {
   const email = formValue(formData, "email");
   const password = formValue(formData, "password");
+  const confirmPassword = formValue(formData, "confirmPassword");
+  const firstName = formValue(formData, "firstName");
+  const lastName = formValue(formData, "lastName");
+  const organizationName = formValue(formData, "organizationName");
   const next = safeNextPath(formValue(formData, "next"), "/get-started");
 
-  if (!email || !password) {
+  if (!email || !password || !organizationName) {
     redirectWith(
       withNext("/signup", next, "/get-started"),
       "error",
-      "Email and password are required.",
+      "Organization, email, and password are required.",
+    );
+  }
+
+  if (confirmPassword && password !== confirmPassword) {
+    redirectWith(
+      withNext("/signup", next, "/get-started"),
+      "error",
+      "Passwords must match.",
     );
   }
 
   await checkAuthRateLimit("signup", email, withNext("/signup", next, "/get-started"));
 
   const supabase = await createClient();
+  const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       emailRedirectTo: `${await getOrigin()}/auth/callback?next=${encodeURIComponent(next)}`,
+      data: {
+        first_name: firstName || null,
+        last_name: lastName || null,
+        full_name: fullName || null,
+        organization_name: organizationName,
+      },
     },
   });
 
@@ -149,6 +168,7 @@ export async function signUpAction(formData: FormData) {
     targetId: data.user?.id ?? null,
     metadata: {
       email,
+      organizationName,
       requiresConfirmation: !data.session,
     },
   });

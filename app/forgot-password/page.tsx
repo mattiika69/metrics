@@ -27,21 +27,31 @@ export default async function ForgotPasswordPage({ searchParams }: PageProps) {
   return (
     <main className="auth-shell">
       <section className="auth-panel">
-        <p className="eyebrow">HyperOptimal Metrics</p>
-        <h1>Reset password</h1>
-        <p className="lede">Send a secure reset link to your email.</p>
+        <div className="auth-heading">
+          <h1>HyperOptimal</h1>
+          <p>Reset your password</p>
+        </div>
         {error ? <p className="notice error">{error}</p> : null}
         {message ? <p className="notice">{message}</p> : null}
-        <form action={forgotPasswordAction} className="form-stack">
-          <label>
+        <p className="auth-copy">
+          Enter your email address and we&apos;ll send you a link to reset your password.
+        </p>
+        <form action={forgotPasswordAction} className="auth-form">
+          <label className="auth-field">
             Email
-            <input name="email" type="email" autoComplete="email" required />
+            <input
+              name="email"
+              type="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              required
+            />
           </label>
           <button type="submit">Send reset link</button>
         </form>
-        <div className="link-row">
-          <Link href="/login">Back to login</Link>
-        </div>
+        <p className="auth-switch">
+          Remember your password? <Link href="/login">Sign in</Link>
+        </p>
       </section>
     </main>
   );

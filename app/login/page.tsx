@@ -31,32 +31,43 @@ export default async function LoginPage({ searchParams }: PageProps) {
   return (
     <main className="auth-shell">
       <section className="auth-panel">
-        <p className="eyebrow">HyperOptimal Metrics</p>
-        <h1>Log in</h1>
-        <p className="lede">Access your workspace, reports, and admin tools.</p>
+        <div className="auth-heading">
+          <h1>HyperOptimal</h1>
+          <p>Sign in to your account</p>
+        </div>
         {error ? <p className="notice error">{error}</p> : null}
         {message ? <p className="notice">{message}</p> : null}
-        <form action={signInAction} className="form-stack">
+        <form action={signInAction} className="auth-form">
           {next ? <input type="hidden" name="next" value={next} /> : null}
-          <label>
+          <label className="auth-field">
             Email
             <input name="email" type="email" autoComplete="email" required />
           </label>
-          <label>
-            Password
-            <input
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-            />
+          <label className="auth-field">
+            <span className="auth-label-row">
+              Password
+              <Link href="/forgot-password">Forgot password?</Link>
+            </span>
+            <span className="auth-password-wrap">
+              <input
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+              />
+              <span className="auth-eye" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <path d="M2.4 12s3.4-5.7 9.6-5.7 9.6 5.7 9.6 5.7-3.4 5.7-9.6 5.7S2.4 12 2.4 12Z" />
+                  <circle cx="12" cy="12" r="2.8" />
+                </svg>
+              </span>
+            </span>
           </label>
-          <button type="submit">Log in</button>
+          <button type="submit">Sign in</button>
         </form>
-        <div className="link-row">
-          <Link href="/forgot-password">Reset password</Link>
-          <Link href={signupHref}>Create account</Link>
-        </div>
+        <p className="auth-switch">
+          Don&apos;t have an account? <Link href={signupHref}>Sign up</Link>
+        </p>
       </section>
     </main>
   );
