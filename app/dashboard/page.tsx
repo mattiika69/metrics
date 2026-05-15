@@ -75,7 +75,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
             <p className="eyebrow">Last 30 days</p>
             <p className="lede">Executive source of truth for growth, sales, retention, cash, constraints, and forecast targets.</p>
           </div>
-          <Link href="/integrations" className="button-secondary">Connect sources</Link>
+          <Link href="/settings/integrations" className="button-secondary">Connect sources</Link>
         </div>
         {message ? <p className="notice">{message}</p> : null}
       </section>
@@ -154,7 +154,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 <h2>Integration Health</h2>
                 <p className="muted">{connectedCount} active connections</p>
               </div>
-              <Link href="/integrations" className="button-secondary">Manage</Link>
+              <Link href="/settings/integrations" className="button-secondary">Manage</Link>
             </div>
             <div className="integration-health-grid">
               {liveProviders.map((provider) => {
@@ -169,7 +169,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
               {["slack", "telegram"].map((provider) => {
                 const row = messagingConnectionRows.find((connection) => connection.provider === provider);
                 return (
-                  <Link href={`/integrations/${provider}`} key={provider} className="integration-health-row">
+                  <Link href={`/settings/${provider}`} key={provider} className="integration-health-row">
                     <span>{provider}</span>
                     <strong>{row?.status === "active" ? "Connected" : "Not connected"}</strong>
                   </Link>

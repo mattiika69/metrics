@@ -177,7 +177,7 @@ export async function POST(request: Request) {
     if (commandFromText(text) === "start") {
       await sendTelegramMessage({
         chatId,
-        text: "Open HyperOptimal Metrics > Integrations > Telegram, generate a link code, then send /link CODE here.",
+        text: "Open HyperOptimal Metrics > Settings > Telegram, generate a link code, then send /link CODE here.",
       });
     }
     return Response.json({ received: true, mapped: false });

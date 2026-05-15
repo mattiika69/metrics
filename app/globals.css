@@ -1835,16 +1835,19 @@ body {
   display: flex;
   min-height: 26px;
   align-items: center;
-  gap: 4px;
+  gap: 0;
   border: 1px solid transparent;
   border-radius: 4px;
   color: #9ca3af;
-  font-size: 12px;
-  font-weight: 400;
+  cursor: grab;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.0575em;
   line-height: 1rem;
   overflow: hidden;
-  padding: 4px 8px 4px 4px;
+  padding: 4px 8px;
   text-overflow: ellipsis;
+  text-transform: uppercase;
   transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
   white-space: nowrap;
 }
@@ -1861,15 +1864,12 @@ body {
   color: #dbeafe;
 }
 
-.sidebar-parent-chevron {
-  display: inline-flex;
-  width: 14px;
-  flex: 0 0 14px;
-  align-items: center;
-  justify-content: center;
-  color: #94a3b8;
-  font-size: 13px;
-  line-height: 1;
+.sidebar-parent-link.dragging {
+  opacity: 0.55;
+}
+
+.sidebar-parent-link:active {
+  cursor: grabbing;
 }
 
 .sidebar-divider {

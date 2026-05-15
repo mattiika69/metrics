@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { SidebarNav, type SidebarItem } from "@/components/sidebar-nav";
 import { signOutAction } from "@/lib/auth/actions";
 import { isAuthBypassEnabled } from "@/lib/auth/bypass";
+import { loadSidebarOrder } from "@/lib/navigation/sidebar-actions";
 
 export type ActiveRoute =
   | "dashboard"
@@ -33,13 +35,7 @@ type AppShellProps = {
   children: React.ReactNode;
 };
 
-type NavItem = {
-  id: ActiveRoute;
-  label: string;
-  href: string;
-};
-
-const primaryItems = [
+const primaryItems: SidebarItem[] = [
   { id: "dashboard", label: "CEO Dashboard", href: "/dashboard" },
   { id: "marketing", label: "Marketing", href: "/marketing" },
   { id: "sales", label: "Sales", href: "/sales" },
@@ -47,31 +43,20 @@ const primaryItems = [
   { id: "finance", label: "Finance", href: "/finance" },
   { id: "constraints", label: "Constraints", href: "/constraints" },
   { id: "forecasting", label: "Forecasting", href: "/forecasting" },
-  { id: "integrations", label: "Integrations", href: "/integrations" },
   { id: "settings", label: "Settings", href: "/settings/team" },
-] as const;
+];
 
-function SidebarLink({
-  item,
-  active,
-}: {
-  item: NavItem;
-  active: ActiveRoute;
-}) {
-  return (
-    <Link
-      href={item.href}
-      prefetch
-      className={active === item.id ? "sidebar-parent-link active" : "sidebar-parent-link"}
-    >
-      <span className="sidebar-parent-chevron" aria-hidden="true">›</span>
-      <span>{item.label}</span>
-    </Link>
-  );
+async function getOrderedSidebarItems() {
+  const order = await loadSidebarOrder(primaryItems.map((item) => item.id));
+  const itemById = new Map(primaryItems.map((item) => [item.id, item]));
+  return order
+    .map((itemId) => itemById.get(itemId as ActiveRoute))
+    .filter((item): item is SidebarItem => Boolean(item));
 }
 
-export function AppShell({ active, children }: AppShellProps) {
+export async function AppShell({ active, children }: AppShellProps) {
   const authBypassEnabled = isAuthBypassEnabled();
+  const sidebarItems = await getOrderedSidebarItems();
 
   return (
     <main className="app-shell">
@@ -83,17 +68,10 @@ export function AppShell({ active, children }: AppShellProps) {
             </span>
             <span>HyperOptimal Metrics</span>
           </Link>
-          <span className="collapse-dot" aria-hidden="true">
-            ‹
-          </span>
         </div>
 
         <nav className="sidebar-sections" aria-label="Primary navigation">
-          <div className="sidebar-flat-nav">
-            {primaryItems.map((item) => (
-              <SidebarLink key={item.id} item={item} active={active} />
-            ))}
-          </div>
+          <SidebarNav active={active === "integrations" ? "settings" : active} items={sidebarItems} />
           {authBypassEnabled ? null : (
             <form action={signOutAction}>
               <button type="submit" className="sidebar-logout">

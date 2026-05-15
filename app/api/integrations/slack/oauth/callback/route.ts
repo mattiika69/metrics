@@ -22,7 +22,7 @@ export async function GET(request: Request) {
   cookieStore.delete(slackOAuthTenantCookie);
 
   if (!code || !state || !expectedState || state !== expectedState || !tenantId) {
-    redirect("/integrations/slack?error=invalid_slack_oauth_state");
+    redirect("/settings/slack?error=invalid_slack_oauth_state");
   }
 
   const headerStore = await headers();
@@ -32,7 +32,7 @@ export async function GET(request: Request) {
   const botToken = oauth.access_token?.trim();
 
   if (!teamId || !botToken) {
-    redirect("/integrations/slack?error=missing_slack_oauth_payload");
+    redirect("/settings/slack?error=missing_slack_oauth_payload");
   }
 
   const admin = createAdminClient();
@@ -74,7 +74,7 @@ export async function GET(request: Request) {
       .single();
 
   if (error) {
-    redirect(`/integrations/slack?error=${encodeURIComponent(error.message)}`);
+    redirect(`/settings/slack?error=${encodeURIComponent(error.message)}`);
   }
 
   await admin.from("metric_integration_secrets").insert({
@@ -92,5 +92,5 @@ export async function GET(request: Request) {
     metadata: { teamName: oauth.team?.name ?? null },
   });
 
-  redirect("/integrations/slack?connected=1");
+  redirect("/settings/slack?connected=1");
 }

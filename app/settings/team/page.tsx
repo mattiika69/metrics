@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
+import { SettingsTabs } from "@/components/settings/settings-tabs";
 import { requireTenant } from "@/lib/auth/session";
 import {
   inviteTeamMemberAction,
@@ -67,11 +67,7 @@ export default async function TeamSettingsPage({ searchParams }: PageProps) {
         {message ? <p className="notice">{message}</p> : null}
         {error ? <p className="notice error">{error}</p> : null}
       </section>
-      <nav className="settings-tabs" aria-label="Settings">
-        <Link href="/settings/team" className="active">
-          Team
-        </Link>
-      </nav>
+      <SettingsTabs active="team" />
       <section className="settings-layout">
         <article className="settings-panel">
           <div className="panel-heading">

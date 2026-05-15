@@ -348,13 +348,13 @@ export async function saveQualityChecklistAction(formData: FormData) {
 export async function connectIntegrationAction(formData: FormData) {
   const { tenant, user, membership } = await requireTenant();
   if (membership.role !== "owner" && membership.role !== "admin") {
-    redirect("/integrations?message=Only tenant admins can manage integrations");
+    redirect("/settings/integrations?message=Only tenant admins can manage integrations");
   }
 
   const provider = String(formData.get("provider") ?? "");
   const definition = getIntegrationDefinition(provider);
   if (!definition || definition.comingSoon || definition.group === "Messaging") {
-    redirect(`/integrations/${provider}?message=Use the dedicated connection flow`);
+    redirect(`/settings/integrations?message=Use the dedicated connection flow`);
   }
 
   const values: Record<string, string> = {};
@@ -498,7 +498,7 @@ export async function importCsvBankingAction(formData: FormData) {
 export async function createTelegramLinkCodeAction() {
   const { tenant, user, membership } = await requireTenant();
   if (membership.role !== "owner" && membership.role !== "admin") {
-    redirect("/integrations/telegram?message=Only tenant admins can create Telegram link codes");
+    redirect("/settings/telegram?message=Only tenant admins can create Telegram link codes");
   }
 
   const code = createTelegramLinkCode();
@@ -510,5 +510,5 @@ export async function createTelegramLinkCodeAction() {
     code,
     expires_at: expiresAt,
   });
-  redirect(`/integrations/telegram?code=${code}&expires=${encodeURIComponent(expiresAt)}`);
+  redirect(`/settings/telegram?code=${code}&expires=${encodeURIComponent(expiresAt)}`);
 }

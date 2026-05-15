@@ -253,11 +253,11 @@ export default async function GetStartedPage({ searchParams }: PageProps) {
 
         <SetupCard step="Step 6" title="Messaging">
           <div className="integration-health-grid">
-            <Link href="/integrations/slack" className="integration-health-row">
+            <Link href="/settings/slack" className="integration-health-row">
               <span>Slack</span>
               <strong>Connect</strong>
             </Link>
-            <Link href="/integrations/telegram" className="integration-health-row">
+            <Link href="/settings/telegram" className="integration-health-row">
               <span>Telegram</span>
               <strong>Connect</strong>
             </Link>

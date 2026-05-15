@@ -32,11 +32,11 @@ export default async function IntegrationDetailPage({ params, searchParams }: Pa
 
   if (!definition) {
     return (
-      <AppShell active="integrations" tenantName={tenant.name}>
+      <AppShell active="settings" tenantName={tenant.name}>
         <section className="page-header compact">
           <p className="eyebrow">Integrations</p>
           <h1>Not found</h1>
-          <Link href="/integrations">Back to integrations</Link>
+          <Link href="/settings/integrations">Back to integrations</Link>
         </section>
       </AppShell>
     );
@@ -71,7 +71,7 @@ export default async function IntegrationDetailPage({ params, searchParams }: Pa
       .limit(5);
 
   return (
-    <AppShell active="integrations" tenantName={tenant.name}>
+    <AppShell active="settings" tenantName={tenant.name}>
       <section className="page-header compact">
         <p className="eyebrow">{definition.group}</p>
         <div className="header-row">
@@ -79,7 +79,7 @@ export default async function IntegrationDetailPage({ params, searchParams }: Pa
             <h1>{definition.name}</h1>
             <p className="lede">{definition.description}</p>
           </div>
-          <Link href="/integrations" className="button-secondary">All integrations</Link>
+          <Link href="/settings/integrations" className="button-secondary">All integrations</Link>
         </div>
         {message ? <p className="notice">{message}</p> : null}
       </section>
