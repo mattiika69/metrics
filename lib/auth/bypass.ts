@@ -64,16 +64,17 @@ export async function getAuthBypassContext() {
   const tenantName = process.env.AUTH_BYPASS_TENANT_NAME ?? DEFAULT_BYPASS_TENANT_NAME;
   const user = (await findAuthUserByEmail(email)) as BypassUser;
 
-  const { data: existingTenant, error: tenantReadError } = await admin
+  const { data: existingTenants, error: tenantReadError } = await admin
     .from("tenants")
     .select("id, name")
     .eq("name", tenantName)
-    .maybeSingle();
+    .order("created_at", { ascending: true })
+    .limit(1);
 
   if (tenantReadError) throw tenantReadError;
 
   const tenant =
-    existingTenant ??
+    existingTenants?.[0] ??
     (
       await admin
         .from("tenants")
