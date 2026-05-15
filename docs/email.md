@@ -31,5 +31,6 @@ Product emails are supported through the server-side Resend helper and tenant-sc
 
 - Workspace created
 - Admin invited
+- Team invited
 - Billing needs attention
 - Integration connected

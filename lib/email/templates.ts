@@ -1,6 +1,7 @@
 export type ProductEmailTemplate =
   | "workspace_created"
   | "admin_invited"
+  | "team_invited"
   | "billing_attention"
   | "integration_connected";
 
@@ -10,6 +11,8 @@ export function productEmailSubject(template: ProductEmailTemplate) {
       return "Your HyperOptimal Metrics workspace is ready";
     case "admin_invited":
       return "You have been invited to manage HyperOptimal Metrics";
+    case "team_invited":
+      return "You have been invited to HyperOptimal Metrics";
     case "billing_attention":
       return "HyperOptimal Metrics billing needs attention";
     case "integration_connected":
@@ -23,6 +26,8 @@ export function productEmailText(template: ProductEmailTemplate, detail: string)
       return `Your HyperOptimal Metrics workspace is ready. ${detail}`;
     case "admin_invited":
       return `You have been invited to help administer HyperOptimal Metrics. ${detail}`;
+    case "team_invited":
+      return `You have been invited to join a HyperOptimal Metrics team. ${detail}`;
     case "billing_attention":
       return `A billing action is needed for HyperOptimal Metrics. ${detail}`;
     case "integration_connected":

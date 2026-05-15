@@ -15,7 +15,25 @@ function formValue(formData: FormData, key: string) {
 }
 
 function redirectWith(path: string, key: "error" | "message", value: string): never {
-  redirect(`${path}?${key}=${encodeURIComponent(value)}`);
+  const separator = path.includes("?") ? "&" : "?";
+  redirect(`${path}${separator}${key}=${encodeURIComponent(value)}`);
+}
+
+function withNext(path: string, next: string, fallback: string) {
+  if (next === fallback) {
+    return path;
+  }
+
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}next=${encodeURIComponent(next)}`;
+}
+
+function safeNextPath(value: string, fallback: string) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return fallback;
+  }
+
+  return value;
 }
 
 function getMembershipTenant(
@@ -87,19 +105,24 @@ async function checkAuthRateLimit(
 export async function signUpAction(formData: FormData) {
   const email = formValue(formData, "email");
   const password = formValue(formData, "password");
+  const next = safeNextPath(formValue(formData, "next"), "/get-started");
 
   if (!email || !password) {
-    redirectWith("/signup", "error", "Email and password are required.");
+    redirectWith(
+      withNext("/signup", next, "/get-started"),
+      "error",
+      "Email and password are required.",
+    );
   }
 
-  await checkAuthRateLimit("signup", email, "/signup");
+  await checkAuthRateLimit("signup", email, withNext("/signup", next, "/get-started"));
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${await getOrigin()}/auth/callback?next=/get-started`,
+      emailRedirectTo: `${await getOrigin()}/auth/callback?next=${encodeURIComponent(next)}`,
     },
   });
 
@@ -112,7 +135,7 @@ export async function signUpAction(formData: FormData) {
         error: error.message,
       },
     });
-    redirectWith("/signup", "error", error.message);
+    redirectWith(withNext("/signup", next, "/get-started"), "error", error.message);
   }
 
   await logAuditEvent({
@@ -127,11 +150,11 @@ export async function signUpAction(formData: FormData) {
   });
 
   if (data.session) {
-    redirect("/get-started");
+    redirect(next);
   }
 
   redirectWith(
-    "/login",
+    withNext("/login", next, "/dashboard"),
     "message",
     "Account created. Check your email if confirmation is required, then log in.",
   );
@@ -140,12 +163,17 @@ export async function signUpAction(formData: FormData) {
 export async function signInAction(formData: FormData) {
   const email = formValue(formData, "email");
   const password = formValue(formData, "password");
+  const next = safeNextPath(formValue(formData, "next"), "/dashboard");
 
   if (!email || !password) {
-    redirectWith("/login", "error", "Email and password are required.");
+    redirectWith(
+      withNext("/login", next, "/dashboard"),
+      "error",
+      "Email and password are required.",
+    );
   }
 
-  await checkAuthRateLimit("login", email, "/login");
+  await checkAuthRateLimit("login", email, withNext("/login", next, "/dashboard"));
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -162,7 +190,7 @@ export async function signInAction(formData: FormData) {
         error: error.message,
       },
     });
-    redirectWith("/login", "error", error.message);
+    redirectWith(withNext("/login", next, "/dashboard"), "error", error.message);
   }
 
   await logAuditEvent({
@@ -175,7 +203,7 @@ export async function signInAction(formData: FormData) {
     },
   });
 
-  redirect("/dashboard");
+  redirect(next);
 }
 
 export async function signOutAction() {

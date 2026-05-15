@@ -15,6 +15,8 @@ HyperOptimal Metrics is built as a multi-tenant SaaS product. Authentication, ro
 
 - `tenants`: one row per customer workspace/account.
 - `tenant_memberships`: maps authenticated users to tenants with a role.
+- `user_profiles`: stores display-safe user email/name fields for team views.
+- `tenant_invitations`: tenant-scoped team invitations with email matching and expiry.
 - Tenant-scoped feature tables: include `tenant_id` and policies based on `is_tenant_member(tenant_id)`.
 
 ## Feature Checklist

@@ -12,6 +12,7 @@ export default async function AccountPage() {
           HyperOptimal Metrics
         </Link>
         <div className="nav-links">
+          <Link href="/settings/team">Settings</Link>
           <Link href="/admin">Admin</Link>
           <form action={signOutAction}>
             <button type="submit" className="link-button">

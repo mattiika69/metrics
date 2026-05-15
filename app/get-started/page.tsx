@@ -53,6 +53,7 @@ export default async function GetStartedPage({ searchParams }: PageProps) {
         </Link>
         <div className="nav-links">
           <Link href="/dashboard">Dashboard</Link>
+          <Link href="/settings/team">Settings</Link>
           <form action={signOutAction}>
             <button type="submit" className="link-button">
               Sign out

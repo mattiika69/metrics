@@ -38,6 +38,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           {tenant ? (
             <>
               <Link href="/admin">Admin</Link>
+              <Link href="/settings/team">Settings</Link>
               <Link href="/account">Account</Link>
             </>
           ) : (

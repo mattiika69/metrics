@@ -16,6 +16,10 @@ function getParam(
 export default async function SignupPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const error = getParam(params, "error");
+  const next = getParam(params, "next");
+  const loginHref = next
+    ? `/login?next=${encodeURIComponent(next)}`
+    : "/login";
 
   return (
     <main className="auth-shell">
@@ -27,6 +31,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
         </p>
         {error ? <p className="notice error">{error}</p> : null}
         <form action={signUpAction} className="form-stack">
+          {next ? <input type="hidden" name="next" value={next} /> : null}
           <label>
             Email
             <input name="email" type="email" autoComplete="email" required />
@@ -44,7 +49,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
           <button type="submit">Create account</button>
         </form>
         <div className="link-row">
-          <Link href="/login">Already have an account?</Link>
+          <Link href={loginHref}>Already have an account?</Link>
           <Link href="/terms">Terms</Link>
           <Link href="/privacy">Privacy</Link>
         </div>

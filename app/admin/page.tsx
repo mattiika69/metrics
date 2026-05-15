@@ -11,6 +11,7 @@ export default async function AdminPage() {
           HyperOptimal Metrics
         </Link>
         <div className="nav-links">
+          <Link href="/settings/team">Settings</Link>
           <Link href="/account">Account</Link>
           <Link href="/dashboard">Dashboard</Link>
         </div>

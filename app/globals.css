@@ -191,7 +191,8 @@ label {
   font-weight: 700;
 }
 
-input {
+input,
+select {
   width: 100%;
   min-height: 44px;
   border: 1px solid var(--border);
@@ -299,6 +300,87 @@ input {
   border-top: 1px solid var(--border);
 }
 
+.settings-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+
+.settings-tabs a {
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-weight: 700;
+  padding: 0 4px 12px;
+}
+
+.settings-tabs a.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.settings-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+  gap: 18px;
+}
+
+.settings-panel {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  padding: 22px;
+}
+
+.settings-panel.full-span {
+  grid-column: 1 / -1;
+}
+
+.panel-heading,
+.table-row,
+.row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.panel-heading h2 {
+  margin-top: 0;
+}
+
+.table-list {
+  display: grid;
+  gap: 0;
+}
+
+.table-row {
+  border-top: 1px solid var(--border);
+  padding: 16px 0;
+}
+
+.table-row:first-child {
+  border-top: 0;
+}
+
+.table-row > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.pill {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 800;
+  padding: 0 10px;
+}
+
 @media (max-width: 640px) {
   .page-shell {
     padding: 20px;
@@ -311,7 +393,19 @@ input {
   }
 
   .top-nav,
+  .settings-layout,
   .settings-list div {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .settings-layout {
+    display: flex;
+  }
+
+  .panel-heading,
+  .table-row,
+  .row-actions {
     align-items: flex-start;
     flex-direction: column;
   }
