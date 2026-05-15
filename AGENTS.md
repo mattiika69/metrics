@@ -4,6 +4,11 @@
 
 Everything durable must be written to and synced with the cloud.
 
+- The utmost priority is data persistence and preventing data loss.
+- Cloud persistence is mandatory for user data, tenant data, operational state, configuration, migrations, and completed work.
+- Prefer durable cloud writes over temporary local state whenever there is any tradeoff.
+- Never ship a workflow that can silently lose user-entered data; persist first, then continue.
+- If persistence is uncertain, stop and surface the risk before proceeding.
 - Do not treat local files as the source of truth.
 - Do not leave completed work only on the local machine.
 - Commit and push every finished code, configuration, documentation, migration, and design change to `main`.
