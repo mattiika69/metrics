@@ -25,12 +25,21 @@ export function isAuthBypassEnabled() {
 
 async function findAuthUserByEmail(email: string) {
   const admin = createAdminClient();
+  const { data: lookupRows } = await admin.rpc("find_auth_user_id_by_email", {
+    target_email: email,
+  });
+  const lookupRow = Array.isArray(lookupRows) ? lookupRows[0] : null;
+
+  if (lookupRow?.id) {
+    return { id: lookupRow.id, email: lookupRow.email ?? email };
+  }
+
   let page = 1;
 
-  while (page <= 10) {
+  while (page <= 50) {
     const { data, error } = await admin.auth.admin.listUsers({
       page,
-      perPage: 100,
+      perPage: 1000,
     });
 
     if (error) throw error;
@@ -50,6 +59,16 @@ async function findAuthUserByEmail(email: string) {
       temporary_auth_bypass: true,
     },
   });
+
+  if (error?.code === "email_exists") {
+    const { data: fallbackRows } = await admin.rpc("find_auth_user_id_by_email", {
+      target_email: email,
+    });
+    const fallbackRow = Array.isArray(fallbackRows) ? fallbackRows[0] : null;
+    if (fallbackRow?.id) {
+      return { id: fallbackRow.id, email: fallbackRow.email ?? email };
+    }
+  }
 
   if (error || !data.user) {
     throw error ?? new Error("Unable to create temporary bypass user.");
