@@ -15,6 +15,13 @@ The app should feel like a quiet, focused operating dashboard rather than a mark
 - Use generous empty space when there is no data rather than filling the screen with decorative content.
 - Prefer compact cards and rows over large hero sections.
 
+## Form Factor
+
+- Treat HyperOptimal Metrics as a desktop-first operational app.
+- Optimize primary workflows for desktop navigation, scanning, tables, settings, and repeated daily use.
+- Make every screen as mobile-friendly as practical with responsive single-column layouts, readable type, and usable controls.
+- Do not compromise the desktop experience to force a mobile-first design.
+
 ## Visual Style
 
 - Background: warm off-white, close to `#fbf8f3`.

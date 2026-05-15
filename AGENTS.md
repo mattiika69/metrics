@@ -24,6 +24,15 @@ Everything durable must be written to and synced with the cloud.
 - Use `HyperOptimal Metrics` as the product/display name in UI, documentation, emails, messages, and integration-facing copy.
 - Keep technical slugs such as repository names, package names, database refs, and deployment URLs stable unless the user explicitly asks to rename them.
 
+## Product Form Factor
+
+HyperOptimal Metrics is primarily a desktop web application.
+
+- Optimize core workflows for desktop first, including navigation, density, tables, settings, and repeated operational use.
+- Make every screen as mobile-friendly as practical with responsive layouts, readable text, usable controls, and no broken overflow.
+- Do not compromise the desktop product experience to force a mobile-first layout.
+- Mobile support should preserve access to core flows, but the canonical design target is desktop.
+
 ## Auth, RLS, Multi-Tenancy, Billing, Messaging, Email, and SMS
 
 Every durable feature must support user authentication, row-level security, multi-tenancy, Stripe-ready billing, Slack/Telegram-ready messaging, Resend-ready email, and Roezan-ready SMS from day one.
