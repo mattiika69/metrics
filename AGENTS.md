@@ -19,6 +19,11 @@ Everything durable must be written to and synced with the cloud.
 - Run the smallest relevant verification before pushing.
 - Prefer cloud-connected workflows: GitHub for source, Vercel for deployment, and Supabase for database/configuration.
 
+## Naming
+
+- Use `HyperOptimal Metrics` as the product/display name in UI, documentation, emails, messages, and integration-facing copy.
+- Keep technical slugs such as repository names, package names, database refs, and deployment URLs stable unless the user explicitly asks to rename them.
+
 ## Auth, RLS, Multi-Tenancy, Billing, Messaging, Email, and SMS
 
 Every durable feature must support user authentication, row-level security, multi-tenancy, Stripe-ready billing, Slack/Telegram-ready messaging, Resend-ready email, and Roezan-ready SMS from day one.

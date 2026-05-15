@@ -14,7 +14,7 @@ export default async function Home() {
   return (
     <main className="page-shell">
       <section className="panel">
-        <p className="eyebrow">Metrics</p>
+        <p className="eyebrow">HyperOptimal Metrics</p>
         <h1>Vercel and Supabase are wired in.</h1>
         <p className="lede">
           This Next.js app is ready for dashboard work, with Supabase clients

@@ -1,6 +1,6 @@
 # Auth, RLS, and Multi-Tenancy
 
-Metrics is built as a multi-tenant SaaS product. Authentication, row-level security, and tenant scoping are required for every durable feature.
+HyperOptimal Metrics is built as a multi-tenant SaaS product. Authentication, row-level security, and tenant scoping are required for every durable feature.
 
 ## Core Rules
 

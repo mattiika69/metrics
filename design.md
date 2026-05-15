@@ -1,4 +1,4 @@
-# Metrics Design Direction
+# HyperOptimal Metrics Design Direction
 
 Use the Daily Planner screenshot as the primary interface reference for the first product pass.
 
@@ -48,11 +48,11 @@ The app should feel like a quiet, focused operating dashboard rather than a mark
 - Mobile should collapse to a single column while preserving the same calm visual language.
 - Text must never overlap controls or cards; compact elements should use stable dimensions.
 
-## Initial Metrics Adaptation
+## Initial HyperOptimal Metrics Adaptation
 
 For this project, translate the planner layout into a metrics workspace:
 
-- Top nav: `Metrics`, `Today`, `Funnels`, `Campaigns`, `Reports`, `Inbox`, `Assets`, `Settings`.
+- Top nav: `HyperOptimal Metrics`, `Today`, `Funnels`, `Campaigns`, `Reports`, `Inbox`, `Assets`, `Settings`.
 - Header: current view name plus a short description.
 - Left column: summary cards for usage, alerts, or key performance indicators.
 - Right/main column: project or account cards with progress, status, and recent activity.

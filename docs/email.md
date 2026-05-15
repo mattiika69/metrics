@@ -1,11 +1,11 @@
 # Email With Resend
 
-Metrics uses Resend for transactional and workflow email.
+HyperOptimal Metrics uses Resend for transactional and workflow email.
 
 ## Environment Variables
 
 - `RESEND_API_KEY`: server-only Resend API key.
-- `RESEND_FROM_EMAIL`: verified sender address, for example `Metrics <noreply@example.com>`.
+- `RESEND_FROM_EMAIL`: verified sender address, for example `HyperOptimal Metrics <noreply@example.com>`.
 
 ## Rules
 

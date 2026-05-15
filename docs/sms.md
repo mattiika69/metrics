@@ -1,6 +1,6 @@
 # SMS With Roezan
 
-Metrics uses Roezan for SMS and MMS sends.
+HyperOptimal Metrics uses Roezan for SMS and MMS sends.
 
 ## Environment Variables
 

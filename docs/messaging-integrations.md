@@ -1,6 +1,6 @@
 # Slack and Telegram Integrations
 
-Metrics must support web, Slack, and Telegram workflows from the start. Messaging integrations are tenant-scoped and must follow the same auth, RLS, and billing expectations as the web app.
+HyperOptimal Metrics must support web, Slack, and Telegram workflows from the start. Messaging integrations are tenant-scoped and must follow the same auth, RLS, and billing expectations as the web app.
 
 ## Environment Variables
 

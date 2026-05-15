@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Metrics",
-  description: "Metrics dashboard",
+  title: "HyperOptimal Metrics",
+  description: "HyperOptimal Metrics dashboard",
 };
 
 export default function RootLayout({

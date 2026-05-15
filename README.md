@@ -1,4 +1,4 @@
-# Metrics
+# HyperOptimal Metrics
 
 Next.js application wired for Vercel deployment and Supabase.
 
