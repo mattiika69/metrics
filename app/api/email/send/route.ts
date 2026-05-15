@@ -1,4 +1,6 @@
 import { createResendClient, getDefaultFromEmail } from "@/lib/email/resend";
+import { logAuditEvent } from "@/lib/security/audit";
+import { checkRateLimit } from "@/lib/security/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -50,6 +52,35 @@ export async function POST(request: Request) {
     return Response.json({ error: "Tenant access denied." }, { status: 403 });
   }
 
+  const rateLimit = await checkRateLimit({
+    route: "api:email:send",
+    key: `${tenantId}:${user.id}`,
+    limit: 20,
+    windowSeconds: 60,
+    tenantId,
+    actorUserId: user.id,
+    metadata: {
+      recipientCount: recipients.length,
+    },
+  });
+
+  if (!rateLimit.allowed) {
+    return Response.json(
+      { error: "Too many email sends. Try again later." },
+      {
+        status: 429,
+        headers: {
+          "retry-after": Math.max(
+            1,
+            Math.ceil(
+              (new Date(rateLimit.resetAt).getTime() - Date.now()) / 1000,
+            ),
+          ).toString(),
+        },
+      },
+    );
+  }
+
   const resend = createResendClient();
   const from = getDefaultFromEmail();
   const email = payload.html
@@ -85,8 +116,31 @@ export async function POST(request: Request) {
   });
 
   if (result.error) {
+    await logAuditEvent({
+      tenantId,
+      actorUserId: user.id,
+      eventType: "email_send_failed",
+      targetType: "email_message",
+      metadata: {
+        subject: payload.subject,
+        recipientCount: recipients.length,
+        error: result.error.message,
+      },
+    });
     return Response.json({ error: result.error.message }, { status: 502 });
   }
+
+  await logAuditEvent({
+    tenantId,
+    actorUserId: user.id,
+    eventType: "email_sent",
+    targetType: "email_message",
+    targetId: result.data?.id ?? null,
+    metadata: {
+      subject: payload.subject,
+      recipientCount: recipients.length,
+    },
+  });
 
   return Response.json({ id: result.data?.id });
 }

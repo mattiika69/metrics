@@ -1,4 +1,6 @@
 import { sendRoezanMessage } from "@/lib/sms/roezan";
+import { logAuditEvent } from "@/lib/security/audit";
+import { checkRateLimit } from "@/lib/security/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -39,6 +41,35 @@ export async function POST(request: Request) {
     return Response.json({ error: "Tenant access denied." }, { status: 403 });
   }
 
+  const rateLimit = await checkRateLimit({
+    route: "api:sms:send",
+    key: `${payload.tenantId}:${user.id}`,
+    limit: 10,
+    windowSeconds: 60,
+    tenantId: payload.tenantId,
+    actorUserId: user.id,
+    metadata: {
+      phone: payload.phone,
+    },
+  });
+
+  if (!rateLimit.allowed) {
+    return Response.json(
+      { error: "Too many SMS sends. Try again later." },
+      {
+        status: 429,
+        headers: {
+          "retry-after": Math.max(
+            1,
+            Math.ceil(
+              (new Date(rateLimit.resetAt).getTime() - Date.now()) / 1000,
+            ),
+          ).toString(),
+        },
+      },
+    );
+  }
+
   const result = await sendRoezanMessage({
     phone: payload.phone,
     message: payload.message,
@@ -69,11 +100,32 @@ export async function POST(request: Request) {
   });
 
   if (!result.ok) {
+    await logAuditEvent({
+      tenantId: payload.tenantId,
+      actorUserId: user.id,
+      eventType: "sms_send_failed",
+      targetType: "sms_message",
+      metadata: {
+        phone: payload.phone,
+        responseStatus: result.status,
+      },
+    });
     return Response.json(
       { error: "Roezan send failed.", details: result.data },
       { status: 502 },
     );
   }
+
+  await logAuditEvent({
+    tenantId: payload.tenantId,
+    actorUserId: user.id,
+    eventType: "sms_sent",
+    targetType: "sms_message",
+    metadata: {
+      phone: payload.phone,
+      responseStatus: result.status,
+    },
+  });
 
   return Response.json({ sent: true, provider: "roezan" });
 }

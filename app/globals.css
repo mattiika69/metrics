@@ -161,6 +161,10 @@ button,
   margin-top: 28px;
 }
 
+.skip-form {
+  margin-top: 14px;
+}
+
 label {
   display: grid;
   gap: 8px;

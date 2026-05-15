@@ -1,4 +1,7 @@
-import { createTenantAction } from "@/lib/auth/actions";
+import {
+  createTenantAction,
+  skipOnboardingAction,
+} from "@/lib/auth/actions";
 import { requireUser } from "@/lib/auth/session";
 
 type PageProps = {
@@ -40,6 +43,11 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
             />
           </label>
           <button type="submit">Create workspace</button>
+        </form>
+        <form action={skipOnboardingAction} className="skip-form">
+          <button type="submit" className="button-secondary">
+            Skip
+          </button>
         </form>
       </section>
     </main>

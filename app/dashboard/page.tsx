@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { signOutAction } from "@/lib/auth/actions";
-import { requireTenant } from "@/lib/auth/session";
+import { requireUser } from "@/lib/auth/session";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -15,7 +15,16 @@ function getParam(
 }
 
 export default async function DashboardPage({ searchParams }: PageProps) {
-  const { user, tenant, membership } = await requireTenant();
+  const { supabase, user } = await requireUser();
+  const { data: memberships } = await supabase
+    .from("tenant_memberships")
+    .select("tenant_id, role, tenants(id, name)")
+    .order("created_at", { ascending: true })
+    .limit(1);
+  const membership = memberships?.[0];
+  const tenant = Array.isArray(membership?.tenants)
+    ? membership.tenants[0]
+    : membership?.tenants;
   const params = await searchParams;
   const message = getParam(params, "message");
 
@@ -26,8 +35,14 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           HyperOptimal Metrics
         </Link>
         <div className="nav-links">
-          <Link href="/admin">Admin</Link>
-          <Link href="/account">Account</Link>
+          {tenant ? (
+            <>
+              <Link href="/admin">Admin</Link>
+              <Link href="/account">Account</Link>
+            </>
+          ) : (
+            <Link href="/onboarding">Create workspace</Link>
+          )}
           <form action={signOutAction}>
             <button type="submit" className="link-button">
               Sign out
@@ -36,19 +51,30 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         </div>
       </nav>
       <section className="page-header">
-        <p className="eyebrow">{tenant.name}</p>
+        <p className="eyebrow">{tenant?.name ?? "Personal dashboard"}</p>
         <h1>Today</h1>
         <p className="lede">
-          Secure, tenant-scoped workspace for metrics, messaging, billing, and
-          reporting.
+          Secure workspace for metrics, messaging, billing, and reporting.
         </p>
         {message ? <p className="notice">{message}</p> : null}
       </section>
       <section className="dashboard-grid">
         <article className="compact-card">
           <h2>Workspace</h2>
-          <p>{tenant.name}</p>
-          <span className="muted">Role: {membership.role}</span>
+          {tenant ? (
+            <>
+              <p>{tenant.name}</p>
+              <span className="muted">Role: {membership?.role}</span>
+            </>
+          ) : (
+            <>
+              <p>No workspace connected yet.</p>
+              <span className="muted">
+                You can create a tenant-scoped workspace when you are ready.
+              </span>
+              <Link href="/onboarding">Create workspace</Link>
+            </>
+          )}
         </article>
         <article className="compact-card">
           <h2>User</h2>
@@ -58,7 +84,11 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         <article className="compact-card">
           <h2>Admin readiness</h2>
           <p>RLS, tenant boundaries, billing, email, SMS, Slack, and Telegram.</p>
-          <Link href="/admin">Open admin</Link>
+          {tenant ? (
+            <Link href="/admin">Open admin</Link>
+          ) : (
+            <span className="muted">Create a workspace to enable admin.</span>
+          )}
         </article>
       </section>
     </main>

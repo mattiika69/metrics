@@ -76,3 +76,12 @@ Every workflow that sends SMS must be tenant-scoped, logged, and compliance-awar
 - SMS delivery records must include `tenant_id` and have RLS enabled.
 - Do not expose `ROEZAN_API_KEY` to the browser.
 - Respect SMS compliance requirements, opt-outs, and quiet-hour decisions before adding automated sends.
+
+## MVP Safety Infrastructure
+
+MVP safety features must remain built into new work.
+
+- Log security, admin, billing, integration, email, and SMS actions to tenant-aware audit events.
+- Use webhook idempotency before mutating billing or integration state.
+- Use Supabase-backed rate limiting for auth-adjacent, communication-send, and webhook endpoints.
+- Keep GitHub Actions build checks passing before claiming cloud sync is complete.

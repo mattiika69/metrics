@@ -1,9 +1,31 @@
 import { headers } from "next/headers";
+import { getRequestIp } from "@/lib/request/ip";
+import { logAuditEvent } from "@/lib/security/audit";
+import { checkRateLimit } from "@/lib/security/rate-limit";
+import {
+  markWebhookFailed,
+  markWebhookProcessed,
+  recordWebhookEvent,
+} from "@/lib/security/webhooks";
 import Stripe from "stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createStripeClient } from "@/lib/stripe/server";
 
 export async function POST(request: Request) {
+  const rateLimit = await checkRateLimit({
+    route: "webhook:stripe",
+    key: await getRequestIp(),
+    limit: 120,
+    windowSeconds: 60,
+    metadata: {
+      provider: "stripe",
+    },
+  });
+
+  if (!rateLimit.allowed) {
+    return Response.json({ error: "Too many requests." }, { status: 429 });
+  }
+
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!webhookSecret) {
@@ -32,12 +54,68 @@ export async function POST(request: Request) {
     return Response.json({ error: "Invalid Stripe signature." }, { status: 400 });
   }
 
-  if (
-    event.type === "customer.subscription.created" ||
-    event.type === "customer.subscription.updated" ||
-    event.type === "customer.subscription.deleted"
-  ) {
-    await syncSubscription(event.data.object);
+  const webhook = await recordWebhookEvent({
+    provider: "stripe",
+    externalEventId: event.id,
+    eventType: event.type,
+    payload: {
+      id: event.id,
+      type: event.type,
+      created: event.created,
+    },
+  });
+
+  if (webhook.duplicate) {
+    return Response.json({ received: true, duplicate: true });
+  }
+
+  await logAuditEvent({
+    eventType: "stripe_webhook_received",
+    targetType: "webhook_event",
+    targetId: webhook.id,
+    metadata: {
+      eventId: event.id,
+      eventType: event.type,
+    },
+  });
+
+  try {
+    let tenantId: string | null = null;
+
+    if (
+      event.type === "customer.subscription.created" ||
+      event.type === "customer.subscription.updated" ||
+      event.type === "customer.subscription.deleted"
+    ) {
+      tenantId = await syncSubscription(event.data.object);
+    }
+
+    await markWebhookProcessed(webhook.id, tenantId);
+    await logAuditEvent({
+      tenantId,
+      eventType: "stripe_webhook_processed",
+      targetType: "webhook_event",
+      targetId: webhook.id,
+      metadata: {
+        eventId: event.id,
+        eventType: event.type,
+      },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    await markWebhookFailed(webhook.id, message);
+    await logAuditEvent({
+      eventType: "stripe_webhook_failed",
+      targetType: "webhook_event",
+      targetId: webhook.id,
+      metadata: {
+        eventId: event.id,
+        eventType: event.type,
+        error: message,
+      },
+    });
+
+    return Response.json({ error: "Webhook processing failed." }, { status: 500 });
   }
 
   return Response.json({ received: true });
@@ -83,4 +161,6 @@ async function syncSubscription(subscription: Stripe.Subscription) {
       onConflict: "stripe_subscription_id",
     },
   );
+
+  return tenantId;
 }
