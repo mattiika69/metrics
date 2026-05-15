@@ -1826,6 +1826,52 @@ body {
   padding: 6px 8px;
 }
 
+.sidebar-flat-nav {
+  display: grid;
+  gap: 2px;
+}
+
+.sidebar-parent-link {
+  display: flex;
+  min-height: 26px;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1rem;
+  overflow: hidden;
+  padding: 4px 8px 4px 4px;
+  text-overflow: ellipsis;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.sidebar-parent-link:hover {
+  background: #374151;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.sidebar-parent-link.active {
+  border-color: rgba(96, 165, 250, 0.6);
+  background: rgba(37, 99, 235, 0.2);
+  color: #dbeafe;
+}
+
+.sidebar-parent-chevron {
+  display: inline-flex;
+  width: 14px;
+  flex: 0 0 14px;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 13px;
+  line-height: 1;
+}
+
 .sidebar-divider {
   height: 0;
   margin: 4px 0;

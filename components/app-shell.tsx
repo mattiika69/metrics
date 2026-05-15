@@ -48,54 +48,25 @@ const primaryItems = [
   { id: "constraints", label: "Constraints", href: "/constraints" },
   { id: "forecasting", label: "Forecasting", href: "/forecasting" },
   { id: "integrations", label: "Integrations", href: "/integrations" },
+  { id: "settings", label: "Settings", href: "/settings/team" },
 ] as const;
 
-const settingsItems = [
-  { id: "settings", label: "Team", href: "/settings/team" },
-] as const;
-
-function SectionChevron() {
-  return (
-    <svg className="sidebar-label-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-    </svg>
-  );
-}
-
-function SidebarSection({
-  title,
-  items,
+function SidebarLink({
+  item,
   active,
 }: {
-  title: string;
-  items: readonly NavItem[];
+  item: NavItem;
   active: ActiveRoute;
 }) {
   return (
-    <div className="sidebar-group">
-      <div className="sidebar-label-row">
-        <button type="button" className="sidebar-label-button" aria-expanded="true">
-          <SectionChevron />
-          <span>{title}</span>
-        </button>
-      </div>
-      <div className="sidebar-subnav">
-        {items.map((item) => (
-          <div className="sidebar-menu-row" key={item.id}>
-            <Link
-              href={item.href}
-              prefetch
-              className={active === item.id ? "sidebar-sub-link active" : "sidebar-sub-link"}
-            >
-              {item.label}
-            </Link>
-            <span className="sidebar-drag-handle" title="Drag to reorder" aria-hidden="true">
-              ⋮⋮
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
+    <Link
+      href={item.href}
+      prefetch
+      className={active === item.id ? "sidebar-parent-link active" : "sidebar-parent-link"}
+    >
+      <span className="sidebar-parent-chevron" aria-hidden="true">›</span>
+      <span>{item.label}</span>
+    </Link>
   );
 }
 
@@ -118,10 +89,11 @@ export function AppShell({ active, children }: AppShellProps) {
         </div>
 
         <nav className="sidebar-sections" aria-label="Primary navigation">
-          <SidebarSection title="HyperOptimal Metrics" items={primaryItems} active={active} />
-
-          <div className="sidebar-divider" />
-          <SidebarSection title="Settings" items={settingsItems} active={active} />
+          <div className="sidebar-flat-nav">
+            {primaryItems.map((item) => (
+              <SidebarLink key={item.id} item={item} active={active} />
+            ))}
+          </div>
           {authBypassEnabled ? null : (
             <form action={signOutAction}>
               <button type="submit" className="sidebar-logout">
