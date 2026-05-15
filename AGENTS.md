@@ -24,6 +24,14 @@ Everything durable must be written to and synced with the cloud.
 - Run the smallest relevant verification before pushing.
 - Prefer cloud-connected workflows: GitHub for source, Vercel for deployment, and Supabase for database/configuration.
 
+## Git Authorship
+
+Every commit must use the author name `Matika69pushingtomain`.
+
+- Use `Matika69pushingtomain <matt@1000xleads.com>` as the commit author unless the user explicitly changes it.
+- Apply the same identity to commit metadata created by local Git, temporary clones, scripts, or automated pushes.
+- If a tool cannot set this author, stop and report the limitation before pushing.
+
 ## Naming
 
 - Use `HyperOptimal Metrics` as the product/display name in UI, documentation, emails, messages, and integration-facing copy.
