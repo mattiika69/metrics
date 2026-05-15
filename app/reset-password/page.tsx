@@ -3,26 +3,12 @@ import { updatePasswordAction } from "@/lib/auth/actions";
 import { isAuthBypassEnabled } from "@/lib/auth/bypass";
 import { requireUser } from "@/lib/auth/session";
 
-type PageProps = {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-};
-
-function getParam(
-  params: Record<string, string | string[] | undefined>,
-  key: string,
-) {
-  const value = params[key];
-  return Array.isArray(value) ? value[0] : value;
-}
-
-export default async function ResetPasswordPage({ searchParams }: PageProps) {
+export default async function ResetPasswordPage() {
   if (isAuthBypassEnabled()) {
     redirect("/dashboard");
   }
 
   await requireUser();
-  const params = await searchParams;
-  const error = getParam(params, "error");
 
   return (
     <main className="auth-shell">
@@ -30,7 +16,6 @@ export default async function ResetPasswordPage({ searchParams }: PageProps) {
         <p className="eyebrow">HyperOptimal Metrics</p>
         <h1>Choose a new password</h1>
         <p className="lede">Use a strong password for your account.</p>
-        {error ? <p className="notice error">{error}</p> : null}
         <form action={updatePasswordAction} className="form-stack">
           <label>
             New password

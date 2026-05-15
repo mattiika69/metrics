@@ -15,7 +15,6 @@ function getParam(
 
 export default async function SignupPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const error = getParam(params, "error");
   const next = getParam(params, "next");
   const loginHref = next
     ? `/login?next=${encodeURIComponent(next)}`
@@ -28,7 +27,6 @@ export default async function SignupPage({ searchParams }: PageProps) {
           <h1>HyperOptimal</h1>
           <p>Create your account</p>
         </div>
-        {error ? <p className="notice error">{error}</p> : null}
         <form action={signUpAction} className="auth-form">
           {next ? <input type="hidden" name="next" value={next} /> : null}
           <label className="auth-field">
