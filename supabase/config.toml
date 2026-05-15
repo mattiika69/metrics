@@ -27,5 +27,52 @@ additional_redirect_urls = [
 jwt_expiry = 3600
 enable_signup = true
 
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+secure_password_change = true
+max_frequency = "1m"
+otp_length = 6
+otp_expiry = 3600
+
+[auth.email.smtp]
+host = "smtp.resend.com"
+port = 465
+user = "resend"
+pass = "env(SUPABASE_AUTH_EMAIL_SMTP_PASS)"
+admin_email = "noreply@hyperoptimal.com"
+sender_name = "HyperOptimal Metrics"
+
+[auth.email.template.invite]
+subject = "You have been invited to HyperOptimal Metrics"
+content_path = "templates/invite.html"
+
+[auth.email.template.confirmation]
+subject = "Confirm your HyperOptimal Metrics account"
+content_path = "templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Reset your HyperOptimal Metrics password"
+content_path = "templates/recovery.html"
+
+[auth.email.template.magic_link]
+subject = "Your HyperOptimal Metrics login link"
+content_path = "templates/magic-link.html"
+
+[auth.email.template.email_change]
+subject = "Confirm your HyperOptimal Metrics email change"
+content_path = "templates/email-change.html"
+
+[auth.email.notification.password_changed]
+enabled = true
+subject = "Your HyperOptimal Metrics password was changed"
+content_path = "templates/password-changed.html"
+
+[auth.email.notification.email_changed]
+enabled = true
+subject = "Your HyperOptimal Metrics email was changed"
+content_path = "templates/email-changed.html"
+
 [storage]
 enabled = true

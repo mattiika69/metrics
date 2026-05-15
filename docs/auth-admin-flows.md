@@ -21,6 +21,7 @@ HyperOptimal Metrics includes baseline SaaS account and admin flows from the sta
 ## Security Rules
 
 - Auth is handled by Supabase Auth.
+- Auth emails are sent through Resend SMTP with branded HyperOptimal Metrics templates.
 - Protected pages require a signed-in user.
 - Tenant pages require membership in `tenant_memberships`.
 - Tenant data access is backed by Supabase RLS.
