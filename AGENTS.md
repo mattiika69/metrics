@@ -45,6 +45,8 @@ HyperOptimal Metrics is primarily a desktop web application.
 - Make every screen as mobile-friendly as practical with responsive layouts, readable text, usable controls, and no broken overflow.
 - Do not compromise the desktop product experience to force a mobile-first layout.
 - Mobile support should preserve access to core flows, but the canonical design target is desktop.
+- Never put internal notes, implementation notes, planning notes, TODOs, design commentary, or developer-facing explanations on client-facing pages.
+- Client-facing UI copy must read as product copy only. Keep internal reasoning in repository documentation, code comments where appropriate, issues, or commits, never in the rendered app.
 
 ## Auth, RLS, Multi-Tenancy, Billing, Messaging, Email, and SMS
 
