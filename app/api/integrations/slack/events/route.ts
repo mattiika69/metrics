@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { verifySlackSignature } from "@/lib/integrations/slack";
 import { sendSlackMessage } from "@/lib/integrations/slack-oauth";
-import { buildConstraintsCommandResponse, buildMetricsCommandResponse } from "@/lib/metrics/channel";
+import { buildChannelCommandResponse, resolveChannelCommand } from "@/lib/metrics/channel";
 import { logAuditEvent } from "@/lib/security/audit";
 import {
   markWebhookFailed,
@@ -15,10 +15,7 @@ export const dynamic = "force-dynamic";
 
 function commandFromText(text: unknown) {
   if (typeof text !== "string") return null;
-  const lower = text.toLowerCase();
-  if (lower.includes("/constraints") || lower.includes(" constraints")) return "constraints";
-  if (lower.includes("/metrics") || lower.includes(" metrics")) return "metrics";
-  return null;
+  return resolveChannelCommand(text);
 }
 
 export async function POST(request: Request) {
@@ -87,9 +84,7 @@ export async function POST(request: Request) {
     const channel = payload.event?.channel;
 
     if (command && channel) {
-      const responseText = command === "constraints"
-        ? await buildConstraintsCommandResponse(integration.tenant_id)
-        : await buildMetricsCommandResponse(integration.tenant_id);
+      const responseText = await buildChannelCommandResponse(integration.tenant_id, command);
       const { data: secret } = await admin
         .from("metric_integration_secrets")
         .select("secret_values")

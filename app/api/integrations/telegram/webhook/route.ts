@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { sendTelegramMessage } from "@/lib/integrations/telegram";
-import { buildConstraintsCommandResponse, buildMetricsCommandResponse } from "@/lib/metrics/channel";
+import { buildChannelCommandResponse, resolveChannelCommand } from "@/lib/metrics/channel";
 import { logAuditEvent } from "@/lib/security/audit";
 import {
   markWebhookFailed,
@@ -38,11 +38,9 @@ function messageFromPayload(payload: TelegramPayload) {
 
 function commandFromText(text: string) {
   const trimmed = text.trim();
-  if (/^\/constraints(?:@\S+)?/i.test(trimmed)) return "constraints";
-  if (/^\/metrics(?:@\S+)?/i.test(trimmed)) return "metrics";
   if (/^\/start(?:@\S+)?/i.test(trimmed)) return "start";
   if (/^\/link(?:@\S+)?/i.test(trimmed)) return "link";
-  return null;
+  return resolveChannelCommand(trimmed);
 }
 
 function codeFromText(text: string) {
@@ -117,7 +115,7 @@ async function consumeLinkCode({
     ok: true as const,
     tenantId: link.tenant_id,
     integrationId: result.data.id,
-    message: "Telegram is linked. Try /metrics or /constraints.",
+    message: "Telegram is linked. Try /metrics, /constraints, /forecast, /marketing, /sales, /retention, or /finance.",
   };
 }
 
@@ -208,9 +206,12 @@ export async function POST(request: Request) {
 
     const command = commandFromText(text);
     let responseText: string | null = null;
-    if (command === "metrics") responseText = await buildMetricsCommandResponse(integration.tenant_id);
-    if (command === "constraints") responseText = await buildConstraintsCommandResponse(integration.tenant_id);
-    if (command === "start") responseText = "Telegram is linked. Try /metrics or /constraints.";
+    if (command && command !== "start" && command !== "link") {
+      responseText = await buildChannelCommandResponse(integration.tenant_id, command);
+    }
+    if (command === "start") {
+      responseText = "Telegram is linked. Try /metrics, /constraints, /forecast, /marketing, /sales, /retention, or /finance.";
+    }
 
     if (responseText) {
       await sendTelegramMessage({ chatId, text: responseText });

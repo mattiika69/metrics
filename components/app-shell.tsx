@@ -2,8 +2,13 @@ import Link from "next/link";
 import { signOutAction } from "@/lib/auth/actions";
 import { isAuthBypassEnabled } from "@/lib/auth/bypass";
 
-type ActiveRoute =
+export type ActiveRoute =
   | "dashboard"
+  | "marketing"
+  | "sales"
+  | "retention"
+  | "finance"
+  | "forecasting"
   | "integrations"
   | "constraints"
   | "ai-context"
@@ -35,24 +40,14 @@ type NavItem = {
 };
 
 const primaryItems = [
-  { id: "dashboard", label: "Dashboard", href: "/dashboard" },
-  { id: "ai-context", label: "AI Context Doc", href: "/ai-context-doc" },
-  { id: "integrations", label: "Integrations", href: "/integrations" },
+  { id: "dashboard", label: "CEO Dashboard", href: "/dashboard" },
+  { id: "marketing", label: "Marketing", href: "/marketing" },
+  { id: "sales", label: "Sales", href: "/sales" },
+  { id: "retention", label: "Retention", href: "/retention" },
+  { id: "finance", label: "Finance", href: "/finance" },
   { id: "constraints", label: "Constraints", href: "/constraints" },
-] as const;
-
-const metricItems = [
-  { id: "metrics-most-important", label: "Most Important Metrics", href: "/metrics/most-important" },
-  { id: "metrics-reverse-engineering", label: "Reverse Engineering", href: "/metrics/reverse-engineering" },
-  { id: "metrics-financial", label: "Financial", href: "/metrics/financial" },
-  { id: "metrics-churn-ltv", label: "Churn & LTV", href: "/metrics/churn-ltv" },
-  { id: "metrics-sales", label: "Sales", href: "/metrics/sales" },
-  { id: "metrics-cost-per-call", label: "Cost Per Call", href: "/metrics/cost-per-call" },
-  { id: "metrics-inputs", label: "Inputs", href: "/metrics/inputs" },
-  { id: "metrics-raw-data", label: "Raw Data", href: "/metrics/raw-data" },
-  { id: "metrics-benchmarking", label: "Benchmarking", href: "/metrics/benchmarking" },
-  { id: "metrics-principles", label: "Principles", href: "/metrics/principles" },
-  { id: "metrics-quality-assurance", label: "Quality Assurance", href: "/metrics/quality-assurance" },
+  { id: "forecasting", label: "Forecasting", href: "/forecasting" },
+  { id: "integrations", label: "Integrations", href: "/integrations" },
 ] as const;
 
 const settingsItems = [
@@ -123,10 +118,7 @@ export function AppShell({ active, children }: AppShellProps) {
         </div>
 
         <nav className="sidebar-sections" aria-label="Primary navigation">
-          <SidebarSection title="App" items={primaryItems} active={active} />
-
-          <div className="sidebar-divider" />
-          <SidebarSection title="Metrics" items={metricItems} active={active} />
+          <SidebarSection title="HyperOptimal Metrics" items={primaryItems} active={active} />
 
           <div className="sidebar-divider" />
           <SidebarSection title="Settings" items={settingsItems} active={active} />

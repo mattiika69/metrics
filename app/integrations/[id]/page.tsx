@@ -3,6 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import {
   connectIntegrationAction,
   createTelegramLinkCodeAction,
+  importCsvBankingAction,
   syncIntegrationAction,
 } from "@/app/metrics/actions";
 import { requireTenant } from "@/lib/auth/session";
@@ -59,6 +60,15 @@ export default async function IntegrationDetailPage({ params, searchParams }: Pa
   const connectionRecord = connection as Record<string, unknown> | null;
   const lastSyncAt = typeof connectionRecord?.last_sync_at === "string" ? connectionRecord.last_sync_at : null;
   const lastError = typeof connectionRecord?.last_error === "string" ? connectionRecord.last_error : null;
+  const { data: syncRuns } = definition.group === "Messaging"
+    ? { data: [] }
+    : await supabase
+      .from("metric_sync_runs")
+      .select("id, status, rows_read, rows_written, error, started_at, completed_at")
+      .eq("tenant_id", tenant.id)
+      .eq("provider", definition.id)
+      .order("started_at", { ascending: false })
+      .limit(5);
 
   return (
     <AppShell active="integrations" tenantName={tenant.name}>
@@ -133,10 +143,61 @@ export default async function IntegrationDetailPage({ params, searchParams }: Pa
                 <input type="hidden" name="provider" value={definition.id} />
                 <button type="submit" className="button-secondary">Sync now</button>
               </form>
+              {definition.id === "csv-banking" ? (
+                <form action={importCsvBankingAction} className="form-stack compact">
+                  <label>
+                    Banking CSV
+                    <input name="csvFile" type="file" accept=".csv,text/csv" />
+                  </label>
+                  <label>
+                    Paste CSV
+                    <textarea
+                      name="csvText"
+                      placeholder="date,description,amount,category,cost_type,is_acquisition"
+                      rows={8}
+                    />
+                  </label>
+                  <button type="submit">Import CSV</button>
+                </form>
+              ) : null}
             </>
           )}
         </aside>
       </section>
+
+      {definition.group === "Messaging" ? null : (
+        <section className="table-panel">
+          <div className="report-table-title">Recent Sync Runs</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>Rows Read</th>
+                <th>Rows Written</th>
+                <th>Started</th>
+                <th>Completed</th>
+                <th>Error</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(syncRuns ?? []).length ? syncRuns?.map((run) => (
+                <tr key={run.id}>
+                  <td>{run.status}</td>
+                  <td>{run.rows_read}</td>
+                  <td>{run.rows_written}</td>
+                  <td>{run.started_at ? new Date(run.started_at).toLocaleString() : "Never"}</td>
+                  <td>{run.completed_at ? new Date(run.completed_at).toLocaleString() : "Pending"}</td>
+                  <td>{run.error ?? ""}</td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan={6}>No sync runs yet.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </section>
+      )}
     </AppShell>
   );
 }

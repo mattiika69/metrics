@@ -15,12 +15,11 @@ function param(params: Record<string, string | string[] | undefined>, key: strin
 }
 
 const integrationSections = [
-  { title: "Calendar", ids: ["calendly", "calcom", "iclosed"] },
-  { title: "Call Notes & Recordings", ids: ["readai", "fathom", "fireflies"] },
-  { title: "Sales", ids: ["typeform", "heyflow"] },
-  { title: "Social", ids: ["linkedin", "twitter", "instagram", "facebook"] },
   { title: "Payment Processors", ids: ["stripe", "fanbasis", "whop"] },
   { title: "Banking", ids: ["plaid", "csv-banking", "quickbooks"] },
+  { title: "Sales Calls", ids: ["calendly", "calcom", "iclosed", "readai", "fathom", "fireflies"] },
+  { title: "Forms/Leads", ids: ["typeform", "heyflow"] },
+  { title: "Social Inputs", ids: ["linkedin", "twitter", "instagram", "facebook"] },
   { title: "Messaging", ids: ["slack", "telegram"] },
 ] as const;
 

@@ -33,8 +33,8 @@ export const integrationCatalog: IntegrationDefinition[] = [
   { id: "twitter", name: "X / Twitter", group: "Social Inputs", description: "Track posts, views, and engagement inputs.", fields: [{ name: "bearerToken", label: "Bearer Token", type: "password", placeholder: "AAAA..." }] },
   { id: "instagram", name: "Instagram", group: "Social Inputs", description: "Track posts and engagement inputs.", fields: [{ name: "accessToken", label: "Access Token", type: "password", placeholder: "Paste token" }] },
   { id: "facebook", name: "Facebook", group: "Social Inputs", description: "Track posts and engagement inputs.", fields: [{ name: "pageAccessToken", label: "Page Access Token", type: "password", placeholder: "Paste token" }] },
-  { id: "slack", name: "Slack", group: "Messaging", description: "Use /metrics and /constraints from Slack.", fields: [] },
-  { id: "telegram", name: "Telegram", group: "Messaging", description: "Use /metrics and /constraints from Telegram.", fields: [] },
+  { id: "slack", name: "Slack", group: "Messaging", description: "Use metrics, constraints, forecast, and department commands from Slack.", fields: [] },
+  { id: "telegram", name: "Telegram", group: "Messaging", description: "Use metrics, constraints, forecast, and department commands from Telegram.", fields: [] },
 ];
 
 export const integrationGroups = [

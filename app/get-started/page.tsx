@@ -1,13 +1,17 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import type { ReactNode } from "react";
+import { AppShell } from "@/components/app-shell";
 import {
   createTenantAction,
-  signOutAction,
   skipOnboardingAction,
   startStripeCheckoutAction,
 } from "@/lib/auth/actions";
+import { saveBusinessProfileAction, saveMetricSelectionsAction } from "@/app/metrics/actions";
 import { isAuthBypassEnabled } from "@/lib/auth/bypass";
 import { requireUser } from "@/lib/auth/session";
+import { metricDefinitions } from "@/lib/metrics/definitions";
+import { getMetricViewDefinition } from "@/lib/metrics/views";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -19,6 +23,24 @@ function getParam(
 ) {
   const value = params[key];
   return Array.isArray(value) ? value[0] : value;
+}
+
+function SetupCard({
+  step,
+  title,
+  children,
+}: {
+  step: string;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <article className="wide-panel launch-panel">
+      <p className="step-label">{step}</p>
+      <h2>{title}</h2>
+      {children}
+    </article>
+  );
 }
 
 export default async function GetStartedPage({ searchParams }: PageProps) {
@@ -50,29 +72,60 @@ export default async function GetStartedPage({ searchParams }: PageProps) {
         .limit(1)
         .maybeSingle()
     : { data: null };
+  const { data: profile } = tenant
+    ? await supabase
+        .from("tenant_business_profiles")
+        .select("business_type, offer_model, stage, revenue_band, team_size, timezone, benchmark_opt_in")
+        .eq("tenant_id", tenant.id)
+        .maybeSingle()
+    : { data: null };
+  const ceoView = getMetricViewDefinition("ceo");
+  const { data: selections } = tenant
+    ? await supabase
+        .from("tenant_metric_selections")
+        .select("metric_id")
+        .eq("tenant_id", tenant.id)
+        .eq("view_key", "ceo")
+    : { data: null };
+  const selectedMetricIds = new Set((selections?.length ? selections.map((row) => row.metric_id) : ceoView.defaultMetricIds) as string[]);
+
+  if (!tenant) {
+    return (
+      <main className="auth-shell">
+        <section className="auth-panel">
+          <p className="eyebrow">Get started</p>
+          <h1>Create workspace</h1>
+          <p className="lede">Create the first HyperOptimal Metrics workspace for {user.email}.</p>
+          {message ? <p className="notice">{message}</p> : null}
+          {error ? <p className="notice error">{error}</p> : null}
+          <form action={createTenantAction} className="form-stack compact">
+            <label>
+              Workspace name
+              <input name="name" type="text" placeholder="HyperOptimal Metrics" autoComplete="organization" required />
+            </label>
+            <button type="submit">Create workspace</button>
+          </form>
+          <form action={skipOnboardingAction} className="skip-form">
+            <button type="submit" className="button-secondary">Skip</button>
+          </form>
+        </section>
+      </main>
+    );
+  }
 
   return (
-    <main className="app-shell">
-      <nav className="top-nav">
-        <Link href="/dashboard" className="brand">
-          HyperOptimal Metrics
-        </Link>
-        <div className="nav-links">
-          <Link href="/dashboard">Dashboard</Link>
-          <Link href="/settings/team">Settings</Link>
-          <form action={signOutAction}>
-            <button type="submit" className="link-button">
-              Sign out
-            </button>
+    <AppShell active="dashboard" tenantName={tenant.name}>
+      <section className="page-header compact">
+        <div className="header-row">
+          <div>
+            <h1>Get Started</h1>
+            <p className="eyebrow">Workspace setup</p>
+            <p className="lede">Set up the first source-of-truth views, core data sources, and messaging channels.</p>
+          </div>
+          <form action={skipOnboardingAction}>
+            <button type="submit" className="button-secondary">Skip</button>
           </form>
         </div>
-      </nav>
-      <section className="page-header">
-        <p className="eyebrow">Get started</p>
-        <h1>Set up your account</h1>
-        <p className="lede">
-          Finish the first workspace, plan, and team setup steps.
-        </p>
         {message ? <p className="notice">{message}</p> : null}
         {error ? <p className="notice error">{error}</p> : null}
         {billing === "success" ? (
@@ -85,68 +138,133 @@ export default async function GetStartedPage({ searchParams }: PageProps) {
           <p className="notice">Billing setup was cancelled.</p>
         ) : null}
       </section>
-      <section className="dashboard-grid">
-        <article className="compact-card">
-          <p className="step-label">Step 1</p>
-          <h2>Account</h2>
+
+      <section className="onboarding-grid">
+        <SetupCard step="Step 1" title="Account">
           <p>{user.email}</p>
-          <span className="muted">Ready</span>
-        </article>
-        <article className="compact-card">
-          <p className="step-label">Step 2</p>
-          <h2>Billing</h2>
+          <p className="muted">{membership?.role === "owner" ? "Owner access" : "Team access"}</p>
+        </SetupCard>
+
+        <SetupCard step="Step 2" title="Billing">
           {subscription ? (
             <>
               <p>Subscription: {subscription.status}</p>
-              <span className="muted">Plan details are up to date</span>
+              <p className="muted">Billing is connected to this workspace.</p>
             </>
-          ) : tenant ? (
+          ) : (
             <>
-              <p>Choose a plan when you are ready.</p>
+              <p>Set up Stripe billing for this workspace.</p>
               <form action={startStripeCheckoutAction} className="card-action">
                 <button type="submit">Continue to billing</button>
               </form>
             </>
-          ) : (
-            <>
-              <p>Billing will be available after the workspace is created.</p>
-              <span className="muted">Create a workspace first</span>
-            </>
           )}
-        </article>
-        <article className="compact-card">
-          <p className="step-label">Step 3</p>
-          <h2>Workspace</h2>
-          {tenant ? (
-            <>
-              <p>{tenant.name}</p>
-              <span className="muted">{membership?.role === "owner" ? "Owner access" : "Team access"}</span>
-              <Link href="/dashboard">Open dashboard</Link>
-            </>
-          ) : (
-            <>
-              <form action={createTenantAction} className="form-stack compact">
-                <label>
-                  Workspace name
+        </SetupCard>
+
+        <SetupCard step="Step 3" title="Business Profile">
+          <form action={saveBusinessProfileAction} className="forecast-form">
+            <input type="hidden" name="next" value="/get-started" />
+            <label>
+              Business type
+              <select name="businessType" defaultValue={profile?.business_type ?? "service"}>
+                <option value="service">Service</option>
+                <option value="subscription">Subscription</option>
+                <option value="hybrid">Hybrid</option>
+              </select>
+            </label>
+            <label>
+              Offer model
+              <select name="offerModel" defaultValue={profile?.offer_model ?? "high_ticket"}>
+                <option value="high_ticket">High ticket</option>
+                <option value="recurring">Recurring</option>
+                <option value="one_time">One time</option>
+              </select>
+            </label>
+            <label>
+              Stage
+              <select name="stage" defaultValue={profile?.stage ?? "mvp"}>
+                <option value="mvp">MVP</option>
+                <option value="growth">Growth</option>
+                <option value="scale">Scale</option>
+              </select>
+            </label>
+            <label>
+              Revenue band
+              <select name="revenueBand" defaultValue={profile?.revenue_band ?? "unknown"}>
+                <option value="unknown">Unknown</option>
+                <option value="0-10k">$0 - $10k monthly</option>
+                <option value="10k-50k">$10k - $50k monthly</option>
+                <option value="50k-250k">$50k - $250k monthly</option>
+                <option value="250k+">$250k+ monthly</option>
+              </select>
+            </label>
+            <label>
+              Team size
+              <input name="teamSize" type="number" min="1" defaultValue={profile?.team_size ?? ""} />
+            </label>
+            <label>
+              Timezone
+              <input name="timezone" type="text" defaultValue={profile?.timezone ?? "America/New_York"} required />
+            </label>
+            <label className="metric-checkbox-row">
+              <input name="benchmarkOptIn" type="checkbox" defaultChecked={profile?.benchmark_opt_in ?? false} />
+              <span>Use curated benchmark cohorts</span>
+            </label>
+            <button type="submit">Save profile</button>
+          </form>
+        </SetupCard>
+
+        <SetupCard step="Step 4" title="Core Sources">
+          <div className="integration-health-grid">
+            {[
+              ["Stripe", "/integrations/stripe"],
+              ["CSV Banking", "/integrations/csv-banking"],
+              ["Calendly", "/integrations/calendly"],
+              ["Typeform", "/integrations/typeform"],
+            ].map(([label, href]) => (
+              <Link key={href} href={href} className="integration-health-row">
+                <span>{label}</span>
+                <strong>Connect</strong>
+              </Link>
+            ))}
+          </div>
+        </SetupCard>
+
+        <SetupCard step="Step 5" title="CEO Metrics">
+          <form action={saveMetricSelectionsAction} className="metric-selector-form compact-selector">
+            <input type="hidden" name="viewKey" value="ceo" />
+            <input type="hidden" name="next" value="/get-started" />
+            <div className="metric-selector-grid compact-selector-grid">
+              {metricDefinitions.map((definition) => (
+                <label key={definition.id} className="metric-checkbox-row">
                   <input
-                    name="name"
-                    type="text"
-                    placeholder="Acme Growth"
-                    autoComplete="organization"
-                    required
+                    type="checkbox"
+                    name="metricId"
+                    value={definition.id}
+                    defaultChecked={selectedMetricIds.has(definition.id)}
                   />
+                  <span>{definition.name}</span>
                 </label>
-                <button type="submit">Create workspace</button>
-              </form>
-              <form action={skipOnboardingAction} className="skip-form">
-                <button type="submit" className="button-secondary">
-                  Skip
-                </button>
-              </form>
-            </>
-          )}
-        </article>
+              ))}
+            </div>
+            <button type="submit">Save CEO metrics</button>
+          </form>
+        </SetupCard>
+
+        <SetupCard step="Step 6" title="Messaging">
+          <div className="integration-health-grid">
+            <Link href="/integrations/slack" className="integration-health-row">
+              <span>Slack</span>
+              <strong>Connect</strong>
+            </Link>
+            <Link href="/integrations/telegram" className="integration-health-row">
+              <span>Telegram</span>
+              <strong>Connect</strong>
+            </Link>
+          </div>
+          <Link href="/dashboard" className="button-primary card-action">Open CEO Dashboard</Link>
+        </SetupCard>
       </section>
-    </main>
+    </AppShell>
   );
 }

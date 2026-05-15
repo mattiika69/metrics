@@ -1,15 +1,13 @@
 import { headers } from "next/headers";
 import { verifySlackSignature } from "@/lib/integrations/slack";
-import { buildConstraintsCommandResponse, buildMetricsCommandResponse } from "@/lib/metrics/channel";
+import { buildChannelCommandResponse, resolveChannelCommand } from "@/lib/metrics/channel";
 import { logAuditEvent } from "@/lib/security/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
-function parseCommand(text: string | null) {
-  const value = (text ?? "").trim().toLowerCase();
-  if (value.includes("constraints")) return "constraints";
-  return "metrics";
+function parseCommand(commandName: string | null, text: string | null) {
+  return resolveChannelCommand(text) ?? resolveChannelCommand(commandName) ?? "metrics";
 }
 
 export async function POST(request: Request) {
@@ -30,7 +28,7 @@ export async function POST(request: Request) {
   const teamId = params.get("team_id");
   const channelId = params.get("channel_id");
   const userId = params.get("user_id");
-  const command = parseCommand(`${params.get("command") ?? ""} ${params.get("text") ?? ""}`);
+  const command = parseCommand(params.get("command"), params.get("text"));
 
   if (!teamId) return Response.json({ response_type: "ephemeral", text: "Slack team could not be resolved." });
 
@@ -61,9 +59,7 @@ export async function POST(request: Request) {
     payload: Object.fromEntries(params.entries()),
   });
 
-  const text = command === "constraints"
-    ? await buildConstraintsCommandResponse(integration.tenant_id)
-    : await buildMetricsCommandResponse(integration.tenant_id);
+  const text = await buildChannelCommandResponse(integration.tenant_id, command);
 
   await admin.from("integration_messages").insert({
     tenant_id: integration.tenant_id,
@@ -77,7 +73,7 @@ export async function POST(request: Request) {
 
   await logAuditEvent({
     tenantId: integration.tenant_id,
-    eventType: command === "constraints" ? "slack_constraints" : "slack_metrics",
+    eventType: `slack_${command}`,
     targetType: "slack",
     metadata: { teamId, channelId, userId },
   });

@@ -2665,3 +2665,247 @@ body {
     padding: 28px 18px 72px;
   }
 }
+
+.launch-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.launch-metrics-grid {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.launch-metric-card {
+  min-height: 104px;
+}
+
+.metric-source {
+  margin: 0;
+  color: #9ca3af;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.launch-two-column,
+.onboarding-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.launch-panel {
+  margin-top: 0;
+}
+
+.constraint-stack,
+.integration-health-grid,
+.source-freshness-grid,
+.forecast-grid {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.constraint-line,
+.integration-health-row,
+.source-freshness-item,
+.forecast-grid div {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid #edf0f4;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #374151;
+  padding: 8px 10px;
+}
+
+.constraint-line {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+}
+
+.constraint-line > span {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 700;
+}
+
+.constraint-line strong,
+.recommendation-body strong,
+.integration-health-row strong,
+.source-freshness-item strong,
+.forecast-grid strong {
+  color: #111827;
+  font-weight: 700;
+}
+
+.constraint-line p,
+.recommendation-body p,
+.forecast-grid span {
+  margin: 3px 0 0;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.constraint-line em {
+  color: #6b7280;
+  font-size: 12px;
+  font-style: normal;
+}
+
+.forecast-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.forecast-grid div {
+  display: grid;
+  align-content: center;
+  justify-content: stretch;
+}
+
+.forecast-output-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.recommendation-body {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.metric-selector-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.metric-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.metric-selector-group {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  margin: 0;
+  border: 1px solid #edf0f4;
+  border-radius: 7px;
+  padding: 12px;
+}
+
+.metric-selector-group legend {
+  color: #111827;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 0 4px;
+}
+
+.metric-checkbox-row {
+  display: flex;
+  grid-template-columns: none;
+  align-items: center;
+  gap: 8px;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.metric-checkbox-row input[type="checkbox"] {
+  width: 14px;
+  min-height: 14px;
+  flex: 0 0 14px;
+}
+
+.panel-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.launch-request-form {
+  grid-template-columns: minmax(180px, 0.8fr) minmax(220px, 1fr) auto;
+}
+
+.forecast-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.forecast-form .panel-actions,
+.forecast-form > button {
+  grid-column: 1 / -1;
+}
+
+.input-with-affix {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.input-with-affix input {
+  min-height: 38px;
+  border: 0;
+}
+
+.input-with-affix em {
+  color: #6b7280;
+  font-style: normal;
+  padding: 0 10px;
+}
+
+.compact-selector-grid {
+  max-height: 360px;
+  overflow: auto;
+  border: 1px solid #edf0f4;
+  border-radius: 7px;
+  padding: 12px;
+}
+
+.launch-constraint-card {
+  min-height: 240px;
+}
+
+.launch-constraint-card ul {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: #4b5563;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 1180px) {
+  .forecast-output-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .launch-two-column,
+  .onboarding-grid,
+  .forecast-form,
+  .forecast-grid,
+  .launch-request-form {
+    grid-template-columns: 1fr;
+  }
+
+  .forecast-output-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
