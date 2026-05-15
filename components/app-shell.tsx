@@ -9,12 +9,12 @@ type AppShellProps = {
 };
 
 const navItems = [
-  { id: "dashboard", label: "Dashboard", href: "/dashboard" },
-  { id: "metrics", label: "Metrics", href: "/metrics" },
-  { id: "integrations", label: "Integrations", href: "/integrations" },
-  { id: "constraints", label: "Constraints", href: "/constraints" },
-  { id: "settings", label: "Settings", href: "/settings" },
-  { id: "account", label: "Account", href: "/account" },
+  { id: "dashboard", label: "Today", href: "/dashboard", icon: "✓" },
+  { id: "metrics", label: "Metrics", href: "/metrics", icon: "▦" },
+  { id: "integrations", label: "Integrations", href: "/integrations", icon: "⌁" },
+  { id: "constraints", label: "Constraints", href: "/constraints", icon: "◎" },
+  { id: "settings", label: "Settings", href: "/settings", icon: "⚙" },
+  { id: "account", label: "Account", href: "/account", icon: "◷" },
 ] as const;
 
 export function AppShell({ active, tenantName, children }: AppShellProps) {
@@ -26,16 +26,32 @@ export function AppShell({ active, tenantName, children }: AppShellProps) {
         <Link href="/dashboard" className="brand">
           HyperOptimal Metrics
         </Link>
-        <div className="nav-links" aria-label="Primary navigation">
-          {navItems.map((item) => (
-            <Link
-              key={item.id}
-              href={item.href}
-              className={active === item.id ? "nav-link active" : "nav-link"}
-            >
-              {item.label}
+        <div className="nav-links-wrap">
+          <div className="nav-links" aria-label="Primary navigation">
+            {navItems.map((item) => (
+              <Link
+                key={item.id}
+                href={item.href}
+                className={active === item.id ? "nav-link active" : "nav-link"}
+              >
+                <span aria-hidden="true">{item.icon}</span>
+                {item.label}
+              </Link>
+            ))}
+          </div>
+          <div className="account-cluster">
+            {tenantName ? (
+              <span className="account-pill">
+                <span className="avatar subtle" aria-hidden="true">
+                  {tenantName.slice(0, 1).toUpperCase()}
+                </span>
+                {tenantName}
+              </span>
+            ) : null}
+            <Link href="/account" className="avatar hot" aria-label="Account">
+              M
             </Link>
-          ))}
+          </div>
           {authBypassEnabled ? null : (
             <form action={signOutAction}>
               <button type="submit" className="link-button">
@@ -45,7 +61,6 @@ export function AppShell({ active, tenantName, children }: AppShellProps) {
           )}
         </div>
       </nav>
-      {tenantName ? <p className="workspace-label">{tenantName}</p> : null}
       {children}
     </main>
   );
