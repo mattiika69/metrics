@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/app-shell";
 import { SettingsHeader, SettingsTabs } from "@/components/settings/settings-tabs";
+import Link from "next/link";
 import {
   archiveScheduleAction,
   createScheduleAction,
@@ -23,11 +24,24 @@ function canManage(role: string) {
   return role === "owner" || role === "admin";
 }
 
+function todayDate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function normalizeDate(value: string | undefined) {
+  return value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : todayDate();
+}
+
+function runDate(value: string | null | undefined, fallback: string) {
+  return value?.slice(0, 10) ?? fallback;
+}
+
 export default async function SchedulingSettingsPage({ searchParams }: PageProps) {
   const { supabase, tenant, membership } = await requireTenant();
   const params = await searchParams;
   const message = param(params, "message");
   const error = param(params, "error");
+  const selectedDate = normalizeDate(param(params, "date"));
   const isAdmin = canManage(membership.role);
   const [{ data: schedules }, { data: runs }, { data: channels }] = await Promise.all([
     supabase
@@ -59,6 +73,18 @@ export default async function SchedulingSettingsPage({ searchParams }: PageProps
         {error ? <p className="notice error">{error}</p> : null}
       </section>
       <SettingsTabs active="scheduling" />
+      <section className="schedule-date-bar">
+        <form className="schedule-date-form" action="/settings/scheduling/daily">
+          <label>
+            Daily schedule
+            <input type="date" name="date" defaultValue={selectedDate} />
+          </label>
+          <button type="submit" className="button-secondary">Open date</button>
+        </form>
+        <Link className="button-secondary" href={`/settings/scheduling/daily?date=${selectedDate}`}>
+          View daily schedule
+        </Link>
+      </section>
       <section className="settings-layout">
         <article className="settings-panel">
           <div className="panel-heading">
@@ -79,6 +105,9 @@ export default async function SchedulingSettingsPage({ searchParams }: PageProps
                     </span>
                   </div>
                   <div className="row-actions">
+                    <Link className="button-secondary" href={`/settings/scheduling/daily?date=${selectedDate}`}>
+                      Open date
+                    </Link>
                     <span className="pill">{schedule.enabled ? "On" : "Paused"}</span>
                     {isAdmin ? (
                       <>
@@ -195,7 +224,11 @@ export default async function SchedulingSettingsPage({ searchParams }: PageProps
           <div className="table-list">
             {runs?.length ? (
               runs.map((run) => (
-                <div className="table-row" key={run.id}>
+                <Link
+                  className="table-row schedule-run-link"
+                  href={`/settings/scheduling/daily?date=${runDate(run.started_at ?? run.created_at, selectedDate)}`}
+                  key={run.id}
+                >
                   <div>
                     <strong>{run.status}</strong>
                     <span className="muted">
@@ -205,7 +238,7 @@ export default async function SchedulingSettingsPage({ searchParams }: PageProps
                   <span className="muted">
                     {run.finished_at ? new Date(run.finished_at).toLocaleTimeString() : "In progress"}
                   </span>
-                </div>
+                </Link>
               ))
             ) : (
               <p className="muted">No activity yet.</p>
