@@ -10,6 +10,7 @@ const allowedSidebarItemIds = [
   "metrics-churn-ltv",
   "metrics-sales",
   "metrics-inputs",
+  "metrics-benchmarking",
   "constraints",
   "settings",
 ];

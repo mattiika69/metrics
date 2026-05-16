@@ -80,18 +80,14 @@ const primaryItems: SidebarItem[] = [
   },
   {
     id: "metrics-inputs",
-    label: "Marketing",
-    href: "/marketing",
+    label: "Inputs",
+    href: "/inputs",
     section: "metrics",
     children: [
-      { id: "marketing-overview", label: "Overview", href: "/marketing" },
-      { id: "marketing-cost-per-call", label: "Cost Per Call", href: "/marketing/cost-per-call" },
-      { id: "marketing-paid-ads", label: "Paid Ads", href: "/marketing/paid-ads" },
-      { id: "marketing-cold-email", label: "Cold Email", href: "/marketing/cold-email" },
-      { id: "marketing-newsletter", label: "Newsletter", href: "/marketing/newsletter" },
-      { id: "marketing-accounts", label: "Accounts", href: "/marketing/accounts" },
+      { id: "inputs-overview", label: "Overview", href: "/inputs" },
     ],
   },
+  { id: "metrics-benchmarking", label: "Benchmarks", href: "/benchmarks", section: "metrics" },
   { id: "constraints", label: "Constraints", href: "/constraints", section: "metrics" },
   { id: "settings", label: "Settings", href: "/settings/account", section: "settings" },
 ];

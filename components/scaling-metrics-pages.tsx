@@ -19,7 +19,7 @@ type MetricTabKey =
 
 type TablePageKind = "financial" | "churn-ltv" | "sales" | "cost-per-call" | "inputs";
 
-export type MarketingChannelPageKind = "paid-ads" | "cold-email" | "newsletter" | "accounts";
+export type InputsChannelPageKind = "paid-ads" | "cold-email" | "newsletter";
 
 type TableColumn = {
   label: string;
@@ -121,11 +121,6 @@ const weeklyRowsAscending = [
 const metricById = new Map(metricDefinitions.map((definition) => [definition.id, definition]));
 
 const pageTabs: Partial<Record<MetricTabKey, PageTab[]>> = {
-  "reverse-engineering": [
-    { key: "current", label: "Current", href: "/forecasting" },
-    { key: "goal", label: "Goal", href: "/forecasting" },
-    { key: "difference", label: "% Difference", href: "/forecasting" },
-  ],
   financial: [
     { key: "overview", label: "Overview", href: "/finance" },
     { key: "transactions-in", label: "Transactions In", href: "/finance/transactions-in" },
@@ -143,16 +138,16 @@ const pageTabs: Partial<Record<MetricTabKey, PageTab[]>> = {
     { key: "calls", label: "Calls", href: "/sales/calls" },
   ],
   inputs: [
-    { key: "overview", label: "Overview", href: "/marketing" },
-    { key: "cost-per-call", label: "Cost Per Call", href: "/marketing/cost-per-call" },
-    { key: "paid-ads", label: "Paid Ads", href: "/marketing/paid-ads" },
-    { key: "cold-email", label: "Cold Email", href: "/marketing/cold-email" },
-    { key: "newsletter", label: "Newsletter", href: "/marketing/newsletter" },
-    { key: "accounts", label: "Accounts", href: "/marketing/accounts" },
+    { key: "overview", label: "Overview", href: "/inputs" },
+    { key: "cost-per-call", label: "Cost Per Call", href: "/inputs?tab=cost-per-call" },
+    { key: "paid-ads", label: "Paid Ads", href: "/inputs?tab=paid-ads" },
+    { key: "cold-email", label: "Cold Email", href: "/inputs?tab=cold-email" },
+    { key: "newsletter", label: "Newsletter", href: "/inputs?tab=newsletter" },
+    { key: "accounts", label: "Accounts", href: "/inputs?tab=accounts" },
   ],
   "cost-per-call": [
-    { key: "overview", label: "Overview", href: "/marketing" },
-    { key: "cost-per-call", label: "Cost Per Call", href: "/marketing/cost-per-call" },
+    { key: "overview", label: "Overview", href: "/inputs" },
+    { key: "cost-per-call", label: "Cost Per Call", href: "/inputs?tab=cost-per-call" },
   ],
 };
 
@@ -656,7 +651,7 @@ const tableConfigs: Record<TablePageKind, {
     includeSource: true,
   },
   inputs: {
-    title: "Inputs Overview",
+    title: "Inputs",
     activeRoute: "metrics-inputs",
     activeTab: "inputs",
     activeChild: "overview",
@@ -703,7 +698,7 @@ export async function ScalingMetricsTablePage({ kind }: { kind: TablePageKind })
   );
 }
 
-const marketingChannelConfigs: Record<MarketingChannelPageKind, {
+const inputChannelConfigs: Record<InputsChannelPageKind, {
   title: string;
   columns: TableColumn[];
 }> = {
@@ -737,21 +732,11 @@ const marketingChannelConfigs: Record<MarketingChannelPageKind, {
       { label: "Revenue" },
     ],
   },
-  accounts: {
-    title: "Accounts",
-    columns: [
-      { label: "Sources" },
-      { label: "Connected" },
-      { label: "Leads" },
-      { label: "Spend" },
-      { label: "Revenue" },
-    ],
-  },
 };
 
-export async function ScalingMarketingChannelPage({ kind }: { kind: MarketingChannelPageKind }) {
+export async function ScalingInputsChannelPage({ kind }: { kind: InputsChannelPageKind }) {
   const { tenant } = await requireTenant();
-  const config = marketingChannelConfigs[kind];
+  const config = inputChannelConfigs[kind];
   const rows = [
     ...weeklyRowsDescending.map((label) => ({
       label,
@@ -771,6 +756,49 @@ export async function ScalingMarketingChannelPage({ kind }: { kind: MarketingCha
         <PageTabs tabs={pageTabs.inputs} activeKey={kind} />
         <PeriodToolbar includeSource />
         <DataTable columns={config.columns} rows={rows} />
+      </section>
+    </AppShell>
+  );
+}
+
+export async function ScalingInputsAccountsPage() {
+  const { supabase, tenant } = await requireTenant();
+  const { data: connections } = await supabase
+    .from("metric_integrations")
+    .select("provider, status, last_sync_at, last_error")
+    .eq("tenant_id", tenant.id);
+  const connectionByProvider = new Map((connections ?? []).map((connection) => [connection.provider, connection]));
+  const accountIntegrations = integrationCatalog.filter((integration) =>
+    ["Forms/Leads", "Social Inputs", "Sales Calls"].includes(integration.group),
+  );
+
+  return (
+    <AppShell active="metrics-inputs" tenantName={tenant.name}>
+      <section className="scaling-page">
+        <Header title="Accounts" />
+        <PageTabs tabs={pageTabs.inputs} activeKey="accounts" />
+        <section className="input-account-grid">
+          {accountIntegrations.map((integration) => {
+            const connection = connectionByProvider.get(integration.id);
+            const connected = Boolean(connection && connection.status !== "disabled");
+
+            return (
+              <Link href={`/integrations/${integration.id}`} className="input-account-card" key={integration.id}>
+                <div>
+                  <strong>{integration.name}</strong>
+                  <span>{integration.group}</span>
+                </div>
+                <p>{integration.description}</p>
+                <div className="input-account-footer">
+                  <span className={connected ? "status-badge ok" : "status-badge"}>
+                    {connected ? "Connected" : "Not connected"}
+                  </span>
+                  <span>{connected ? "Manage" : "Connect"}</span>
+                </div>
+              </Link>
+            );
+          })}
+        </section>
       </section>
     </AppShell>
   );
@@ -1408,7 +1436,21 @@ function StatusToggle({ active, negative = false }: { active: boolean; negative?
 
 export async function ScalingSalesCallsPage() {
   const { supabase, tenant } = await requireTenant();
-  const calls = await loadSalesRows(supabase, tenant.id);
+  const [calls, schedulerConnections] = await Promise.all([
+    loadSalesRows(supabase, tenant.id),
+    supabase
+      .from("metric_integrations")
+      .select("provider, status")
+      .eq("tenant_id", tenant.id)
+      .in("provider", ["calendly", "calcom", "iclosed"])
+      .neq("status", "disabled"),
+  ]);
+  const connectedSchedulerCount = schedulerConnections.data?.length ?? 0;
+  const eventTypeNames = [...new Set(
+    calls
+      .map((call) => rawString(call.raw_data, ["event_type_name", "event_name", "title"]))
+      .filter((value): value is string => Boolean(value)),
+  )];
 
   return (
     <SourcePageChrome
@@ -1421,11 +1463,22 @@ export async function ScalingSalesCallsPage() {
       <div className="sales-call-toolbar">
         <div className="sales-call-status">
           <span>Individual call records</span>
-          <span className="connected-dot"><i /> Calendly Connected</span>
-          <span className="event-types">⚙ Event Types ({calls.length ? 1 : 0})</span>
+          {connectedSchedulerCount > 0 ? (
+            <span className="connected-dot"><i /> {connectedSchedulerCount} scheduler{connectedSchedulerCount === 1 ? "" : "s"} connected</span>
+          ) : null}
+          {eventTypeNames.length > 0 ? (
+            <span className="event-types">{eventTypeNames.length} event type{eventTypeNames.length === 1 ? "" : "s"}</span>
+          ) : null}
         </div>
         <div className="source-filter-controls">
-          <select aria-label="Event type"><option>All Event Types</option></select>
+          {eventTypeNames.length > 0 ? (
+            <select aria-label="Event type">
+              <option>All Event Types</option>
+              {eventTypeNames.map((eventTypeName) => (
+                <option key={eventTypeName}>{eventTypeName}</option>
+              ))}
+            </select>
+          ) : null}
           <select aria-label="Closer"><option>All Closers</option></select>
           <select aria-label="Source"><option>All Sources</option></select>
           <select aria-label="Year"><option>2026</option></select>
@@ -1454,7 +1507,7 @@ export async function ScalingSalesCallsPage() {
             </thead>
             <tbody>
               {calls.length === 0 ? (
-                <EmptySourceRow colSpan={12} label="No sales calls found from your connected schedulers." />
+                <EmptySourceRow colSpan={12} label="No sales calls found." />
               ) : (
                 calls.map((call) => (
                   <tr key={call.id}>
@@ -1603,13 +1656,6 @@ export async function ScalingReverseEngineeringPage() {
     <AppShell active="metrics-reverse-engineering" tenantName={tenant.name}>
       <section className="scaling-page">
         <Header title="Reverse Engineering" />
-        <PageTabs tabs={pageTabs["reverse-engineering"]} activeKey="current" />
-        <p className="reverse-note">Current tab: only Net Profit Goal is editable. Core inputs mirror Goal tab values.</p>
-        <div className="reverse-legend">
-          <strong>Legend:</strong>
-          <span className="editable">Editable Here (Current)</span>
-          <span className="readonly">Read-Only Here (Edit on Goal Tab)</span>
-        </div>
         <div className="reverse-grid">
           <div className="reverse-stack">
             <section className="re-box">
@@ -1691,6 +1737,87 @@ export async function ScalingConstraintsPage() {
           ]}
           rows={rows.length ? rows : [{ label: "No constraints", cells: ["—", "—", "—", "—", "Connect data sources"] }]}
         />
+      </section>
+    </AppShell>
+  );
+}
+
+function benchmarkTargetCopy(row: Awaited<ReturnType<typeof buildConstraintsDigest>>["rows"][number]) {
+  const scale = formatConstraintValue(row, row.scale);
+  const minimum = formatConstraintValue(row, row.minimum);
+  return row.benchmark.inverse
+    ? `Scale target: at or below ${scale}. Minimum: at or below ${minimum}.`
+    : `Scale target: at or above ${scale}. Minimum: at or above ${minimum}.`;
+}
+
+function benchmarkStatusCopy(row: Awaited<ReturnType<typeof buildConstraintsDigest>>["rows"][number]) {
+  if (row.status === "scale_met") return "Scale target met";
+  if (row.status === "minimum_met") return "Minimum met";
+  if (row.status === "missing") return "Needs data";
+  return "Constraint";
+}
+
+export async function ScalingBenchmarksPage() {
+  const { supabase, tenant } = await requireTenant();
+  const digest = await buildConstraintsDigest({ supabase, tenantId: tenant.id, periodKey: "30d" });
+  const biggest =
+    digest.rows.find((row) => row.status === "constrained" && row.gapPercent !== null) ??
+    digest.rows.find((row) => row.status === "missing") ??
+    digest.rows[0] ??
+    null;
+
+  return (
+    <AppShell active="metrics-benchmarking" tenantName={tenant.name}>
+      <section className="scaling-page">
+        <Header title="Benchmarks" />
+        {biggest ? (
+          <section className="benchmark-focus-panel">
+            <div>
+              <span>Biggest constraint</span>
+              <h2>{biggest.benchmark.name}</h2>
+              <p>
+                Current: {formatConstraintValue(biggest, biggest.actual)} · Target:{" "}
+                {formatConstraintValue(biggest, biggest.scale)} · Gap:{" "}
+                {biggest.gapPercent === null ? "Needs data" : `${biggest.gapPercent.toFixed(1)}%`}
+              </p>
+            </div>
+            <ol>
+              {biggest.suggestions.slice(0, 5).map((step) => (
+                <li key={step}>{step}</li>
+              ))}
+            </ol>
+          </section>
+        ) : null}
+        <section className="source-table-panel benchmarks-panel">
+          <div className="source-table-scroll">
+            <table className="source-table">
+              <thead>
+                <tr>
+                  <th>Benchmark</th>
+                  <th>Category</th>
+                  <th>Actual</th>
+                  <th>Minimum</th>
+                  <th>Scale Target</th>
+                  <th>Status</th>
+                  <th>What You Should Have</th>
+                </tr>
+              </thead>
+              <tbody>
+                {digest.rows.map((row) => (
+                  <tr key={row.benchmark.id}>
+                    <td className="strong">{row.benchmark.name}</td>
+                    <td className="muted">{row.benchmark.category}</td>
+                    <td>{formatConstraintValue(row, row.actual)}</td>
+                    <td>{formatConstraintValue(row, row.minimum)}</td>
+                    <td>{formatConstraintValue(row, row.scale)}</td>
+                    <td>{benchmarkStatusCopy(row)}</td>
+                    <td>{benchmarkTargetCopy(row)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
       </section>
     </AppShell>
   );

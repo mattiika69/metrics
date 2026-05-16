@@ -87,7 +87,7 @@ export default async function TelegramSettingsPage({ searchParams }: PageProps) 
               <h2>Available in Telegram</h2>
             </div>
           </div>
-          <p className="muted">Use /metrics, /constraints, /forecast, /marketing, /sales, /retention, and /finance.</p>
+          <p className="muted">Use /metrics, /constraints, /forecast, /inputs, /sales, /retention, and /finance.</p>
         </article>
       </section>
     </AppShell>

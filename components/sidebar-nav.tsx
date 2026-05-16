@@ -42,6 +42,7 @@ export function SidebarNav({
   const pathname = usePathname();
   const [orderedItems, setOrderedItems] = useState(items);
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [collapsedParents, setCollapsedParents] = useState<Record<string, boolean>>({});
   const [, startTransition] = useTransition();
   const itemIds = useMemo(() => orderedItems.map((item) => item.id), [orderedItems]);
   const metricsItems = orderedItems.filter((item) => item.section === "metrics");
@@ -53,13 +54,7 @@ export function SidebarNav({
       items: metricsItems,
       expanded: true,
       accent: true,
-    },
-    {
-      id: "settings",
-      label: "Settings",
-      items: settingsItems,
-      expanded: true,
-      dividerBefore: true,
+      dividerBefore: false,
     },
   ];
 
@@ -145,25 +140,39 @@ export function SidebarNav({
                     {item.children?.length ? (
                       <>
                         <div className="sidebar-parent-row">
-                          <span className="sidebar-parent-label">{item.label}</span>
+                          <button
+                            type="button"
+                            className="sidebar-parent-toggle"
+                            aria-expanded={!collapsedParents[item.id]}
+                            onClick={() => {
+                              setCollapsedParents((current) => ({
+                                ...current,
+                                [item.id]: !current[item.id],
+                              }));
+                            }}
+                          >
+                            {item.label}
+                          </button>
                           <span className="sidebar-drag-handle" aria-hidden="true">⋮⋮</span>
                         </div>
-                        <div className="sidebar-child-nav">
-                          {item.children.map((child) => (
-                            <Link
-                              href={child.href}
-                              prefetch
-                              aria-label={child.label}
-                              className={[
-                                "sidebar-sub-link",
-                                isChildActive(child) ? "active" : "",
-                              ].filter(Boolean).join(" ")}
-                              key={child.id}
-                            >
-                              {child.label}
-                            </Link>
-                          ))}
-                        </div>
+                        {!collapsedParents[item.id] ? (
+                          <div className="sidebar-child-nav">
+                            {item.children.map((child) => (
+                              <Link
+                                href={child.href}
+                                prefetch
+                                aria-label={child.label}
+                                className={[
+                                  "sidebar-sub-link",
+                                  isChildActive(child) ? "active" : "",
+                                ].filter(Boolean).join(" ")}
+                                key={child.id}
+                              >
+                                {child.label}
+                              </Link>
+                            ))}
+                          </div>
+                        ) : null}
                       </>
                     ) : (
                       <>
@@ -188,6 +197,55 @@ export function SidebarNav({
           ) : null}
         </section>
       ))}
+      {settingsItems.length ? (
+        <section className="sidebar-group with-divider sidebar-settings-direct">
+          <div className="sidebar-subnav">
+            {settingsItems.map((item) => (
+              <div
+                key={item.id}
+                draggable
+                data-item-id={item.id}
+                className={[
+                  "sidebar-menu-row",
+                  draggedId === item.id ? "dragging" : "",
+                ].filter(Boolean).join(" ")}
+                onDragStart={(event) => {
+                  setDraggedId(item.id);
+                  event.dataTransfer.effectAllowed = "move";
+                  event.dataTransfer.setData("text/plain", item.id);
+                }}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  event.dataTransfer.dropEffect = "move";
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  const droppedId = event.dataTransfer.getData("text/plain") || draggedId;
+                  if (!droppedId || !itemIds.includes(droppedId as ActiveRoute)) return;
+                  const nextItems = moveItem(orderedItems, droppedId, item.id);
+                  setOrderedItems(nextItems);
+                  setDraggedId(null);
+                  persist(nextItems);
+                }}
+                onDragEnd={() => setDraggedId(null)}
+              >
+                <Link
+                  href={item.href}
+                  prefetch
+                  aria-label={item.label}
+                  className={[
+                    "sidebar-sub-link",
+                    isItemActive(item) ? "active" : "",
+                  ].filter(Boolean).join(" ")}
+                >
+                  {item.label}
+                </Link>
+                <span className="sidebar-drag-handle" aria-hidden="true">⋮⋮</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

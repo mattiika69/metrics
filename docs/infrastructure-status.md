@@ -95,7 +95,7 @@ The app shell is implemented to match the Scaling Metrics design system.
 - Sidebar uses the app name `HyperOptimal Metrics`.
 - No org switcher is shown.
 - No `Most Viewed` section is shown.
-- The sidebar only includes built app pages: CEO Dashboard, Marketing, Sales, Retention, Finance, Constraints, Forecasting, and Settings.
+- The sidebar only includes built app pages: CEO Dashboard, Reverse Engineering, Financials, Retention, Sales, Inputs, Benchmarks, Constraints, and Settings.
 - The top utility chip bar is not present.
 
 ## Internal APIs Implemented

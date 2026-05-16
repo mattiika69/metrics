@@ -126,7 +126,7 @@ async function consumeLinkCode({
     ok: true as const,
     tenantId: link.tenant_id,
     integrationId: result.data.id,
-    message: "Telegram is linked. Try /metrics, /constraints, /forecast, /marketing, /sales, /retention, or /finance.",
+    message: "Telegram is linked. Try /metrics, /constraints, /forecast, /inputs, /sales, /retention, or /finance.",
   };
 }
 
@@ -244,7 +244,7 @@ export async function POST(request: Request) {
       responseText = await buildChannelCommandResponse(integration.tenant_id, command);
     }
     if (command === "start") {
-      responseText = "Telegram is linked. Try /metrics, /constraints, /forecast, /marketing, /sales, /retention, or /finance.";
+      responseText = "Telegram is linked. Try /metrics, /constraints, /forecast, /inputs, /sales, /retention, or /finance.";
     }
 
     if (responseText) {

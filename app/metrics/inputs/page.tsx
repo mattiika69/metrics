@@ -1,7 +1,7 @@
-import { ScalingMetricsTablePage } from "@/components/scaling-metrics-pages";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default function InputsPage() {
-  return <ScalingMetricsTablePage kind="inputs" />;
+  redirect("/inputs");
 }

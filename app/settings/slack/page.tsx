@@ -71,7 +71,7 @@ export default async function SlackSettingsPage({ searchParams }: PageProps) {
               <h2>Available in Slack</h2>
             </div>
           </div>
-          <p className="muted">Use /metrics, /constraints, /forecast, /marketing, /sales, /retention, and /finance.</p>
+          <p className="muted">Use /metrics, /constraints, /forecast, /inputs, /sales, /retention, and /finance.</p>
           <Link href="/api/integrations/slack/oauth/start" className="button-primary card-action">
             Connect Slack
           </Link>

@@ -32,9 +32,9 @@ export const metricViewDefinitions: MetricViewDefinition[] = [
   },
   {
     key: "marketing",
-    title: "Marketing",
-    href: "/marketing",
-    description: "Lead flow, acquisition costs, CAC, and source performance.",
+    title: "Inputs",
+    href: "/inputs",
+    description: "Lead flow, acquisition costs, CAC, and source account performance.",
     defaultMetricIds: ["acquisition_costs", "cac", "cost_per_call", "calls_booked", "new_clients", "new_client_revenue", "call_show_rate", "wasted_money"],
   },
   {

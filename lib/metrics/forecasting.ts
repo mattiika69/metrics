@@ -38,15 +38,18 @@ function numberFrom(value: unknown, fallback: number) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-export function normalizeForecastAssumptions(input: Record<string, unknown>): ForecastAssumptions {
+export function normalizeForecastAssumptions(
+  input: Record<string, unknown>,
+  fallback: ForecastAssumptions = defaultForecastAssumptions,
+): ForecastAssumptions {
   return {
-    netProfitGoal: numberFrom(input.netProfitGoal, defaultForecastAssumptions.netProfitGoal),
-    netMarginPercent: numberFrom(input.netMarginPercent, defaultForecastAssumptions.netMarginPercent),
-    monthlyClientPayment: numberFrom(input.monthlyClientPayment, defaultForecastAssumptions.monthlyClientPayment),
-    churnPercent: numberFrom(input.churnPercent, defaultForecastAssumptions.churnPercent),
-    showRatePercent: numberFrom(input.showRatePercent, defaultForecastAssumptions.showRatePercent),
-    closeRatePercent: numberFrom(input.closeRatePercent, defaultForecastAssumptions.closeRatePercent),
-    costPerCall: numberFrom(input.costPerCall, defaultForecastAssumptions.costPerCall),
+    netProfitGoal: numberFrom(input.netProfitGoal, fallback.netProfitGoal),
+    netMarginPercent: numberFrom(input.netMarginPercent, fallback.netMarginPercent),
+    monthlyClientPayment: numberFrom(input.monthlyClientPayment, fallback.monthlyClientPayment),
+    churnPercent: numberFrom(input.churnPercent, fallback.churnPercent),
+    showRatePercent: numberFrom(input.showRatePercent, fallback.showRatePercent),
+    closeRatePercent: numberFrom(input.closeRatePercent, fallback.closeRatePercent),
+    costPerCall: numberFrom(input.costPerCall, fallback.costPerCall),
   };
 }
 
@@ -77,9 +80,11 @@ export function calculateForecast(assumptions: ForecastAssumptions): ForecastOut
 export async function loadForecastModel({
   supabase,
   tenantId,
+  fallbackAssumptions = defaultForecastAssumptions,
 }: {
   supabase: SupabaseLike;
   tenantId: string;
+  fallbackAssumptions?: ForecastAssumptions;
 }) {
   const { data } = await supabase
     .from("metric_forecast_models")
@@ -94,6 +99,7 @@ export async function loadForecastModel({
     data?.assumptions && typeof data.assumptions === "object"
       ? data.assumptions as Record<string, unknown>
       : {},
+    fallbackAssumptions,
   );
   const outputs = calculateForecast(assumptions);
 
@@ -106,6 +112,15 @@ export async function loadForecastModel({
   };
 }
 
+function metricAssumption(
+  payload: Awaited<ReturnType<typeof loadMetricSnapshotPayload>>,
+  metricId: string,
+  fallback: number,
+) {
+  const value = payload.metrics[metricId]?.value;
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
 export async function buildForecastContext({
   supabase,
   tenantId,
@@ -113,10 +128,17 @@ export async function buildForecastContext({
   supabase: SupabaseLike;
   tenantId: string;
 }) {
-  const [model, payload] = await Promise.all([
-    loadForecastModel({ supabase, tenantId }),
-    loadMetricSnapshotPayload({ supabase, tenantId, periodKey: "30d" }),
-  ]);
+  const payload = await loadMetricSnapshotPayload({ supabase, tenantId, periodKey: "30d" });
+  const fallbackAssumptions = {
+    ...defaultForecastAssumptions,
+    netMarginPercent: metricAssumption(payload, "net_margin", defaultForecastAssumptions.netMarginPercent),
+    monthlyClientPayment: metricAssumption(payload, "monthly_client_payment", defaultForecastAssumptions.monthlyClientPayment),
+    churnPercent: metricAssumption(payload, "churn", defaultForecastAssumptions.churnPercent),
+    showRatePercent: metricAssumption(payload, "call_show_rate", defaultForecastAssumptions.showRatePercent),
+    closeRatePercent: metricAssumption(payload, "call_close_rate", defaultForecastAssumptions.closeRatePercent),
+    costPerCall: metricAssumption(payload, "cost_per_call", defaultForecastAssumptions.costPerCall),
+  };
+  const model = await loadForecastModel({ supabase, tenantId, fallbackAssumptions });
 
   return {
     model,
