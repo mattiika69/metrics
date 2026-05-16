@@ -21,10 +21,9 @@ export default async function Home() {
     <main className="page-shell">
       <section className="panel">
         <p className="eyebrow">HyperOptimal Metrics</p>
-        <h1>Metrics operations for secure teams.</h1>
+        <h1>Metrics that show what to fix next.</h1>
         <p className="lede">
-          Sign in to manage your workspace metrics, connected channels,
-          reporting, and team access in one place.
+          Sign in to view dashboards, connected channels, reports, and team access.
         </p>
         <div className="button-row">
           <Link href="/signup" className="button-primary">

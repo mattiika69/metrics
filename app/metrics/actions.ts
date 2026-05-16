@@ -33,6 +33,12 @@ function parseViewKey(value: string): MetricViewKey {
   return allMetricViewKeys().includes(value as MetricViewKey) ? value as MetricViewKey : "ceo";
 }
 
+function parseOptionalNumber(value: FormDataEntryValue | null) {
+  if (typeof value !== "string" || !value.trim()) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export async function recalculateMetricsAction(formData: FormData) {
   const { tenant, user } = await requireTenant();
   const period = periodFromSearch(String(formData.get("period") ?? "30d"));
@@ -45,7 +51,7 @@ export async function recalculateMetricsAction(formData: FormData) {
     targetType: "metric_snapshots",
     metadata: { period },
   });
-  redirectWith(next, "message", "Metrics recalculated");
+  redirectWith(next, "message", "Metrics refreshed");
 }
 
 export async function createMetricOverrideAction(formData: FormData) {
@@ -114,22 +120,130 @@ export async function createMetricPrincipleAction(formData: FormData) {
 }
 
 export async function saveBenchmarkTargetAction(formData: FormData) {
-  const { tenant, supabase } = await requireTenant();
+  const { tenant, user, supabase } = await requireTenant();
   const benchmarkId = String(formData.get("benchmarkId") ?? "");
-  const targetValue = Number(formData.get("targetValue"));
-  if (!benchmarkId || !Number.isFinite(targetValue)) {
-    redirect("/metrics/benchmarking?message=Invalid benchmark target");
+  const targetValue = parseOptionalNumber(formData.get("targetValue"));
+  const minimumValue = parseOptionalNumber(formData.get("minimumValue"));
+  const notes = formText(formData, "notes");
+  const next = safeNextPath(formText(formData, "next"), "/benchmarks");
+  if (!benchmarkId || targetValue === null) {
+    redirectWith(next, "error", "Enter a valid target.");
   }
 
   await supabase.from("metric_benchmark_targets").upsert({
     tenant_id: tenant.id,
     benchmark_id: benchmarkId,
     target_value: targetValue,
+    minimum_value: minimumValue,
+    notes: notes || null,
+    updated_by_user_id: user.id,
     updated_at: new Date().toISOString(),
   }, {
     onConflict: "tenant_id,benchmark_id",
   });
-  redirect("/metrics/benchmarking?message=Benchmark target saved");
+  await logAuditEvent({
+    tenantId: tenant.id,
+    actorUserId: user.id,
+    eventType: "benchmark_target_saved",
+    targetType: "metric_benchmark_target",
+    targetId: benchmarkId,
+    metadata: { targetValue, minimumValue },
+  });
+  redirectWith(next, "message", "Benchmark saved");
+}
+
+export async function createLearningAction(formData: FormData) {
+  const { tenant, user, supabase } = await requireTenant();
+  const title = formText(formData, "title");
+  const source = formText(formData, "source") || "General";
+  const body = formText(formData, "body");
+
+  if (!title || !body) redirectWith("/learnings", "error", "Add a title and learning.");
+
+  const { data, error } = await supabase
+    .from("metric_learnings")
+    .insert({
+      tenant_id: tenant.id,
+      title,
+      source,
+      body,
+      created_by_user_id: user.id,
+      updated_by_user_id: user.id,
+    })
+    .select("id")
+    .single();
+
+  if (error) redirectWith("/learnings", "error", error.message);
+
+  await logAuditEvent({
+    tenantId: tenant.id,
+    actorUserId: user.id,
+    eventType: "learning_created",
+    targetType: "metric_learning",
+    targetId: data.id,
+  });
+  redirectWith("/learnings", "message", "Learning saved");
+}
+
+export async function updateLearningAction(formData: FormData) {
+  const { tenant, user, supabase } = await requireTenant();
+  const id = formText(formData, "id");
+  const title = formText(formData, "title");
+  const source = formText(formData, "source") || "General";
+  const body = formText(formData, "body");
+
+  if (!id || !title || !body) redirectWith("/learnings", "error", "Add a title and learning.");
+
+  const { error } = await supabase
+    .from("metric_learnings")
+    .update({
+      title,
+      source,
+      body,
+      updated_by_user_id: user.id,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("tenant_id", tenant.id)
+    .eq("id", id)
+    .is("archived_at", null);
+
+  if (error) redirectWith("/learnings", "error", error.message);
+
+  await logAuditEvent({
+    tenantId: tenant.id,
+    actorUserId: user.id,
+    eventType: "learning_updated",
+    targetType: "metric_learning",
+    targetId: id,
+  });
+  redirectWith("/learnings", "message", "Learning updated");
+}
+
+export async function deleteLearningAction(formData: FormData) {
+  const { tenant, user, supabase } = await requireTenant();
+  const id = formText(formData, "id");
+  if (!id) redirectWith("/learnings", "error", "Choose a learning to delete.");
+
+  const { error } = await supabase
+    .from("metric_learnings")
+    .update({
+      archived_at: new Date().toISOString(),
+      updated_by_user_id: user.id,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("tenant_id", tenant.id)
+    .eq("id", id);
+
+  if (error) redirectWith("/learnings", "error", error.message);
+
+  await logAuditEvent({
+    tenantId: tenant.id,
+    actorUserId: user.id,
+    eventType: "learning_deleted",
+    targetType: "metric_learning",
+    targetId: id,
+  });
+  redirectWith("/learnings", "message", "Learning deleted");
 }
 
 export async function saveBusinessProfileAction(formData: FormData) {

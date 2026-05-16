@@ -25,9 +25,9 @@ export type MetricViewDefinition = {
 export const metricViewDefinitions: MetricViewDefinition[] = [
   {
     key: "ceo",
-    title: "CEO Dashboard",
+    title: "Most Important Metrics",
     href: "/dashboard",
-    description: "The executive source of truth across growth, cash, clients, and constraints.",
+    description: "The most important operating metrics across growth, cash, clients, and constraints.",
     defaultMetricIds: ["revenue", "mrr", "arr", "net_profit", "net_margin", "runway", "active_clients", "churn", "calls_booked", "call_close_rate", "cac", "ltv_cac"],
   },
   {
@@ -152,7 +152,7 @@ export async function loadMetricViewPayload({
 }
 
 export function labelForFreshness(value: string | null) {
-  if (!value) return "No snapshot yet";
+  if (!value) return "No data yet";
   const ageHours = Math.max(0, (Date.now() - new Date(value).getTime()) / 36e5);
   if (ageHours < 24) return "Fresh";
   if (ageHours < 72) return "Needs review";

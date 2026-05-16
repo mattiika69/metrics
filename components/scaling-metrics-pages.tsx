@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { saveBenchmarkTargetAction } from "@/app/metrics/actions";
 import { AppShell, type ActiveRoute } from "@/components/app-shell";
 import { requireTenant } from "@/lib/auth/session";
 import { integrationCatalog } from "@/lib/integrations/catalog";
@@ -1591,7 +1592,7 @@ export async function ScalingMostImportantPage() {
   return (
     <AppShell active="metrics-most-important" tenantName={tenant.name}>
       <section className="scaling-page">
-        <Header title="CEO Dashboard" />
+        <Header title="Most Important Metrics" />
         <div className="most-important-toolbar">
           <div className="most-important-date-controls">
             <select aria-label="Year">
@@ -1743,6 +1744,7 @@ export async function ScalingConstraintsPage() {
 }
 
 function benchmarkTargetCopy(row: Awaited<ReturnType<typeof buildConstraintsDigest>>["rows"][number]) {
+  if (row.scale === null) return "Add a target for this metric.";
   const scale = formatConstraintValue(row, row.scale);
   const minimum = formatConstraintValue(row, row.minimum);
   return row.benchmark.inverse
@@ -1751,19 +1753,35 @@ function benchmarkTargetCopy(row: Awaited<ReturnType<typeof buildConstraintsDige
 }
 
 function benchmarkStatusCopy(row: Awaited<ReturnType<typeof buildConstraintsDigest>>["rows"][number]) {
+  if (row.scale === null) return "Needs target";
   if (row.status === "scale_met") return "Scale target met";
   if (row.status === "minimum_met") return "Minimum met";
   if (row.status === "missing") return "Needs data";
   return "Constraint";
 }
 
+function benchmarkInputValue(value: number | null) {
+  if (value === null || !Number.isFinite(value)) return "";
+  return Number.isInteger(value) ? String(value) : String(value);
+}
+
 export async function ScalingBenchmarksPage() {
   const { supabase, tenant } = await requireTenant();
-  const digest = await buildConstraintsDigest({ supabase, tenantId: tenant.id, periodKey: "30d" });
+  const [digest, savedTargets] = await Promise.all([
+    buildConstraintsDigest({ supabase, tenantId: tenant.id, periodKey: "30d" }),
+    supabase
+      .from("metric_benchmark_targets")
+      .select("benchmark_id, notes")
+      .eq("tenant_id", tenant.id),
+  ]);
+  const notesByBenchmarkId = new Map((savedTargets.data ?? []).map((row) => [row.benchmark_id, row.notes ?? ""]));
+  const mostImportantIds = Array.from(new Set(mostImportantMetricIds));
+  const rows = digest.rows.filter((row) => mostImportantIds.includes(row.benchmark.metricId));
   const biggest =
-    digest.rows.find((row) => row.status === "constrained" && row.gapPercent !== null) ??
-    digest.rows.find((row) => row.status === "missing") ??
-    digest.rows[0] ??
+    rows.find((row) => row.status === "constrained" && row.gapPercent !== null) ??
+    rows.find((row) => row.scale === null) ??
+    rows.find((row) => row.status === "missing") ??
+    rows[0] ??
     null;
 
   return (
@@ -1800,20 +1818,57 @@ export async function ScalingBenchmarksPage() {
                   <th>Scale Target</th>
                   <th>Status</th>
                   <th>What You Should Have</th>
+                  <th>Notes</th>
+                  <th>Save</th>
                 </tr>
               </thead>
               <tbody>
-                {digest.rows.map((row) => (
+                {rows.map((row) => {
+                  const formId = `benchmark-${row.benchmark.id}`;
+                  return (
                   <tr key={row.benchmark.id}>
                     <td className="strong">{row.benchmark.name}</td>
                     <td className="muted">{row.benchmark.category}</td>
                     <td>{formatConstraintValue(row, row.actual)}</td>
-                    <td>{formatConstraintValue(row, row.minimum)}</td>
-                    <td>{formatConstraintValue(row, row.scale)}</td>
+                    <td>
+                      <input
+                        form={formId}
+                        className="benchmark-input"
+                        name="minimumValue"
+                        defaultValue={benchmarkInputValue(row.minimum)}
+                        aria-label={`${row.benchmark.name} minimum`}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        form={formId}
+                        className="benchmark-input"
+                        name="targetValue"
+                        defaultValue={benchmarkInputValue(row.scale)}
+                        aria-label={`${row.benchmark.name} target`}
+                      />
+                    </td>
                     <td>{benchmarkStatusCopy(row)}</td>
                     <td>{benchmarkTargetCopy(row)}</td>
+                    <td>
+                      <input
+                        form={formId}
+                        className="benchmark-notes-input"
+                        name="notes"
+                        defaultValue={notesByBenchmarkId.get(row.benchmark.id) ?? ""}
+                        aria-label={`${row.benchmark.name} notes`}
+                      />
+                    </td>
+                    <td>
+                      <form id={formId} action={saveBenchmarkTargetAction}>
+                        <input type="hidden" name="benchmarkId" value={row.benchmark.id} />
+                        <input type="hidden" name="next" value="/benchmarks" />
+                        <button className="mini-save-button" type="submit">Save</button>
+                      </form>
+                    </td>
                   </tr>
-                ))}
+                );
+                })}
               </tbody>
             </table>
           </div>

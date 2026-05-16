@@ -53,7 +53,6 @@ export default async function GetStartedPage({ searchParams }: PageProps) {
   const error = getParam(params, "error");
   const message = getParam(params, "message");
   const billing = getParam(params, "billing");
-  const checkoutSessionId = getParam(params, "session_id");
   const { data: memberships } = await supabase
     .from("tenant_memberships")
     .select("tenant_id, role, tenants(id, name)")
@@ -94,16 +93,16 @@ export default async function GetStartedPage({ searchParams }: PageProps) {
       <main className="auth-shell">
         <section className="auth-panel">
           <p className="eyebrow">Get started</p>
-          <h1>Create workspace</h1>
-          <p className="lede">Create the first HyperOptimal Metrics workspace for {user.email}.</p>
+          <h1>Create Account</h1>
+          <p className="lede">Set up HyperOptimal Metrics for {user.email}.</p>
           {message ? <p className="notice">{message}</p> : null}
           {error ? <p className="notice error">{error}</p> : null}
           <form action={createTenantAction} className="form-stack compact">
             <label>
-              Workspace name
+              Company name
               <input name="name" type="text" placeholder="HyperOptimal Metrics" autoComplete="organization" required />
             </label>
-            <button type="submit">Create workspace</button>
+            <button type="submit">Create account</button>
           </form>
           <form action={skipOnboardingAction} className="skip-form">
             <button type="submit" className="button-secondary">Skip</button>
@@ -119,8 +118,8 @@ export default async function GetStartedPage({ searchParams }: PageProps) {
         <div className="header-row">
           <div>
             <h1>Get Started</h1>
-            <p className="eyebrow">Workspace setup</p>
-            <p className="lede">Set up the first source-of-truth views, core data sources, and messaging channels.</p>
+            <p className="eyebrow">Account setup</p>
+            <p className="lede">Choose your metrics, connect data sources, and add messaging channels.</p>
           </div>
           <form action={skipOnboardingAction}>
             <button type="submit" className="button-secondary">Skip</button>
@@ -130,8 +129,7 @@ export default async function GetStartedPage({ searchParams }: PageProps) {
         {error ? <p className="notice error">{error}</p> : null}
         {billing === "success" ? (
           <p className="notice">
-            Billing setup returned successfully
-            {checkoutSessionId ? ` for ${checkoutSessionId}` : ""}.
+            Billing setup is complete.
           </p>
         ) : null}
         {billing === "cancelled" ? (
@@ -149,11 +147,11 @@ export default async function GetStartedPage({ searchParams }: PageProps) {
           {subscription ? (
             <>
               <p>Subscription: {subscription.status}</p>
-              <p className="muted">Billing is connected to this workspace.</p>
+              <p className="muted">Billing is active.</p>
             </>
           ) : (
             <>
-              <p>Set up Stripe billing for this workspace.</p>
+              <p>Set up billing.</p>
               <form action={startStripeCheckoutAction} className="card-action">
                 <button type="submit">Continue to billing</button>
               </form>
@@ -208,13 +206,13 @@ export default async function GetStartedPage({ searchParams }: PageProps) {
             </label>
             <label className="metric-checkbox-row">
               <input name="benchmarkOptIn" type="checkbox" defaultChecked={profile?.benchmark_opt_in ?? false} />
-              <span>Use curated benchmark cohorts</span>
+              <span>Use benchmark comparisons</span>
             </label>
             <button type="submit">Save profile</button>
           </form>
         </SetupCard>
 
-        <SetupCard step="Step 4" title="Core Sources">
+        <SetupCard step="Step 4" title="Data Sources">
           <div className="integration-health-grid">
             {[
               ["Stripe", "/integrations/stripe"],
@@ -230,7 +228,7 @@ export default async function GetStartedPage({ searchParams }: PageProps) {
           </div>
         </SetupCard>
 
-        <SetupCard step="Step 5" title="CEO Metrics">
+        <SetupCard step="Step 5" title="Most Important Metrics">
           <form action={saveMetricSelectionsAction} className="metric-selector-form compact-selector">
             <input type="hidden" name="viewKey" value="ceo" />
             <input type="hidden" name="next" value="/get-started" />
@@ -247,7 +245,7 @@ export default async function GetStartedPage({ searchParams }: PageProps) {
                 </label>
               ))}
             </div>
-            <button type="submit">Save CEO metrics</button>
+            <button type="submit">Save metrics</button>
           </form>
         </SetupCard>
 
@@ -262,7 +260,7 @@ export default async function GetStartedPage({ searchParams }: PageProps) {
               <strong>Connect</strong>
             </Link>
           </div>
-          <Link href="/dashboard" className="button-primary card-action">Open CEO Dashboard</Link>
+          <Link href="/dashboard" className="button-primary card-action">Open Metrics</Link>
         </SetupCard>
       </section>
     </AppShell>

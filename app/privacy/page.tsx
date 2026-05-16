@@ -11,15 +11,15 @@ export default function PrivacyPage() {
         <p>Effective date: May 15, 2026</p>
         <h2>Data we process</h2>
         <p>
-          HyperOptimal Metrics processes account information, workspace data,
+          HyperOptimal Metrics processes account information, company data,
           analytics data, integration events, messages, email delivery records,
           SMS delivery records, and billing state needed to operate the service.
         </p>
-        <h2>Workspace boundaries</h2>
+        <h2>Account boundaries</h2>
         <p>
-          Customer workspaces are separated from each other. Application data is
+          Customer accounts are separated from each other. Application data is
           protected by access controls designed to limit access to authorized
-          workspace members.
+          team members.
         </p>
         <h2>Service providers</h2>
         <p>
@@ -33,7 +33,7 @@ export default function PrivacyPage() {
         </p>
         <h2>Contact</h2>
         <p>
-          For privacy questions, contact the workspace administrator or
+          For privacy questions, contact the account administrator or
           HyperOptimal Metrics support.
         </p>
       </article>

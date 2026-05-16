@@ -32,7 +32,7 @@ export default async function TelegramSettingsPage({ searchParams }: PageProps) 
       <section className="page-header compact">
         <p className="eyebrow">{tenant.name}</p>
         <h1>Settings</h1>
-        <p className="lede">Connect Telegram for workspace metrics, constraints, and forecast commands.</p>
+        <p className="lede">Connect Telegram for metrics, constraints, and forecast commands.</p>
         {message ? <p className="notice">{message}</p> : null}
         {error ? <p className="notice error">{error}</p> : null}
       </section>

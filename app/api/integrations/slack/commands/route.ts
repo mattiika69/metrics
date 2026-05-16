@@ -44,7 +44,7 @@ export async function POST(request: Request) {
   if (!integration) {
     return Response.json({
       response_type: "ephemeral",
-      text: "Slack is not connected to a HyperOptimal Metrics workspace yet.",
+      text: "Slack is not connected to HyperOptimal Metrics yet.",
     });
   }
 

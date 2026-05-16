@@ -12,6 +12,8 @@ const allowedSidebarItemIds = [
   "metrics-inputs",
   "metrics-benchmarking",
   "constraints",
+  "ai-context",
+  "learnings",
   "settings",
 ];
 

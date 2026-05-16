@@ -10,7 +10,7 @@ export default async function AccountPage() {
       <section className="page-header">
         <p className="eyebrow">Account</p>
         <h1>Profile and access</h1>
-        <p className="lede">Your profile, workspace, and access level.</p>
+        <p className="lede">Your profile, company, and access level.</p>
       </section>
       <section className="settings-list">
         <div>
@@ -18,7 +18,7 @@ export default async function AccountPage() {
           <strong>{user.email}</strong>
         </div>
         <div>
-          <span>Workspace</span>
+          <span>Company</span>
           <strong>{tenant.name}</strong>
         </div>
         <div>

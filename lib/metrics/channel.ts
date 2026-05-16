@@ -25,6 +25,7 @@ export type ChannelCommand =
   | "metrics"
   | "constraints"
   | "forecast"
+  | "inputs"
   | "marketing"
   | "sales"
   | "retention"
@@ -38,6 +39,7 @@ const commandByToken = new Map<string, ChannelCommand>([
   ["constraint", "constraints"],
   ["forecast", "forecast"],
   ["forecasting", "forecast"],
+  ["inputs", "inputs"],
   ["marketing", "marketing"],
   ["sales", "sales"],
   ["retention", "retention"],
@@ -72,7 +74,7 @@ export async function buildMetricsCommandResponse(tenantId: string) {
 
   if (!payload.calculatedAt) {
     lines.push("");
-    lines.push("No snapshots are available yet. Connect integrations and run a recalculation from the web app.");
+    lines.push("No metric data yet. Connect data sources and refresh metrics in the app.");
   }
 
   return lines.join("\n");
@@ -89,7 +91,7 @@ export async function buildMetricViewCommandResponse(tenantId: string, viewKey: 
 
   if (!payload.calculatedAt) {
     lines.push("");
-    lines.push("No snapshots are available yet. Connect integrations and run a recalculation from the web app.");
+    lines.push("No metric data yet. Connect data sources and refresh metrics in the app.");
   }
 
   return lines.join("\n");
@@ -122,6 +124,7 @@ export async function buildConstraintsCommandResponse(tenantId: string) {
 export async function buildChannelCommandResponse(tenantId: string, command: ChannelCommand) {
   if (command === "constraints") return buildConstraintsCommandResponse(tenantId);
   if (command === "forecast") return buildForecastCommandResponse(tenantId);
+  if (command === "inputs") return buildMetricViewCommandResponse(tenantId, "marketing");
   if (command === "marketing") return buildMetricViewCommandResponse(tenantId, "marketing");
   if (command === "sales") return buildMetricViewCommandResponse(tenantId, "sales");
   if (command === "retention") return buildMetricViewCommandResponse(tenantId, "retention");

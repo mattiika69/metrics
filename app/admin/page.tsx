@@ -17,12 +17,12 @@ export default async function AdminPage() {
       <section className="dashboard-grid">
         <article className="compact-card">
           <h2>Users and roles</h2>
-          <p>Review who can access the workspace and adjust permissions.</p>
+          <p>Review who can access the account and adjust permissions.</p>
           <span className="muted">Your access: {membership.role === "owner" ? "Owner" : membership.role}</span>
         </article>
         <article className="compact-card">
           <h2>Billing</h2>
-          <p>Manage the workspace plan, payment method, and subscription status.</p>
+          <p>Manage the plan, payment method, and subscription status.</p>
           <span className="muted">Plans and invoices</span>
         </article>
         <article className="compact-card">
@@ -32,7 +32,7 @@ export default async function AdminPage() {
         </article>
         <article className="compact-card">
           <h2>Legal and compliance</h2>
-          <p>Review policies and account controls for the workspace.</p>
+          <p>Review policies and account controls.</p>
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>
         </article>

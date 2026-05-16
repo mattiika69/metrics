@@ -28,7 +28,7 @@ function canManage(role: string) {
 export async function createScheduleAction(formData: FormData) {
   const { supabase, tenant, user, membership } = await requireTenant();
   if (!canManage(membership.role)) {
-    redirectWith("error", "Only workspace admins can manage schedules.");
+    redirectWith("error", "Only admins can manage schedules.");
   }
 
   const name = formValue(formData, "name");
@@ -71,7 +71,7 @@ export async function createScheduleAction(formData: FormData) {
 export async function toggleScheduleAction(formData: FormData) {
   const { supabase, tenant, user, membership } = await requireTenant();
   if (!canManage(membership.role)) {
-    redirectWith("error", "Only workspace admins can manage schedules.");
+    redirectWith("error", "Only admins can manage schedules.");
   }
 
   const scheduleId = formValue(formData, "scheduleId");
@@ -103,7 +103,7 @@ export async function toggleScheduleAction(formData: FormData) {
 export async function archiveScheduleAction(formData: FormData) {
   const { supabase, tenant, user, membership } = await requireTenant();
   if (!canManage(membership.role)) {
-    redirectWith("error", "Only workspace admins can manage schedules.");
+    redirectWith("error", "Only admins can manage schedules.");
   }
 
   const scheduleId = formValue(formData, "scheduleId");
@@ -134,7 +134,7 @@ export async function archiveScheduleAction(formData: FormData) {
 export async function runScheduleNowAction(formData: FormData) {
   const { tenant, user, membership } = await requireTenant();
   if (!canManage(membership.role)) {
-    redirectWith("error", "Only workspace admins can run schedules.");
+    redirectWith("error", "Only admins can run schedules.");
   }
 
   const scheduleId = formValue(formData, "scheduleId");

@@ -38,7 +38,7 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
       <section className="page-header">
         <p className="eyebrow">{tenant.name}</p>
         <h1>Settings</h1>
-        <p className="lede">Manage billing for this workspace.</p>
+        <p className="lede">Manage billing and subscription access.</p>
         {message ? <p className="notice">{message}</p> : null}
         {error ? <p className="notice error">{error}</p> : null}
       </section>
@@ -62,11 +62,11 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
               <strong>{subscription?.stripe_subscription_id ? "Connected" : "Not connected"}</strong>
             </div>
             <div>
-              <span>Current period end</span>
+              <span>Renews</span>
               <strong>{subscription?.current_period_end ? new Date(subscription.current_period_end).toLocaleDateString() : "None"}</strong>
             </div>
             <div>
-              <span>Cancel at period end</span>
+              <span>Cancellation scheduled</span>
               <strong>{subscription?.cancel_at_period_end ? "Yes" : "No"}</strong>
             </div>
           </div>
@@ -78,7 +78,7 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
               <h2>Checkout</h2>
             </div>
           </div>
-          <p className="muted">Start or update billing for this workspace.</p>
+          <p className="muted">Start or update billing.</p>
           <form action={startStripeCheckoutAction} className="card-action">
             <button type="submit">Continue to billing</button>
           </form>

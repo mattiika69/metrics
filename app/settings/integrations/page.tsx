@@ -74,7 +74,7 @@ export default async function SettingsIntegrationsPage({ searchParams }: PagePro
       <section className="page-header compact">
         <p className="eyebrow">{tenant.name}</p>
         <h1>Settings</h1>
-        <p className="lede">Connect the data sources that keep your workspace current.</p>
+        <p className="lede">Connect the data sources that keep your dashboards current.</p>
         {message ? <p className="notice">{message}</p> : null}
       </section>
       <SettingsTabs active="integrations" />

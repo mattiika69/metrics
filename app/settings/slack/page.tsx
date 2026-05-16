@@ -30,7 +30,7 @@ export default async function SlackSettingsPage({ searchParams }: PageProps) {
       <section className="page-header compact">
         <p className="eyebrow">{tenant.name}</p>
         <h1>Settings</h1>
-        <p className="lede">Connect Slack for workspace metrics, constraints, and forecast commands.</p>
+        <p className="lede">Connect Slack for metrics, constraints, and forecast commands.</p>
         {message ? <p className="notice">{message}</p> : null}
         {error ? <p className="notice error">{error}</p> : null}
       </section>
@@ -47,7 +47,7 @@ export default async function SlackSettingsPage({ searchParams }: PageProps) {
           </div>
           <div className="settings-list">
             <div>
-              <span>Workspace</span>
+              <span>Slack team</span>
               <strong>{connection?.display_name ?? "None"}</strong>
             </div>
             <div>

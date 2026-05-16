@@ -28,6 +28,13 @@ function canManageTeam(role: string) {
   return role === "owner" || role === "admin";
 }
 
+function invitationStatus(status: string, emailStatus: string | null) {
+  const parts = [status];
+  if (emailStatus === "sent") parts.push("email sent");
+  if (emailStatus === "failed") parts.push("email failed");
+  return parts.join(" · ");
+}
+
 export default async function TeamSettingsPage({ searchParams }: PageProps) {
   const { supabase, user, tenant, membership } = await requireTenant();
   const params = await searchParams;
@@ -63,7 +70,7 @@ export default async function TeamSettingsPage({ searchParams }: PageProps) {
       <section className="page-header">
         <p className="eyebrow">{tenant.name}</p>
         <h1>Settings</h1>
-        <p className="lede">Manage workspace access and team members.</p>
+        <p className="lede">Manage team access and invitations.</p>
         {message ? <p className="notice">{message}</p> : null}
         {error ? <p className="notice error">{error}</p> : null}
       </section>
@@ -120,7 +127,7 @@ export default async function TeamSettingsPage({ searchParams }: PageProps) {
               <button type="submit">Send invitation</button>
             </form>
           ) : (
-            <p className="muted">Only workspace admins can invite team members.</p>
+            <p className="muted">Only admins can invite team members.</p>
           )}
         </article>
         {isAdmin ? (
@@ -138,11 +145,11 @@ export default async function TeamSettingsPage({ searchParams }: PageProps) {
                     <div>
                       <strong>{invitation.email}</strong>
                       <span className="muted">
-                        {invitation.status} · email {invitation.email_delivery_status} · expires{" "}
+                        {invitationStatus(invitation.status, invitation.email_delivery_status)} · expires{" "}
                         {new Date(invitation.expires_at).toLocaleDateString()}
                       </span>
                       {invitation.email_delivery_error ? (
-                        <span className="muted">{invitation.email_delivery_error}</span>
+                        <span className="muted">Email could not be delivered.</span>
                       ) : null}
                     </div>
                     <div className="row-actions">

@@ -31,13 +31,14 @@ export async function POST(request: Request) {
 
     return Response.json({ ok: true, ...result });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to recalculate metrics.";
+    const auditMessage = error instanceof Error ? error.message : "Unable to refresh metrics.";
+    const message = "Unable to refresh metrics.";
     await logAuditEvent({
       tenantId: context.tenant.id,
       actorUserId: context.user.id,
       eventType: "metrics_recalculate_failed",
       targetType: "metric_snapshots",
-      metadata: { periodKey, error: message },
+      metadata: { periodKey, error: auditMessage },
     });
     return Response.json({ error: message }, { status: 500 });
   }

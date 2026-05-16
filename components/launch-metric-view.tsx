@@ -40,7 +40,7 @@ export function MetricCard({
     <article className="metric-card launch-metric-card">
       <div className="card-topline">
         <span>{category}</span>
-        <strong>source</strong>
+        <strong>data</strong>
       </div>
       <h2>{name}</h2>
       <p className="metric-value">{displayValue}</p>
@@ -77,7 +77,7 @@ export function MetricSelectionPanel({
         <form action={recalculateMetricsAction}>
           <input type="hidden" name="period" value="30d" />
           <input type="hidden" name="next" value={next} />
-          <button type="submit" className="button-secondary">Recalculate</button>
+          <button type="submit" className="button-secondary">Refresh</button>
         </form>
       </div>
       <form action={saveMetricSelectionsAction} className="metric-selector-form">
@@ -144,7 +144,7 @@ export function SourceFreshnessPanel({
           <h2>Source Freshness</h2>
           <p className="muted">{labelForFreshness(calculatedAt)}</p>
         </div>
-        <span className="pill">{calculatedAt ? new Date(calculatedAt).toLocaleString() : "No snapshot"}</span>
+        <span className="pill">{calculatedAt ? new Date(calculatedAt).toLocaleString() : "No data yet"}</span>
       </div>
       <div className="source-freshness-grid">
         {counts.map((count) => (
@@ -185,7 +185,7 @@ export async function DepartmentMetricPage({
           <form action={recalculateMetricsAction}>
             <input type="hidden" name="period" value="30d" />
             <input type="hidden" name="next" value={payload.view.href} />
-            <button type="submit" className="button-secondary">Recalculate</button>
+            <button type="submit" className="button-secondary">Refresh</button>
           </form>
         </div>
         {message ? <p className="notice">{message}</p> : null}

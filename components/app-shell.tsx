@@ -14,6 +14,7 @@ export type ActiveRoute =
   | "integrations"
   | "constraints"
   | "ai-context"
+  | "learnings"
   | "metrics-most-important"
   | "metrics-reverse-engineering"
   | "metrics-financial"
@@ -42,7 +43,7 @@ type AppShellProps = {
 };
 
 const primaryItems: SidebarItem[] = [
-  { id: "metrics-most-important", label: "CEO Dashboard", href: "/dashboard", section: "metrics" },
+  { id: "metrics-most-important", label: "Most Important Metrics", href: "/dashboard", section: "metrics" },
   { id: "metrics-reverse-engineering", label: "Reverse Engineering", href: "/forecasting", section: "metrics" },
   {
     id: "metrics-financial",
@@ -89,6 +90,8 @@ const primaryItems: SidebarItem[] = [
   },
   { id: "metrics-benchmarking", label: "Benchmarks", href: "/benchmarks", section: "metrics" },
   { id: "constraints", label: "Constraints", href: "/constraints", section: "metrics" },
+  { id: "ai-context", label: "AI Context Document", href: "/ai-context-doc", section: "metrics" },
+  { id: "learnings", label: "Learnings", href: "/learnings", section: "metrics" },
   { id: "settings", label: "Settings", href: "/settings/account", section: "settings" },
 ];
 

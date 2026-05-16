@@ -18,7 +18,7 @@ export async function POST(_request: Request, routeContext: RouteContext) {
   const definition = getIntegrationDefinition(id);
   if (!definition) return Response.json({ error: "Integration not found." }, { status: 404 });
   if (definition.group === "Messaging") {
-    return Response.json({ error: "Messaging integrations do not use source sync." }, { status: 400 });
+    return Response.json({ error: "This connection refreshes automatically." }, { status: 400 });
   }
 
   const admin = createAdminClient();
@@ -52,13 +52,13 @@ export async function POST(_request: Request, routeContext: RouteContext) {
     targetId: id,
     metadata: {
       provider: id,
-      note: "Provider-specific ingestion runs behind this integration sync surface.",
+      note: "manual_refresh",
     },
   });
 
   return Response.json({
     ok: true,
     syncedAt: now,
-    message: "Integration marked synced and metrics recalculated from persisted source rows.",
+    message: "Data refreshed.",
   });
 }

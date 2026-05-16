@@ -18,7 +18,7 @@ export default async function AccountSettingsPage() {
       <section className="page-header compact">
         <p className="eyebrow">{tenant.name}</p>
         <h1>Settings</h1>
-        <p className="lede">Manage your account and workspace access.</p>
+        <p className="lede">Manage your profile and access.</p>
       </section>
       <SettingsTabs active="account" />
       <section className="settings-layout">
@@ -40,7 +40,7 @@ export default async function AccountSettingsPage() {
               <strong>{profile?.email ?? user.email ?? "Not available"}</strong>
             </div>
             <div>
-              <span>Workspace</span>
+              <span>Company</span>
               <strong>{tenant.name}</strong>
             </div>
           </div>
@@ -48,8 +48,8 @@ export default async function AccountSettingsPage() {
         <article className="settings-panel">
           <div className="panel-heading">
             <div>
-              <p className="step-label">Session</p>
-              <h2>Access</h2>
+              <p className="step-label">Login</p>
+              <h2>Sign out</h2>
             </div>
           </div>
           <p className="muted">Sign out when you are done working on this device.</p>

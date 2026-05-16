@@ -328,7 +328,7 @@ export async function createTenantAction(formData: FormData) {
   const name = formValue(formData, "name");
 
   if (!name) {
-    redirectWith("/get-started", "error", "Workspace name is required.");
+    redirectWith("/get-started", "error", "Company name is required.");
   }
 
   const supabase = await createClient();
@@ -338,7 +338,7 @@ export async function createTenantAction(formData: FormData) {
   } = await supabase.auth.getUser();
 
   if (userError || !user) {
-    redirectWith("/login", "error", "Log in to create a workspace.");
+    redirectWith("/login", "error", "Log in to create an account.");
   }
 
   const { data: tenant, error } = await supabase
@@ -374,7 +374,7 @@ export async function createTenantAction(formData: FormData) {
     },
   });
 
-  redirectWith("/get-started", "message", "Workspace created.");
+  redirectWith("/get-started", "message", "Account created.");
 }
 
 export async function skipOnboardingAction() {
@@ -395,7 +395,7 @@ export async function skipOnboardingAction() {
     targetId: user.id,
   });
 
-  redirectWith("/dashboard", "message", "Workspace setup skipped.");
+  redirectWith("/dashboard", "message", "Setup skipped.");
 }
 
 export async function startStripeCheckoutAction() {
@@ -420,7 +420,7 @@ export async function startStripeCheckoutAction() {
     redirectWith(
       "/get-started",
       "error",
-      "Create a workspace before starting billing.",
+      "Create an account before starting billing.",
     );
   }
 
@@ -457,7 +457,7 @@ export async function startStripeCheckoutAction() {
     redirectWith(
       "/get-started",
       "message",
-      "Stripe checkout is ready for configuration.",
+      "Billing checkout is not available right now.",
     );
   }
 

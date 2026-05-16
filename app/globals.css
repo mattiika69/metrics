@@ -3664,7 +3664,7 @@ body {
 }
 
 .side-shell-header {
-  border-bottom: 1px solid #374151;
+  border-bottom: 0;
   padding: 8px 10px;
 }
 
@@ -3828,8 +3828,8 @@ body {
 }
 
 .sidebar-group.with-accent {
-  border-left: 1px solid rgba(37, 99, 235, 0.62);
-  padding-left: 5px;
+  border-left: 0;
+  padding-left: 0;
 }
 
 .sidebar-subnav {
@@ -5166,6 +5166,293 @@ body {
   display: grid;
   grid-template-columns: repeat(3, minmax(260px, 1fr));
   gap: 12px;
+}
+
+.learnings-layout {
+  display: grid;
+  grid-template-columns: 380px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.learning-panel {
+  border: 1px solid #d8dde6;
+  border-radius: 6px;
+  background: #ffffff;
+  padding: 14px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.learning-panel h2 {
+  margin: 0 0 12px;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.learning-form {
+  display: grid;
+  gap: 10px;
+}
+
+.learning-form input,
+.learning-form select,
+.learning-form textarea,
+.learning-item input,
+.learning-item select,
+.learning-item textarea {
+  width: 100%;
+  min-height: 34px;
+  border: 1px solid #cfd6e1;
+  border-radius: 5px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 12px;
+  padding: 8px 10px;
+}
+
+.learning-form textarea,
+.learning-item textarea {
+  min-height: 128px;
+  resize: vertical;
+}
+
+.learning-form button,
+.learning-actions button {
+  min-height: 32px;
+  border: 0;
+  border-radius: 5px;
+  background: #111827;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 0 12px;
+}
+
+.learning-list {
+  display: grid;
+  gap: 10px;
+}
+
+.learning-item {
+  display: grid;
+  gap: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.learning-item form {
+  display: grid;
+  gap: 8px;
+}
+
+.learning-item-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 150px;
+  gap: 8px;
+}
+
+.learning-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.learning-actions span,
+.learning-empty {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.text-danger {
+  justify-self: end;
+  border: 0;
+  background: transparent;
+  color: #dc2626;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+}
+
+.benchmark-input,
+.benchmark-notes-input {
+  min-height: 28px;
+  border: 1px solid #cfd6e1;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 11px;
+  padding: 4px 7px;
+}
+
+.benchmark-input {
+  max-width: 110px;
+}
+
+.benchmark-notes-input {
+  min-width: 220px;
+}
+
+.mini-save-button {
+  min-height: 27px;
+  border: 1px solid #111827;
+  border-radius: 4px;
+  background: #111827;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 0 10px;
+}
+
+@media (max-width: 980px) {
+  .learnings-layout,
+  .learning-item-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Current product polish overrides */
+.app-main {
+  background: #f5f6f8;
+}
+
+.app-content {
+  padding: 54px 52px 88px;
+}
+
+.scaling-page {
+  max-width: 1760px;
+}
+
+.scaling-metric-card,
+.source-table-panel,
+.category-breakdown-panel,
+.learning-panel,
+.app-content > .settings-layout .settings-panel,
+.benchmark-focus-panel {
+  border-color: #d6dce6;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 10px 24px rgba(15, 23, 42, 0.03);
+}
+
+.scaling-metric-card {
+  min-height: 82px;
+  padding: 12px;
+}
+
+.metric-card-head span:first-child {
+  color: #334155;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.source-table-panel,
+.category-breakdown-panel {
+  border-radius: 6px;
+}
+
+.source-table th,
+.scaling-table th {
+  color: #526174;
+  font-weight: 700;
+}
+
+.source-table td,
+.scaling-table td {
+  color: #1f2937;
+}
+
+.app-content > .settings-layout {
+  max-width: 1440px;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.48fr);
+  gap: 18px;
+}
+
+.app-content > .settings-layout .settings-panel,
+.learning-panel {
+  border-radius: 8px;
+  padding: 18px;
+}
+
+.app-content > .settings-tabs {
+  max-width: 1440px;
+  margin-bottom: 22px;
+}
+
+.app-content > .page-header:has(+ .settings-tabs) {
+  max-width: 1440px;
+}
+
+.learning-panel h2,
+.app-content > .settings-layout h2 {
+  font-size: 15px;
+}
+
+.learning-form input,
+.learning-form select,
+.learning-form textarea,
+.learning-item input,
+.learning-item select,
+.learning-item textarea,
+.benchmark-input,
+.benchmark-notes-input {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.learning-form input:focus,
+.learning-form select:focus,
+.learning-form textarea:focus,
+.learning-item input:focus,
+.learning-item select:focus,
+.learning-item textarea:focus,
+.benchmark-input:focus,
+.benchmark-notes-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.learning-item {
+  border-color: #dbe1ea;
+  background: #fbfcfd;
+}
+
+.learning-empty {
+  display: grid;
+  min-height: 120px;
+  place-items: center;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.benchmark-focus-panel {
+  grid-template-columns: minmax(280px, 0.55fr) minmax(480px, 1fr);
+  border-radius: 8px;
+  padding: 18px 20px;
+}
+
+.benchmarks-panel .source-table {
+  min-width: 1240px;
+}
+
+.benchmarks-panel .source-table th,
+.benchmarks-panel .source-table td {
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+.benchmark-input {
+  max-width: 96px;
+}
+
+.mini-save-button:hover,
+.learning-form button:hover,
+.learning-actions button:hover {
+  background: #0f172a;
 }
 
 .input-account-card {

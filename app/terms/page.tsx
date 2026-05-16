@@ -11,13 +11,13 @@ export default function TermsPage() {
         <p>Effective date: May 15, 2026</p>
         <h2>Use of the service</h2>
         <p>
-          HyperOptimal Metrics is a workspace-based application for metrics,
+          HyperOptimal Metrics is an account-based application for metrics,
           reporting, integrations, and operational workflows. Users must only
-          access workspaces they are authorized to use.
+          access accounts they are authorized to use.
         </p>
         <h2>Accounts and administrators</h2>
         <p>
-          Workspace owners and administrators are responsible for user access,
+          Account owners and administrators are responsible for user access,
           billing configuration, connected integrations, and compliance with
           applicable laws.
         </p>
@@ -29,8 +29,8 @@ export default function TermsPage() {
         </p>
         <h2>Billing</h2>
         <p>
-          Paid features may be governed by subscription status at the workspace
-          level. Subscription changes may affect workspace access.
+          Paid features may be governed by subscription status at the account
+          level. Subscription changes may affect account access.
         </p>
         <h2>Acceptable use</h2>
         <p>

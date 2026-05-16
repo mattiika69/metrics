@@ -56,7 +56,7 @@ export default async function SchedulingSettingsPage({ searchParams }: PageProps
       <section className="page-header compact">
         <p className="eyebrow">{tenant.name}</p>
         <h1>Settings</h1>
-        <p className="lede">Schedule reports and operating prompts for connected channels.</p>
+        <p className="lede">Schedule reports for connected channels.</p>
         {message ? <p className="notice">{message}</p> : null}
         {error ? <p className="notice error">{error}</p> : null}
       </section>
@@ -66,7 +66,7 @@ export default async function SchedulingSettingsPage({ searchParams }: PageProps
           <div className="panel-heading">
             <div>
               <p className="step-label">Schedules</p>
-              <h2>Active workflows</h2>
+              <h2>Scheduled reports</h2>
             </div>
             <span className="pill">{schedules?.length ?? 0} active</span>
           </div>
@@ -184,14 +184,14 @@ export default async function SchedulingSettingsPage({ searchParams }: PageProps
               <button type="submit">Create schedule</button>
             </form>
           ) : (
-            <p className="muted">Only workspace admins can create schedules.</p>
+            <p className="muted">Only admins can create schedules.</p>
           )}
         </article>
         <article className="settings-panel full-span">
           <div className="panel-heading">
             <div>
               <p className="step-label">History</p>
-              <h2>Recent runs</h2>
+              <h2>Recent activity</h2>
             </div>
           </div>
           <div className="table-list">
@@ -210,7 +210,7 @@ export default async function SchedulingSettingsPage({ searchParams }: PageProps
                 </div>
               ))
             ) : (
-              <p className="muted">No runs recorded yet.</p>
+              <p className="muted">No activity yet.</p>
             )}
           </div>
         </article>

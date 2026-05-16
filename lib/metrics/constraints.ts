@@ -9,30 +9,32 @@ type SupabaseLike = SupabaseClient;
 export type ConstraintRow = {
   benchmark: Benchmark;
   actual: number | null;
-  minimum: number;
-  scale: number;
+  minimum: number | null;
+  scale: number | null;
   gapPercent: number | null;
   status: "scale_met" | "minimum_met" | "missing" | "constrained";
   suggestions: string[];
 };
 
-function gapPercent(benchmark: Benchmark, actual: number | null, target: number) {
+function gapPercent(benchmark: Benchmark, actual: number | null, target: number | null) {
   if (actual === null || !Number.isFinite(actual) || target === 0) return null;
+  if (target === null || !Number.isFinite(target)) return null;
   const rawGap = benchmark.inverse
     ? ((actual - target) / target) * 100
     : ((target - actual) / target) * 100;
   return Math.max(0, rawGap);
 }
 
-function statusFor(benchmark: Benchmark, actual: number | null, minimum: number, scale: number): ConstraintRow["status"] {
+function statusFor(benchmark: Benchmark, actual: number | null, minimum: number | null, scale: number | null): ConstraintRow["status"] {
+  if (scale === null || !Number.isFinite(scale)) return "missing";
   if (actual === null) return "missing";
   if (benchmark.inverse) {
     if (actual <= scale) return "scale_met";
-    if (actual <= minimum) return "minimum_met";
+    if (minimum !== null && actual <= minimum) return "minimum_met";
     return "constrained";
   }
   if (actual >= scale) return "scale_met";
-  if (actual >= minimum) return "minimum_met";
+  if (minimum !== null && actual >= minimum) return "minimum_met";
   return "constrained";
 }
 
@@ -59,20 +61,27 @@ export async function buildConstraintsDigest({
     loadMetricSnapshotPayload({ supabase, tenantId, periodKey }),
     supabase
       .from("metric_benchmark_targets")
-      .select("benchmark_id, target_value")
+      .select("benchmark_id, target_value, minimum_value")
       .eq("tenant_id", tenantId),
   ]);
 
-  const targetById = new Map<string, number>();
+  const targetById = new Map<string, { target: number | null; minimum: number | null }>();
   for (const target of targets.data ?? []) {
-    targetById.set(target.benchmark_id, Number(target.target_value));
+    const targetValue = Number(target.target_value);
+    const minimumValue = Number(target.minimum_value);
+    targetById.set(target.benchmark_id, {
+      target: Number.isFinite(targetValue) ? targetValue : null,
+      minimum: Number.isFinite(minimumValue) ? minimumValue : null,
+    });
   }
 
   const rows: ConstraintRow[] = benchmarks
     .map((benchmark) => {
       const actual = payload.metrics[benchmark.metricId]?.value ?? null;
-      const scale = targetById.get(benchmark.id) ?? benchmark.target;
-      const minimum = benchmark.minimum;
+      const custom = targetById.get(benchmark.id);
+      const hasCuratedTarget = benchmark.target !== 0 || benchmark.minimum !== 0;
+      const scale = custom?.target ?? (hasCuratedTarget ? benchmark.target : null);
+      const minimum = custom?.minimum ?? (hasCuratedTarget ? benchmark.minimum : null);
       const gap = gapPercent(benchmark, actual, scale);
 
       return {
@@ -86,6 +95,8 @@ export async function buildConstraintsDigest({
       };
     })
     .sort((left, right) => {
+      if (left.scale === null && right.scale !== null) return 1;
+      if (right.scale === null && left.scale !== null) return -1;
       const leftGap = left.gapPercent ?? Number.MAX_SAFE_INTEGER;
       const rightGap = right.gapPercent ?? Number.MAX_SAFE_INTEGER;
       if (left.status === "missing" && right.status !== "missing") return 1;
@@ -106,7 +117,7 @@ export function formatConstraintValue(row: ConstraintRow, value: number | null) 
 
 export function formatConstraintsForChannel(rows: ConstraintRow[]) {
   if (rows.length === 0) {
-    return "No metric constraints are available yet. Connect integrations, sync data, and recalculate metrics first.";
+    return "No metric constraints are available yet. Connect data sources and refresh metrics first.";
   }
 
   const lines = ["Top 3 metric constraints"];

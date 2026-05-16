@@ -22,8 +22,8 @@ export async function GET() {
       getTelegramBotStatus(),
       getTelegramWebhookStatus(),
     ]);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Telegram environment is not configured.";
+  } catch {
+    const message = "Telegram is unavailable right now.";
     return Response.json({ connection: connection ?? null, bot: { ok: false, error: message }, webhook: null });
   }
 

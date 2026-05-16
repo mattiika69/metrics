@@ -30,7 +30,7 @@ export default async function AcceptTeamInvitationPage({
     <main className="auth-shell">
       <section className="auth-panel">
         <p className="eyebrow">Team invitation</p>
-        <h1>Join workspace</h1>
+        <h1>Join team</h1>
         <p className="lede">
           Accept the invitation with the same email address that received it.
         </p>

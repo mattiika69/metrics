@@ -59,16 +59,6 @@ export default async function IntegrationDetailPage({ params, searchParams }: Pa
       .maybeSingle();
   const connectionRecord = connection as Record<string, unknown> | null;
   const lastSyncAt = typeof connectionRecord?.last_sync_at === "string" ? connectionRecord.last_sync_at : null;
-  const lastError = typeof connectionRecord?.last_error === "string" ? connectionRecord.last_error : null;
-  const { data: syncRuns } = definition.group === "Messaging"
-    ? { data: [] }
-    : await supabase
-      .from("metric_sync_runs")
-      .select("id, status, rows_read, rows_written, error, started_at, completed_at")
-      .eq("tenant_id", tenant.id)
-      .eq("provider", definition.id)
-      .order("started_at", { ascending: false })
-      .limit(5);
 
   return (
     <AppShell active="settings-integrations" tenantName={tenant.name}>
@@ -91,10 +81,7 @@ export default async function IntegrationDetailPage({ params, searchParams }: Pa
             <p><strong>Connection:</strong> {definition.comingSoon ? "Coming soon" : connection ? connection.status : "Not connected"}</p>
             <p><strong>Last updated:</strong> {connection?.updated_at ? new Date(connection.updated_at).toLocaleString() : "Never"}</p>
             {lastSyncAt !== null ? (
-              <p><strong>Last sync:</strong> {new Date(lastSyncAt).toLocaleString()}</p>
-            ) : null}
-            {lastError ? (
-              <p><strong>Last error:</strong> {lastError}</p>
+              <p><strong>Last refreshed:</strong> {new Date(lastSyncAt).toLocaleString()}</p>
             ) : null}
           </div>
         </article>
@@ -103,13 +90,13 @@ export default async function IntegrationDetailPage({ params, searchParams }: Pa
           {definition.id === "slack" ? (
             <>
               <h2>Connect Slack</h2>
-              <p className="muted">Install Slack to ask for metrics and constraints from your workspace.</p>
+              <p className="muted">Use Slack to ask for metrics, constraints, and forecasts.</p>
               <Link href="/api/integrations/slack/oauth/start" className="button-primary">Connect Slack</Link>
             </>
           ) : definition.id === "telegram" ? (
             <>
               <h2>Connect Telegram</h2>
-              <p className="muted">Generate a link code, then send it to the bot to connect this workspace.</p>
+              <p className="muted">Generate a link code, then send it to the Telegram bot.</p>
               {code ? (
                 <p className="notice">
                   Code: <strong>{code}</strong>
@@ -136,12 +123,12 @@ export default async function IntegrationDetailPage({ params, searchParams }: Pa
                     <input name={field.name} type={field.type} placeholder={field.placeholder} required />
                   </label>
                 ))}
-                {definition.fields.length === 0 ? <p className="muted">No credentials are required for this connection.</p> : null}
+                {definition.fields.length === 0 ? <p className="muted">No extra details are needed for this connection.</p> : null}
                 <button type="submit">Save connection</button>
               </form>
               <form action={syncIntegrationAction} className="card-action">
                 <input type="hidden" name="provider" value={definition.id} />
-                <button type="submit" className="button-secondary">Sync now</button>
+                <button type="submit" className="button-secondary">Refresh data</button>
               </form>
               {definition.id === "csv-banking" ? (
                 <form action={importCsvBankingAction} className="form-stack compact">
@@ -153,7 +140,7 @@ export default async function IntegrationDetailPage({ params, searchParams }: Pa
                     Paste CSV
                     <textarea
                       name="csvText"
-                      placeholder="date,description,amount,category,cost_type,is_acquisition"
+                      placeholder="Paste CSV rows here"
                       rows={8}
                     />
                   </label>
@@ -165,39 +152,6 @@ export default async function IntegrationDetailPage({ params, searchParams }: Pa
         </aside>
       </section>
 
-      {definition.group === "Messaging" ? null : (
-        <section className="table-panel">
-          <div className="report-table-title">Recent Sync Runs</div>
-          <table>
-            <thead>
-              <tr>
-                <th>Status</th>
-                <th>Rows Read</th>
-                <th>Rows Written</th>
-                <th>Started</th>
-                <th>Completed</th>
-                <th>Error</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(syncRuns ?? []).length ? syncRuns?.map((run) => (
-                <tr key={run.id}>
-                  <td>{run.status}</td>
-                  <td>{run.rows_read}</td>
-                  <td>{run.rows_written}</td>
-                  <td>{run.started_at ? new Date(run.started_at).toLocaleString() : "Never"}</td>
-                  <td>{run.completed_at ? new Date(run.completed_at).toLocaleString() : "Pending"}</td>
-                  <td>{run.error ?? ""}</td>
-                </tr>
-              )) : (
-                <tr>
-                  <td colSpan={6}>No sync runs yet.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </section>
-      )}
     </AppShell>
   );
 }
