@@ -46,7 +46,7 @@ export async function POST(request: Request, routeContext: RouteContext) {
   const context = await requireApiTenant();
   if ("error" in context) return context.error;
   if (!canManage(context.membership.role)) {
-    return Response.json({ error: "Only tenant admins can manage integrations." }, { status: 403 });
+    return Response.json({ error: "Only admins can manage integrations." }, { status: 403 });
   }
 
   const { id } = await routeContext.params;
@@ -113,7 +113,7 @@ export async function DELETE(_request: Request, routeContext: RouteContext) {
   const context = await requireApiTenant();
   if ("error" in context) return context.error;
   if (!canManage(context.membership.role)) {
-    return Response.json({ error: "Only tenant admins can manage integrations." }, { status: 403 });
+    return Response.json({ error: "Only admins can manage integrations." }, { status: 403 });
   }
 
   const { id } = await routeContext.params;

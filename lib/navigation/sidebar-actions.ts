@@ -6,6 +6,7 @@ import { logAuditEvent } from "@/lib/security/audit";
 const allowedSidebarItemIds = [
   "metrics-most-important",
   "metrics-reverse-engineering",
+  "forecasting",
   "metrics-financial",
   "metrics-churn-ltv",
   "metrics-sales",
@@ -27,7 +28,14 @@ function sanitizeOrder(itemIds: string[]) {
   });
 
   for (const itemId of allowedSidebarItemIds) {
-    if (!seen.has(itemId)) ordered.push(itemId);
+    if (seen.has(itemId)) continue;
+    const canonicalIndex = allowedSidebarItemIds.indexOf(itemId);
+    const nextKnownIndex = allowedSidebarItemIds
+      .slice(canonicalIndex + 1)
+      .map((nextId) => ordered.indexOf(nextId))
+      .find((index) => index >= 0);
+    ordered.splice(nextKnownIndex ?? ordered.length, 0, itemId);
+    seen.add(itemId);
   }
 
   return ordered;

@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/app-shell";
-import { SettingsTabs } from "@/components/settings/settings-tabs";
+import { SettingsHeader, SettingsTabs } from "@/components/settings/settings-tabs";
 import {
   archiveScheduleAction,
   createScheduleAction,
@@ -53,10 +53,8 @@ export default async function SchedulingSettingsPage({ searchParams }: PageProps
 
   return (
     <AppShell active="settings-scheduling" tenantName={tenant.name}>
-      <section className="page-header compact">
-        <p className="eyebrow">{tenant.name}</p>
-        <h1>Settings</h1>
-        <p className="lede">Schedule reports for connected channels.</p>
+      <SettingsHeader title="Scheduling" />
+      <section className="settings-notices">
         {message ? <p className="notice">{message}</p> : null}
         {error ? <p className="notice error">{error}</p> : null}
       </section>

@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/app-shell";
-import { SettingsTabs } from "@/components/settings/settings-tabs";
+import { SettingsHeader, SettingsTabs } from "@/components/settings/settings-tabs";
 import { signOutAction } from "@/lib/auth/actions";
 import { requireTenant } from "@/lib/auth/session";
 
@@ -15,11 +15,7 @@ export default async function AccountSettingsPage() {
 
   return (
     <AppShell active="settings-account" tenantName={tenant.name}>
-      <section className="page-header compact">
-        <p className="eyebrow">{tenant.name}</p>
-        <h1>Settings</h1>
-        <p className="lede">Manage your profile and access.</p>
-      </section>
+      <SettingsHeader title="Account" />
       <SettingsTabs active="account" />
       <section className="settings-layout">
         <article className="settings-panel">

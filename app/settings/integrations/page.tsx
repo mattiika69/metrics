@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
-import { SettingsTabs } from "@/components/settings/settings-tabs";
+import { SettingsHeader, SettingsTabs } from "@/components/settings/settings-tabs";
 import { requireTenant } from "@/lib/auth/session";
 import { integrationCatalog } from "@/lib/integrations/catalog";
 
@@ -71,10 +71,8 @@ export default async function SettingsIntegrationsPage({ searchParams }: PagePro
 
   return (
     <AppShell active="settings-integrations" tenantName={tenant.name}>
-      <section className="page-header compact">
-        <p className="eyebrow">{tenant.name}</p>
-        <h1>Settings</h1>
-        <p className="lede">Connect the data sources that keep your dashboards current.</p>
+      <SettingsHeader title="Integrations" />
+      <section className="settings-notices">
         {message ? <p className="notice">{message}</p> : null}
       </section>
       <SettingsTabs active="integrations" />

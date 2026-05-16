@@ -440,7 +440,7 @@ export async function refreshRecommendationAction(formData: FormData) {
 export async function connectIntegrationAction(formData: FormData) {
   const { tenant, user, membership } = await requireTenant();
   if (membership.role !== "owner" && membership.role !== "admin") {
-    redirect("/settings/integrations?message=Only tenant admins can manage integrations");
+    redirect("/settings/integrations?message=Only admins can manage integrations");
   }
 
   const provider = String(formData.get("provider") ?? "");
@@ -590,7 +590,7 @@ export async function importCsvBankingAction(formData: FormData) {
 export async function createTelegramLinkCodeAction() {
   const { tenant, user, membership } = await requireTenant();
   if (membership.role !== "owner" && membership.role !== "admin") {
-    redirect("/settings/telegram?message=Only tenant admins can create Telegram link codes");
+    redirect("/settings/telegram?message=Only admins can create Telegram link codes");
   }
 
   const code = createTelegramLinkCode();

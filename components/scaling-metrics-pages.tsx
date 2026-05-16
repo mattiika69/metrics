@@ -1,13 +1,13 @@
 import Link from "next/link";
-import { saveBenchmarkTargetAction } from "@/app/metrics/actions";
+import { saveBenchmarkTargetAction, saveForecastModelAction, saveMetricSelectionsAction } from "@/app/metrics/actions";
 import { AppShell, type ActiveRoute } from "@/components/app-shell";
 import { requireTenant } from "@/lib/auth/session";
 import { integrationCatalog } from "@/lib/integrations/catalog";
 import { buildConstraintsDigest, formatConstraintValue } from "@/lib/metrics/constraints";
 import { metricDefinitions } from "@/lib/metrics/definitions";
-import { formatMetricValue } from "@/lib/metrics/format";
 import { buildForecastContext } from "@/lib/metrics/forecasting";
 import { loadMetricSnapshotPayload } from "@/lib/metrics/server";
+import { loadMetricViewPayload, loadSelectedMetricIds } from "@/lib/metrics/views";
 
 type MetricTabKey =
   | "most-important"
@@ -119,8 +119,6 @@ const weeklyRowsAscending = [
   "May 10 - May 15, 2026",
 ];
 
-const metricById = new Map(metricDefinitions.map((definition) => [definition.id, definition]));
-
 const pageTabs: Partial<Record<MetricTabKey, PageTab[]>> = {
   financial: [
     { key: "overview", label: "Overview", href: "/finance" },
@@ -158,17 +156,6 @@ function metricNumber(
 ) {
   const value = payload.metrics[metricId]?.value;
   return typeof value === "number" && Number.isFinite(value) ? value : null;
-}
-
-function metricDisplay(
-  payload: Awaited<ReturnType<typeof loadMetricSnapshotPayload>>,
-  metricId: string,
-  fallback = "—",
-) {
-  const definition = metricById.get(metricId);
-  if (!definition) return fallback;
-  const value = metricNumber(payload, metricId);
-  return value === null ? fallback : formatMetricValue(definition.format, value);
 }
 
 function money(value: number | null | undefined) {
@@ -1468,13 +1455,13 @@ export async function ScalingSalesCallsPage() {
             <span className="connected-dot"><i /> {connectedSchedulerCount} scheduler{connectedSchedulerCount === 1 ? "" : "s"} connected</span>
           ) : null}
           {eventTypeNames.length > 0 ? (
-            <span className="event-types">{eventTypeNames.length} event type{eventTypeNames.length === 1 ? "" : "s"}</span>
+            <span className="event-types">{eventTypeNames.length} call type{eventTypeNames.length === 1 ? "" : "s"}</span>
           ) : null}
         </div>
         <div className="source-filter-controls">
           {eventTypeNames.length > 0 ? (
-            <select aria-label="Event type">
-              <option>All Event Types</option>
+            <select aria-label="Call type">
+              <option>All Call Types</option>
               {eventTypeNames.map((eventTypeName) => (
                 <option key={eventTypeName}>{eventTypeName}</option>
               ))}
@@ -1538,56 +1525,15 @@ export async function ScalingSalesCallsPage() {
   );
 }
 
-const mostImportantMetricIds = [
-  "revenue",
-  "recurring_revenue",
-  "mrr",
-  "arr",
-  "bank_balance",
-  "runway",
-  "active_clients",
-  "new_clients",
-  "churned_clients",
-  "median_payment",
-  "churn",
-  "avg_relationship",
-  "payback",
-  "fixed_costs",
-  "variable_costs",
-  "wasted_money",
-  "fulfillment_costs",
-  "gross_margin",
-  "expenses",
-  "revenue_per_employee",
-  "calls_booked",
-  "new_client_revenue",
-  "cac",
-  "cost_per_call",
-  "call_show_rate",
-  "call_offer_rate",
-  "call_close_rate",
-  "call_unqualified_rate",
-  "sales_cycle",
-  "revenue_ltv",
-  "ltv_cac",
-  "gross_margin",
-  "gross_margin_ltv",
-  "net_margin_ltv",
-  "net_profit",
-  "net_margin",
-  "nrr",
-  "gross_ltv_cac",
-  "net_ltv_cac",
-  "cash_in",
-  "cash_out",
-];
-
 export async function ScalingMostImportantPage() {
   const { supabase, tenant } = await requireTenant();
-  const payload = await loadMetricSnapshotPayload({ supabase, tenantId: tenant.id, periodKey: "30d" });
-  const definitions = mostImportantMetricIds
-    .map((id) => metricById.get(id))
-    .filter((definition): definition is NonNullable<typeof definition> => Boolean(definition));
+  const payload = await loadMetricViewPayload({ supabase, tenantId: tenant.id, viewKey: "ceo" });
+  const groupedDefinitions = new Map<string, typeof metricDefinitions>();
+  for (const definition of metricDefinitions) {
+    const group = groupedDefinitions.get(definition.category) ?? [];
+    group.push(definition);
+    groupedDefinitions.set(definition.category, group);
+  }
 
   return (
     <AppShell active="metrics-most-important" tenantName={tenant.name}>
@@ -1620,16 +1566,44 @@ export async function ScalingMostImportantPage() {
           </div>
         </div>
         <div className="scaling-metric-grid">
-          {definitions.map((definition, index) => (
-            <article className="scaling-metric-card" key={`${definition.id}-${index}`}>
+          {payload.rows.map((row) => (
+            <article className="scaling-metric-card" key={row.metricId}>
               <div className="metric-card-head">
-                <span>{definition.name}</span>
+                <span>{row.name}</span>
                 <span className="info-dot">i</span>
               </div>
-              <strong>{metricDisplay(payload, definition.id, definition.format === "currency" ? "$0" : "—")}</strong>
+              <strong>{row.displayValue}</strong>
             </article>
           ))}
         </div>
+        <details className="metric-edit-panel">
+          <summary>Edit Metrics</summary>
+          <form action={saveMetricSelectionsAction} className="metric-selector-form compact-selector">
+            <input type="hidden" name="viewKey" value="ceo" />
+            <input type="hidden" name="next" value="/dashboard" />
+            <div className="metric-selector-grid compact-selector-grid">
+              {Array.from(groupedDefinitions.entries()).map(([category, definitions]) => (
+                <fieldset key={category} className="metric-selector-group">
+                  <legend>{category}</legend>
+                  {definitions.map((definition) => (
+                    <label key={definition.id} className="metric-checkbox-row">
+                      <input
+                        type="checkbox"
+                        name="metricId"
+                        value={definition.id}
+                        defaultChecked={payload.selectedIds.has(definition.id)}
+                      />
+                      <span>{definition.name}</span>
+                    </label>
+                  ))}
+                </fieldset>
+              ))}
+            </div>
+            <div className="panel-actions">
+              <button type="submit">Save metrics</button>
+            </div>
+          </form>
+        </details>
       </section>
     </AppShell>
   );
@@ -1702,42 +1676,193 @@ export async function ScalingReverseEngineeringPage() {
   );
 }
 
+function forecastField(
+  label: string,
+  name: string,
+  value: number,
+  helper: string,
+  suffix?: string,
+) {
+  return (
+    <label className="forecast-field" key={name}>
+      <span>{label}</span>
+      <div>
+        <input name={name} type="number" step="0.01" defaultValue={value} />
+        {suffix ? <em>{suffix}</em> : null}
+      </div>
+      <small>{helper}</small>
+    </label>
+  );
+}
+
+function forecastOutput(label: string, value: string, detail: string) {
+  return (
+    <article className="forecast-output-card" key={label}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+      <p>{detail}</p>
+    </article>
+  );
+}
+
+export async function ScalingForecastingPage() {
+  const { supabase, tenant } = await requireTenant();
+  const forecast = await buildForecastContext({ supabase, tenantId: tenant.id });
+  const { assumptions, outputs } = forecast.model;
+  const avgRelationship = assumptions.churnPercent > 0 ? 100 / assumptions.churnPercent : 0;
+  const monthlyRevenueRequired = outputs.revenueRequired / 12;
+  const weeklyCalls = outputs.bookedCallsRequired / 52;
+
+  return (
+    <AppShell active="forecasting" tenantName={tenant.name}>
+      <section className="scaling-page forecasting-page">
+        <Header title="Forecasting" />
+        <section className="forecast-hero-panel">
+          <div>
+            <span>Current model</span>
+            <h2>{forecast.model.name}</h2>
+            <p>
+              Build the operating model from the goal backward into revenue, clients,
+              sales volume, and acquisition spend.
+            </p>
+          </div>
+          <div className="forecast-hero-stats">
+            {forecastOutput("Revenue Required", money(outputs.revenueRequired), `${money(monthlyRevenueRequired)} per month`)}
+            {forecastOutput("Clients Required", outputs.clientsRequired.toFixed(2), `${outputs.newClientsRequired.toFixed(2)} new clients to cover churn`)}
+            {forecastOutput("Booked Calls Required", outputs.bookedCallsRequired.toFixed(2), `${weeklyCalls.toFixed(2)} per week`)}
+            {forecastOutput("Acquisition Spend", money(outputs.acquisitionSpendRequired), `${money(outputs.dailySpendRequired)} per day`)}
+          </div>
+        </section>
+
+        <div className="forecast-layout">
+          <form action={saveForecastModelAction} className="forecast-model-panel">
+            <input type="hidden" name="next" value="/forecasting" />
+            <label className="forecast-name-field">
+              <span>Model Name</span>
+              <input name="name" defaultValue={forecast.model.name} />
+            </label>
+            <div className="forecast-field-grid">
+              {forecastField("Net Profit Goal", "netProfitGoal", assumptions.netProfitGoal, "Target profit for the model.")}
+              {forecastField("Net Margin", "netMarginPercent", assumptions.netMarginPercent, "Expected net margin after expenses.", "%")}
+              {forecastField("Monthly Client Payment", "monthlyClientPayment", assumptions.monthlyClientPayment, "Average monthly revenue per active client.")}
+              {forecastField("Monthly Churn", "churnPercent", assumptions.churnPercent, "Expected monthly client churn.", "%")}
+              {forecastField("Show Rate", "showRatePercent", assumptions.showRatePercent, "Booked calls that show.", "%")}
+              {forecastField("Close Rate", "closeRatePercent", assumptions.closeRatePercent, "Booked calls that become clients.", "%")}
+              {forecastField("Cost Per Call", "costPerCall", assumptions.costPerCall, "Average acquisition cost per booked call.")}
+            </div>
+            <button type="submit" className="primary-action">Save Forecast</button>
+          </form>
+
+          <section className="forecast-formula-panel">
+            <h2>Formula Breakdown</h2>
+            <div className="forecast-formula-list">
+              {reRow("Revenue Required", money(outputs.revenueRequired))}
+              {reRow("Average Client Relationship", `${avgRelationship.toFixed(2)} mo`)}
+              {reRow("Average LTV Per Client", money(assumptions.monthlyClientPayment * avgRelationship))}
+              {reRow("Clients Required", outputs.clientsRequired.toFixed(2))}
+              {reRow("New Clients Required", outputs.newClientsRequired.toFixed(2))}
+              {reRow("Booked Calls Required", outputs.bookedCallsRequired.toFixed(2))}
+              {reRow("Daily Spend Required", money(outputs.dailySpendRequired))}
+            </div>
+          </section>
+        </div>
+      </section>
+    </AppShell>
+  );
+}
+
 export async function ScalingConstraintsPage() {
   const { supabase, tenant } = await requireTenant();
   const digest = await buildConstraintsDigest({ supabase, tenantId: tenant.id, periodKey: "30d" });
-  const rows = digest.topConstraints.map((row, index) => ({
-    label: `#${index + 1} ${row.benchmark.name}`,
-    cells: [
-      formatConstraintValue(row, row.actual),
-      formatConstraintValue(row, row.minimum),
-      formatConstraintValue(row, row.scale),
-      row.gapPercent === null ? "No data" : `${row.gapPercent.toFixed(1)}%`,
-      row.suggestions[0] ?? "Review source data and benchmark target.",
-    ],
-  }));
+  const topRows = digest.topConstraints;
+  const focus = topRows[0] ?? digest.rows[0] ?? null;
 
   return (
     <AppShell active="constraints" tenantName={tenant.name}>
-      <section className="scaling-page">
-        <header className="scaling-header">
-          <div>
-            <h1>Constraints</h1>
-            <p>MEMBER SINCE MARCH 2026</p>
+      <section className="scaling-page constraints-page">
+        <Header title="Fixing Constraints" />
+        <section className="constraints-rank-panel">
+          <div className="constraints-panel-head">
+            <div>
+              <h2>Top 3 Metric Constraints</h2>
+              <p>30d constraint ranking</p>
+            </div>
           </div>
-        </header>
-        <div className="scaling-subtabs">
-          <span className="active">Overview</span>
-        </div>
-        <DataTable
-          columns={[
-            { label: "Actual" },
-            { label: "Minimum" },
-            { label: "Scale" },
-            { label: "Gap" },
-            { label: "Action", align: "left" },
-          ]}
-          rows={rows.length ? rows : [{ label: "No constraints", cells: ["—", "—", "—", "—", "Connect data sources"] }]}
-        />
+          <div className="constraint-card-grid">
+            {topRows.length ? topRows.map((row, index) => (
+              <article className={index === 0 ? "constraint-rank-card primary" : "constraint-rank-card"} key={row.benchmark.id}>
+                <div className="constraint-rank-top">
+                  <span>#{index + 1} Constraint</span>
+                  <strong>{row.gapPercent === null ? "Needs data" : `${row.gapPercent.toFixed(1)}% gap`}</strong>
+                </div>
+                <h3>{row.benchmark.name}</h3>
+                <div className="constraint-rank-values">
+                  <div>
+                    <span>Yours</span>
+                    <b>{formatConstraintValue(row, row.actual)}</b>
+                  </div>
+                  <div>
+                    <span>Scale</span>
+                    <b>{formatConstraintValue(row, row.scale)}</b>
+                  </div>
+                </div>
+              </article>
+            )) : (
+              <article className="constraint-rank-card primary">
+                <div className="constraint-rank-top">
+                  <span>No constraints yet</span>
+                  <strong>Needs data</strong>
+                </div>
+                <h3>Connect data sources</h3>
+                <div className="constraint-rank-values">
+                  <div>
+                    <span>Yours</span>
+                    <b>No data</b>
+                  </div>
+                  <div>
+                    <span>Scale</span>
+                    <b>No data</b>
+                  </div>
+                </div>
+              </article>
+            )}
+          </div>
+        </section>
+
+        {focus ? (
+          <section className="constraint-action-panel">
+            <div className="constraint-action-head">
+              <div>
+                <span>Suggestions for #1</span>
+                <h2>{focus.benchmark.name}</h2>
+              </div>
+              <strong>{focus.gapPercent === null ? "Needs data" : `${focus.gapPercent.toFixed(1)}% gap`}</strong>
+            </div>
+            <div className="constraint-metric-strip">
+              <div>
+                <span>Yours</span>
+                <strong>{formatConstraintValue(focus, focus.actual)}</strong>
+              </div>
+              <div>
+                <span>Minimum</span>
+                <strong>{formatConstraintValue(focus, focus.minimum)}</strong>
+              </div>
+              <div>
+                <span>Scale</span>
+                <strong>{formatConstraintValue(focus, focus.scale)}</strong>
+              </div>
+              <div>
+                <span>Gap</span>
+                <strong>{focus.gapPercent === null ? "Needs data" : `${focus.gapPercent.toFixed(1)}%`}</strong>
+              </div>
+            </div>
+            <div className="constraint-suggestion-grid">
+              {focus.suggestions.slice(0, 10).map((suggestion, index) => (
+                <div key={`${focus.benchmark.id}-${index}`}>{index + 1}. {suggestion}</div>
+              ))}
+            </div>
+          </section>
+        ) : null}
       </section>
     </AppShell>
   );
@@ -1767,15 +1892,16 @@ function benchmarkInputValue(value: number | null) {
 
 export async function ScalingBenchmarksPage() {
   const { supabase, tenant } = await requireTenant();
-  const [digest, savedTargets] = await Promise.all([
+  const [digest, savedTargets, selectedMetricIds] = await Promise.all([
     buildConstraintsDigest({ supabase, tenantId: tenant.id, periodKey: "30d" }),
     supabase
       .from("metric_benchmark_targets")
       .select("benchmark_id, notes")
       .eq("tenant_id", tenant.id),
+    loadSelectedMetricIds({ supabase, tenantId: tenant.id, viewKey: "ceo" }),
   ]);
   const notesByBenchmarkId = new Map((savedTargets.data ?? []).map((row) => [row.benchmark_id, row.notes ?? ""]));
-  const mostImportantIds = Array.from(new Set(mostImportantMetricIds));
+  const mostImportantIds = Array.from(new Set(selectedMetricIds));
   const rows = digest.rows.filter((row) => mostImportantIds.includes(row.benchmark.metricId));
   const biggest =
     rows.find((row) => row.status === "constrained" && row.gapPercent !== null) ??

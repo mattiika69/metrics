@@ -13,7 +13,7 @@ export async function POST() {
   const context = await requireApiTenant();
   if ("error" in context) return context.error;
   if (!canManage(context.membership.role)) {
-    return Response.json({ error: "Only tenant admins can create Telegram link codes." }, { status: 403 });
+    return Response.json({ error: "Only admins can create Telegram link codes." }, { status: 403 });
   }
 
   const admin = createAdminClient();

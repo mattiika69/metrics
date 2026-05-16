@@ -45,6 +45,11 @@ function suggestionsFor(name: string) {
     `Run one focused experiment this week to improve ${name}.`,
     `Review what changed on the best-performing weeks for ${name} and repeat those conditions.`,
     `Document one process change that directly supports ${name}.`,
+    `Add one leading indicator that predicts changes in ${name} before the lagging result.`,
+    `Create a weekly scorecard check-in focused only on ${name}.`,
+    `Record and review five examples where ${name} performed best and copy those conditions.`,
+    `Define a stop-doing list this week for activities harming ${name}.`,
+    `Create one repeatable operating rule that keeps ${name} moving toward the scale target.`,
   ];
 }
 

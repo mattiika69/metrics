@@ -142,8 +142,9 @@ export function SidebarNav({
                         <div className="sidebar-parent-row">
                           <button
                             type="button"
-                            className="sidebar-parent-toggle"
+                            className="sidebar-parent-collapse"
                             aria-expanded={!collapsedParents[item.id]}
+                            aria-label={`${collapsedParents[item.id] ? "Expand" : "Collapse"} ${item.label}`}
                             onClick={() => {
                               setCollapsedParents((current) => ({
                                 ...current,
@@ -151,8 +152,30 @@ export function SidebarNav({
                               }));
                             }}
                           >
-                            {item.label}
+                            <svg
+                              className={[
+                                "sidebar-parent-chevron",
+                                collapsedParents[item.id] ? "" : "expanded",
+                              ].filter(Boolean).join(" ")}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              aria-hidden="true"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
                           </button>
+                          <Link
+                            href={item.href}
+                            prefetch
+                            aria-label={item.label}
+                            className={[
+                              "sidebar-parent-link",
+                              active === item.id ? "active" : "",
+                            ].filter(Boolean).join(" ")}
+                          >
+                            {item.label}
+                          </Link>
                           <span className="sidebar-drag-handle" aria-hidden="true">⋮⋮</span>
                         </div>
                         {!collapsedParents[item.id] ? (

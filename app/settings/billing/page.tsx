@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/app-shell";
-import { SettingsTabs } from "@/components/settings/settings-tabs";
+import { SettingsHeader, SettingsTabs } from "@/components/settings/settings-tabs";
 import { startStripeCheckoutAction } from "@/lib/auth/actions";
 import { requireTenant } from "@/lib/auth/session";
 
@@ -35,10 +35,8 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
 
   return (
     <AppShell active="settings-billing" tenantName={tenant.name}>
-      <section className="page-header">
-        <p className="eyebrow">{tenant.name}</p>
-        <h1>Settings</h1>
-        <p className="lede">Manage billing and subscription access.</p>
+      <SettingsHeader title="Billing" />
+      <section className="settings-notices">
         {message ? <p className="notice">{message}</p> : null}
         {error ? <p className="notice error">{error}</p> : null}
       </section>

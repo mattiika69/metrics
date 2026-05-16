@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
-import { SettingsTabs } from "@/components/settings/settings-tabs";
+import { SettingsHeader, SettingsTabs } from "@/components/settings/settings-tabs";
 import { requireTenant } from "@/lib/auth/session";
 
 type PageProps = {
@@ -27,10 +27,8 @@ export default async function SlackSettingsPage({ searchParams }: PageProps) {
 
   return (
     <AppShell active="settings-slack" tenantName={tenant.name}>
-      <section className="page-header compact">
-        <p className="eyebrow">{tenant.name}</p>
-        <h1>Settings</h1>
-        <p className="lede">Connect Slack for metrics, constraints, and forecast commands.</p>
+      <SettingsHeader title="Slack" />
+      <section className="settings-notices">
         {message ? <p className="notice">{message}</p> : null}
         {error ? <p className="notice error">{error}</p> : null}
       </section>

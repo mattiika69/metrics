@@ -20,7 +20,7 @@ export async function requireAdminContext() {
   if (result.context.membership.role !== "owner" && result.context.membership.role !== "admin") {
     return {
       error: Response.json(
-        { error: "Workspace admin access is required." },
+        { error: "Admin access is required." },
         { status: 403 },
       ),
     };

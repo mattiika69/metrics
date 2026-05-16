@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/app-shell";
-import { SettingsTabs } from "@/components/settings/settings-tabs";
+import { SettingsHeader, SettingsTabs } from "@/components/settings/settings-tabs";
 import { requireTenant } from "@/lib/auth/session";
 import {
   inviteTeamMemberAction,
@@ -67,10 +67,8 @@ export default async function TeamSettingsPage({ searchParams }: PageProps) {
 
   return (
     <AppShell active="settings-team" tenantName={tenant.name}>
-      <section className="page-header">
-        <p className="eyebrow">{tenant.name}</p>
-        <h1>Settings</h1>
-        <p className="lede">Manage team access and invitations.</p>
+      <SettingsHeader title="Team" />
+      <section className="settings-notices">
         {message ? <p className="notice">{message}</p> : null}
         {error ? <p className="notice error">{error}</p> : null}
       </section>
@@ -82,7 +80,7 @@ export default async function TeamSettingsPage({ searchParams }: PageProps) {
               <p className="step-label">Team</p>
               <h2>Members</h2>
             </div>
-            <span className="muted">{members?.length ?? 0} active</span>
+            <span className="pill">Your role: {membership.role}</span>
           </div>
           <div className="table-list">
             {members?.map((member) => {

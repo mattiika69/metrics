@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/app-shell";
-import { SettingsTabs } from "@/components/settings/settings-tabs";
+import { SettingsHeader, SettingsTabs } from "@/components/settings/settings-tabs";
 import { createTelegramLinkCodeAction } from "@/app/metrics/actions";
 import { requireTenant } from "@/lib/auth/session";
 
@@ -29,10 +29,8 @@ export default async function TelegramSettingsPage({ searchParams }: PageProps) 
 
   return (
     <AppShell active="settings-telegram" tenantName={tenant.name}>
-      <section className="page-header compact">
-        <p className="eyebrow">{tenant.name}</p>
-        <h1>Settings</h1>
-        <p className="lede">Connect Telegram for metrics, constraints, and forecast commands.</p>
+      <SettingsHeader title="Telegram" />
+      <section className="settings-notices">
         {message ? <p className="notice">{message}</p> : null}
         {error ? <p className="notice error">{error}</p> : null}
       </section>

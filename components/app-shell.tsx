@@ -28,6 +28,7 @@ export type ActiveRoute =
   | "settings"
   | "settings-account"
   | "settings-team"
+  | "settings-learning"
   | "settings-billing"
   | "settings-integrations"
   | "settings-scheduling"
@@ -44,7 +45,8 @@ type AppShellProps = {
 
 const primaryItems: SidebarItem[] = [
   { id: "metrics-most-important", label: "Most Important Metrics", href: "/dashboard", section: "metrics" },
-  { id: "metrics-reverse-engineering", label: "Reverse Engineering", href: "/forecasting", section: "metrics" },
+  { id: "metrics-reverse-engineering", label: "Reverse Engineering", href: "/metrics/reverse-engineering", section: "metrics" },
+  { id: "forecasting", label: "Forecasting", href: "/forecasting", section: "metrics" },
   {
     id: "metrics-financial",
     label: "Financials",
@@ -86,6 +88,11 @@ const primaryItems: SidebarItem[] = [
     section: "metrics",
     children: [
       { id: "inputs-overview", label: "Overview", href: "/inputs" },
+      { id: "inputs-cost-per-call", label: "Cost Per Call", href: "/inputs?tab=cost-per-call" },
+      { id: "inputs-paid-ads", label: "Paid Ads", href: "/inputs?tab=paid-ads" },
+      { id: "inputs-cold-email", label: "Cold Email", href: "/inputs?tab=cold-email" },
+      { id: "inputs-newsletter", label: "Newsletter", href: "/inputs?tab=newsletter" },
+      { id: "inputs-accounts", label: "Accounts", href: "/inputs?tab=accounts" },
     ],
   },
   { id: "metrics-benchmarking", label: "Benchmarks", href: "/benchmarks", section: "metrics" },
@@ -93,6 +100,16 @@ const primaryItems: SidebarItem[] = [
   { id: "ai-context", label: "AI Context Document", href: "/ai-context-doc", section: "metrics" },
   { id: "learnings", label: "Learnings", href: "/learnings", section: "metrics" },
   { id: "settings", label: "Settings", href: "/settings/account", section: "settings" },
+];
+
+const appLinks = [
+  { label: "Management", href: "https://management.hyperoptimal.com" },
+  { label: "Follow Up", href: "https://followup.hyperoptimal.com" },
+  { label: "Ads", href: "https://ads.hyperoptimal.com" },
+  { label: "Planning", href: "https://planning.hyperoptimal.com" },
+  { label: "Metrics", href: "https://metrics.hyperoptimal.com" },
+  { label: "Funnel", href: "https://funnel.hyperoptimal.com" },
+  { label: "Content", href: "https://content.hyperoptimal.com" },
 ];
 
 async function getOrderedSidebarItems() {
@@ -135,6 +152,21 @@ export async function AppShell({ active, children }: AppShellProps) {
       </aside>
       <section className="app-main">
         <div className="app-content">{children}</div>
+        <footer className="app-footer">
+          <div>
+            <strong>HyperOptimal Metrics</strong>
+            <span>© {new Date().getFullYear()} HyperOptimal. All rights reserved.</span>
+          </div>
+          <nav aria-label="Footer navigation">
+            <Link href="/terms">Terms</Link>
+            <Link href="/privacy">Privacy</Link>
+            {appLinks.map((link) => (
+              <a href={link.href} key={link.label}>
+                {link.label}
+              </a>
+            ))}
+          </nav>
+        </footer>
       </section>
     </main>
   );
