@@ -68,21 +68,28 @@ async function getOrderedSidebarItems() {
     .filter((item): item is SidebarItem => Boolean(item));
 }
 
-export async function AppShell({ active, children }: AppShellProps) {
+export async function AppShell({ active, tenantName, children }: AppShellProps) {
   const authBypassEnabled = isAuthBypassEnabled();
   const sidebarItems = await getOrderedSidebarItems();
 
   return (
     <main className="app-shell">
       <aside className="side-nav">
-        <div className="side-brand-row">
-          <Link href="/dashboard" className="side-brand">
-            <span className="brand-mark" aria-hidden="true">
-              H
-            </span>
-            <span>HyperOptimal Metrics</span>
-          </Link>
-          <span className="collapse-dot" aria-hidden="true">‹</span>
+        <div className="side-shell-header">
+          <div className="side-brand-row">
+            <Link href="/dashboard" className="side-brand">
+              <span className="brand-mark" aria-hidden="true">
+                H
+              </span>
+              <span>HyperOptimal</span>
+            </Link>
+            <span className="collapse-dot" aria-hidden="true">‹</span>
+          </div>
+          <div className="org-select" aria-label="Current organization">
+            <span>Org:</span>
+            <strong>{tenantName || "Hyper Optimal Team"}</strong>
+            <span className="org-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
 
         <nav className="sidebar-sections" aria-label="Primary navigation">

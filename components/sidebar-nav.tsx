@@ -34,16 +34,22 @@ export function SidebarNav({
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const itemIds = useMemo(() => orderedItems.map((item) => item.id), [orderedItems]);
+  const metricsItems = orderedItems.filter((item) => item.section === "metrics");
+  const settingsItems = orderedItems.filter((item) => item.section === "settings");
   const groups = [
     {
       id: "metrics",
       label: "Metrics",
-      items: orderedItems.filter((item) => item.section === "metrics"),
+      items: metricsItems,
+      expanded: true,
+      accent: true,
     },
     {
       id: "settings",
       label: "Settings",
-      items: orderedItems.filter((item) => item.section === "settings"),
+      items: settingsItems,
+      expanded: settingsItems.some((item) => item.id === active),
+      dividerBefore: true,
     },
   ];
 
@@ -56,16 +62,33 @@ export function SidebarNav({
   return (
     <div className="sidebar-grouped-nav" aria-label="Draggable sidebar navigation">
       {groups.map((group) => (
-        <section className="sidebar-group" key={group.id}>
+        <section
+          className={[
+            "sidebar-group",
+            group.dividerBefore ? "with-divider" : "",
+            group.accent ? "with-accent" : "",
+          ].filter(Boolean).join(" ")}
+          key={group.id}
+        >
           <div className="sidebar-label-row">
-            <button type="button" className="sidebar-label-button" aria-expanded="true">
-              <svg className="sidebar-label-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <button type="button" className="sidebar-label-button" aria-expanded={group.expanded}>
+              <svg
+                className={[
+                  "sidebar-label-chevron",
+                  group.expanded ? "expanded" : "",
+                ].filter(Boolean).join(" ")}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
               <span>{group.label}</span>
             </button>
           </div>
-          <div className="sidebar-subnav">
+          {group.expanded ? (
+            <div className="sidebar-subnav">
             {group.items.map((item) => (
               <div
                 key={item.id}
@@ -109,7 +132,8 @@ export function SidebarNav({
                 <span className="sidebar-drag-handle" aria-hidden="true">⋮⋮</span>
               </div>
             ))}
-          </div>
+            </div>
+          ) : null}
         </section>
       ))}
     </div>

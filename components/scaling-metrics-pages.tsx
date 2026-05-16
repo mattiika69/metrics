@@ -121,10 +121,8 @@ function ratioPercent(numerator: number | null, denominator: number | null) {
 
 function Header({
   title,
-  activeTab,
 }: {
   title: string;
-  activeTab: MetricTabKey;
 }) {
   return (
     <header className="scaling-header">
@@ -132,6 +130,12 @@ function Header({
         <h1>{title}</h1>
         <p>MEMBER SINCE MARCH 2026</p>
       </div>
+    </header>
+  );
+}
+
+function MetricTabsRow({ activeTab }: { activeTab: MetricTabKey }) {
+  return (
       <nav className="scaling-tabs" aria-label="Metrics sections">
         {metricTabs.map((tab) => (
           <Link
@@ -143,7 +147,6 @@ function Header({
           </Link>
         ))}
       </nav>
-    </header>
   );
 }
 
@@ -515,7 +518,8 @@ export async function ScalingMetricsTablePage({ kind }: { kind: TablePageKind })
   return (
     <AppShell active={config.activeRoute} tenantName={tenant.name}>
       <section className="scaling-page">
-        <Header title={config.title} activeTab={config.activeTab} />
+        <Header title={config.title} />
+        <MetricTabsRow activeTab={config.activeTab} />
         <SubTabs activeTab={config.activeTab} />
         <PeriodToolbar
           includeAccount={config.includeAccount}
@@ -604,7 +608,8 @@ export async function ScalingMostImportantPage() {
   return (
     <AppShell active="metrics-most-important" tenantName={tenant.name}>
       <section className="scaling-page">
-        <Header title="Most Important Metrics" activeTab="most-important" />
+        <Header title="Most Important Metrics" />
+        <MetricTabsRow activeTab="most-important" />
         <SubTabs activeTab="most-important" />
         <div className="most-important-toolbar">
           <div className="period-toolbar-left">
@@ -671,7 +676,8 @@ export async function ScalingReverseEngineeringPage() {
   return (
     <AppShell active="metrics-reverse-engineering" tenantName={tenant.name}>
       <section className="scaling-page">
-        <Header title="Reverse Engineering" activeTab="reverse-engineering" />
+        <Header title="Reverse Engineering" />
+        <MetricTabsRow activeTab="reverse-engineering" />
         <SubTabs activeTab="reverse-engineering" />
         <p className="reverse-note">Current tab: only Net Profit Goal is editable. Core inputs mirror Goal tab values.</p>
         <div className="reverse-legend">
