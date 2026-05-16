@@ -30,6 +30,12 @@ type TableRow = {
   total?: boolean;
 };
 
+type PageTab = {
+  key: string;
+  label: string;
+  href: string;
+};
+
 type TenantSupabase = Awaited<ReturnType<typeof requireTenant>>["supabase"];
 
 type BankTransactionRow = {
@@ -111,6 +117,42 @@ const weeklyRowsAscending = [
 ];
 
 const metricById = new Map(metricDefinitions.map((definition) => [definition.id, definition]));
+
+const pageTabs: Partial<Record<MetricTabKey, PageTab[]>> = {
+  "reverse-engineering": [
+    { key: "current", label: "Current", href: "/forecasting" },
+    { key: "goal", label: "Goal", href: "/forecasting" },
+    { key: "difference", label: "% Difference", href: "/forecasting" },
+  ],
+  financial: [
+    { key: "overview", label: "Overview", href: "/finance" },
+    { key: "transactions-in", label: "Transactions In", href: "/finance/transactions-in" },
+    { key: "transactions-out", label: "Transactions Out", href: "/finance/transactions-out" },
+    { key: "categories", label: "Categories", href: "/finance/categories" },
+    { key: "cost-per-category", label: "Cost Per Category", href: "/finance/cost-per-category" },
+  ],
+  "churn-ltv": [
+    { key: "overview", label: "Overview", href: "/retention" },
+    { key: "client-data", label: "Client Data", href: "/retention/client-data" },
+    { key: "client-payments", label: "Client Payments", href: "/retention/client-payments" },
+  ],
+  sales: [
+    { key: "overview", label: "Overview", href: "/sales" },
+    { key: "calls", label: "Calls", href: "/sales/calls" },
+  ],
+  inputs: [
+    { key: "overview", label: "Overview", href: "/marketing" },
+    { key: "cost-per-call", label: "Cost Per Call", href: "/metrics/cost-per-call" },
+    { key: "paid-ads", label: "Paid Ads", href: "/marketing" },
+    { key: "cold-email", label: "Cold Email", href: "/marketing" },
+    { key: "newsletter", label: "Newsletter", href: "/marketing" },
+    { key: "accounts", label: "Accounts", href: "/marketing" },
+  ],
+  "cost-per-call": [
+    { key: "overview", label: "Overview", href: "/marketing" },
+    { key: "cost-per-call", label: "Cost Per Call", href: "/metrics/cost-per-call" },
+  ],
+};
 
 function metricNumber(
   payload: Awaited<ReturnType<typeof loadMetricSnapshotPayload>>,
@@ -260,6 +302,20 @@ function Header({
         <p>MEMBER SINCE MARCH 2026</p>
       </div>
     </header>
+  );
+}
+
+function PageTabs({ tabs, activeKey }: { tabs?: PageTab[]; activeKey?: string }) {
+  if (!tabs?.length) return null;
+  const selectedKey = activeKey ?? tabs[0]?.key;
+  return (
+    <nav className="scaling-subtabs page-child-tabs" aria-label="Page sections">
+      {tabs.map((tab) => (
+        <Link key={tab.key} href={tab.href} className={tab.key === selectedKey ? "active" : ""}>
+          {tab.label}
+        </Link>
+      ))}
+    </nav>
   );
 }
 
@@ -591,7 +647,7 @@ const tableConfigs: Record<TablePageKind, {
   },
   "cost-per-call": {
     title: "Cost Per Call",
-    activeRoute: "metrics-cost-per-call",
+    activeRoute: "metrics-inputs",
     activeTab: "cost-per-call",
     includeSource: true,
   },
@@ -620,6 +676,7 @@ export async function ScalingMetricsTablePage({ kind }: { kind: TablePageKind })
     <AppShell active={config.activeRoute} tenantName={tenant.name}>
       <section className="scaling-page">
         <Header title={config.title} />
+        <PageTabs tabs={pageTabs[config.activeTab]} activeKey="overview" />
         <PeriodToolbar
           includeAccount={config.includeAccount}
           includeCloser={config.includeCloser}
@@ -694,17 +751,22 @@ function SourcePageChrome({
   activeRoute,
   tenantName,
   title,
+  tabGroup,
+  activeChild,
   children,
 }: {
   activeRoute: ActiveRoute;
   tenantName: string | null;
   title: string;
+  tabGroup?: MetricTabKey;
+  activeChild?: string;
   children: React.ReactNode;
 }) {
   return (
     <AppShell active={activeRoute} tenantName={tenantName}>
       <section className="scaling-page">
         <Header title={title} />
+        <PageTabs tabs={tabGroup ? pageTabs[tabGroup] : undefined} activeKey={activeChild} />
         {children}
       </section>
     </AppShell>
@@ -785,6 +847,8 @@ export async function ScalingTransactionsInPage() {
       activeRoute="metrics-financial"
       tenantName={tenant.name}
       title="Transactions In"
+      tabGroup="financial"
+      activeChild="transactions-in"
     >
       <MetricSourceToolbar account />
       <section className="source-table-panel">
@@ -835,6 +899,8 @@ export async function ScalingTransactionsOutPage() {
       activeRoute="metrics-financial"
       tenantName={tenant.name}
       title="Transactions Out"
+      tabGroup="financial"
+      activeChild="transactions-out"
     >
       <MetricSourceToolbar account />
       <section className="source-table-panel">
@@ -891,6 +957,8 @@ export async function ScalingCategoriesPage() {
       activeRoute="metrics-financial"
       tenantName={tenant.name}
       title="Categories"
+      tabGroup="financial"
+      activeChild="categories"
     >
       <MetricSourceToolbar />
       <p className="source-help-text">Assign categories to transaction sources. These assignments apply to all transactions with the same source.</p>
@@ -1009,6 +1077,8 @@ export async function ScalingCostPerCategoryPage() {
       activeRoute="metrics-financial"
       tenantName={tenant.name}
       title="Cost Per Category"
+      tabGroup="financial"
+      activeChild="cost-per-category"
     >
       <MetricSourceToolbar />
       <section className="category-breakdown-panel">
@@ -1084,6 +1154,8 @@ export async function ScalingClientDataPage() {
       activeRoute="metrics-churn-ltv"
       tenantName={tenant.name}
       title="Client Data"
+      tabGroup="churn-ltv"
+      activeChild="client-data"
     >
       <MetricSourceToolbar range="Full Year" />
       <div className="client-data-heading">
@@ -1171,6 +1243,8 @@ export async function ScalingClientPaymentsPage() {
       activeRoute="metrics-churn-ltv"
       tenantName={tenant.name}
       title="Client Payments"
+      tabGroup="churn-ltv"
+      activeChild="client-payments"
     >
       <div className="client-payment-toolbar">
         <div className="source-filter-controls">
@@ -1263,6 +1337,8 @@ export async function ScalingSalesCallsPage() {
       activeRoute="metrics-sales"
       tenantName={tenant.name}
       title="Sales Calls"
+      tabGroup="sales"
+      activeChild="calls"
     >
       <div className="sales-call-toolbar">
         <div className="sales-call-status">

@@ -49,13 +49,7 @@ const primaryItems: SidebarItem[] = [
   { id: "metrics-sales", label: "Sales", href: "/sales", section: "metrics" },
   { id: "metrics-inputs", label: "Marketing", href: "/marketing", section: "metrics" },
   { id: "constraints", label: "Constraints", href: "/constraints", section: "metrics" },
-  { id: "settings-account", label: "Account", href: "/settings/account", section: "settings" },
-  { id: "settings-team", label: "Team", href: "/settings/team", section: "settings" },
-  { id: "settings-billing", label: "Billing", href: "/settings/billing", section: "settings" },
-  { id: "settings-integrations", label: "Integrations", href: "/integrations", section: "settings" },
-  { id: "settings-scheduling", label: "Scheduling", href: "/settings/scheduling", section: "settings" },
-  { id: "settings-slack", label: "Slack", href: "/settings/slack", section: "settings" },
-  { id: "settings-telegram", label: "Telegram", href: "/settings/telegram", section: "settings" },
+  { id: "settings", label: "Settings", href: "/settings/account", section: "settings" },
 ];
 
 async function getOrderedSidebarItems() {

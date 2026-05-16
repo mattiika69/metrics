@@ -124,7 +124,7 @@ export function SidebarNav({
                   aria-label={item.label}
                   className={[
                     "sidebar-sub-link",
-                    active === item.id ? "active" : "",
+                    active === item.id || (item.id === "settings" && active.startsWith("settings")) ? "active" : "",
                   ].filter(Boolean).join(" ")}
                 >
                   {item.label}

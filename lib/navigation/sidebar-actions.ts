@@ -11,13 +11,7 @@ const allowedSidebarItemIds = [
   "metrics-sales",
   "metrics-inputs",
   "constraints",
-  "settings-account",
-  "settings-team",
-  "settings-billing",
-  "settings-integrations",
-  "settings-scheduling",
-  "settings-slack",
-  "settings-telegram",
+  "settings",
 ] as const;
 
 function sanitizeOrder(itemIds: string[]) {
