@@ -5550,3 +5550,11 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* Sidebar header cleanup */
+.side-shell-header,
+.side-brand-row {
+  border: 0 !important;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+}
