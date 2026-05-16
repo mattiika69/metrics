@@ -52,7 +52,7 @@ export default async function SchedulingSettingsPage({ searchParams }: PageProps
   const telegramChats = (channels ?? []).filter((channel) => channel.provider === "telegram");
 
   return (
-    <AppShell active="settings" tenantName={tenant.name}>
+    <AppShell active="settings-scheduling" tenantName={tenant.name}>
       <section className="page-header compact">
         <p className="eyebrow">{tenant.name}</p>
         <h1>Settings</h1>

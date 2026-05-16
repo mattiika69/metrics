@@ -70,7 +70,7 @@ export default async function SettingsIntegrationsPage({ searchParams }: PagePro
   const shownCount = integrationSections.reduce((total, section) => total + section.ids.length, 0);
 
   return (
-    <AppShell active="settings" tenantName={tenant.name}>
+    <AppShell active="settings-integrations" tenantName={tenant.name}>
       <section className="page-header compact">
         <p className="eyebrow">{tenant.name}</p>
         <h1>Settings</h1>

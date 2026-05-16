@@ -26,7 +26,7 @@ export default async function SlackSettingsPage({ searchParams }: PageProps) {
     .maybeSingle();
 
   return (
-    <AppShell active="settings" tenantName={tenant.name}>
+    <AppShell active="settings-slack" tenantName={tenant.name}>
       <section className="page-header compact">
         <p className="eyebrow">{tenant.name}</p>
         <h1>Settings</h1>

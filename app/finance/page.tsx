@@ -1,9 +1,7 @@
-import { DepartmentMetricPage } from "@/components/launch-metric-view";
+import { ScalingMetricsTablePage } from "@/components/scaling-metrics-pages";
 
-type PageProps = {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-};
+export const dynamic = "force-dynamic";
 
-export default function FinancePage({ searchParams }: PageProps) {
-  return <DepartmentMetricPage viewKey="finance" searchParams={searchParams} />;
+export default function FinancePage() {
+  return <ScalingMetricsTablePage kind="financial" />;
 }

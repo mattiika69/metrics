@@ -34,7 +34,7 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
     .maybeSingle();
 
   return (
-    <AppShell active="settings" tenantName={tenant.name}>
+    <AppShell active="settings-billing" tenantName={tenant.name}>
       <section className="page-header">
         <p className="eyebrow">{tenant.name}</p>
         <h1>Settings</h1>

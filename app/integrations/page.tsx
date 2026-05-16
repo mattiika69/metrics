@@ -1,5 +1,7 @@
-import { redirect } from "next/navigation";
+import { ScalingIntegrationsPage } from "@/components/scaling-metrics-pages";
+
+export const dynamic = "force-dynamic";
 
 export default function IntegrationsPage() {
-  redirect("/settings/integrations");
+  return <ScalingIntegrationsPage />;
 }

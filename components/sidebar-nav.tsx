@@ -9,6 +9,7 @@ export type SidebarItem = {
   id: ActiveRoute;
   label: string;
   href: string;
+  section: "metrics" | "settings";
 };
 
 function moveItem(items: SidebarItem[], draggedId: string, targetId: string) {
@@ -33,6 +34,18 @@ export function SidebarNav({
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const itemIds = useMemo(() => orderedItems.map((item) => item.id), [orderedItems]);
+  const groups = [
+    {
+      id: "metrics",
+      label: "Metrics",
+      items: orderedItems.filter((item) => item.section === "metrics"),
+    },
+    {
+      id: "settings",
+      label: "Settings",
+      items: orderedItems.filter((item) => item.section === "settings"),
+    },
+  ];
 
   function persist(nextItems: SidebarItem[]) {
     startTransition(() => {
@@ -41,42 +54,63 @@ export function SidebarNav({
   }
 
   return (
-    <div className="sidebar-flat-nav" aria-label="Draggable sidebar navigation">
-      {orderedItems.map((item) => (
-        <Link
-          key={item.id}
-          href={item.href}
-          prefetch
-          draggable
-          data-item-id={item.id}
-          aria-label={`${item.label}. Drag to reorder.`}
-          className={[
-            "sidebar-parent-link",
-            active === item.id ? "active" : "",
-            draggedId === item.id ? "dragging" : "",
-          ].filter(Boolean).join(" ")}
-          onDragStart={(event) => {
-            setDraggedId(item.id);
-            event.dataTransfer.effectAllowed = "move";
-            event.dataTransfer.setData("text/plain", item.id);
-          }}
-          onDragOver={(event) => {
-            event.preventDefault();
-            event.dataTransfer.dropEffect = "move";
-          }}
-          onDrop={(event) => {
-            event.preventDefault();
-            const droppedId = event.dataTransfer.getData("text/plain") || draggedId;
-            if (!droppedId || !itemIds.includes(droppedId as ActiveRoute)) return;
-            const nextItems = moveItem(orderedItems, droppedId, item.id);
-            setOrderedItems(nextItems);
-            setDraggedId(null);
-            persist(nextItems);
-          }}
-          onDragEnd={() => setDraggedId(null)}
-        >
-          <span>{item.label}</span>
-        </Link>
+    <div className="sidebar-grouped-nav" aria-label="Draggable sidebar navigation">
+      {groups.map((group) => (
+        <section className="sidebar-group" key={group.id}>
+          <div className="sidebar-label-row">
+            <button type="button" className="sidebar-label-button" aria-expanded="true">
+              <svg className="sidebar-label-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+              <span>{group.label}</span>
+            </button>
+          </div>
+          <div className="sidebar-subnav">
+            {group.items.map((item) => (
+              <div
+                key={item.id}
+                draggable
+                data-item-id={item.id}
+                className={[
+                  "sidebar-menu-row",
+                  draggedId === item.id ? "dragging" : "",
+                ].filter(Boolean).join(" ")}
+                onDragStart={(event) => {
+                  setDraggedId(item.id);
+                  event.dataTransfer.effectAllowed = "move";
+                  event.dataTransfer.setData("text/plain", item.id);
+                }}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  event.dataTransfer.dropEffect = "move";
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  const droppedId = event.dataTransfer.getData("text/plain") || draggedId;
+                  if (!droppedId || !itemIds.includes(droppedId as ActiveRoute)) return;
+                  const nextItems = moveItem(orderedItems, droppedId, item.id);
+                  setOrderedItems(nextItems);
+                  setDraggedId(null);
+                  persist(nextItems);
+                }}
+                onDragEnd={() => setDraggedId(null)}
+              >
+                <Link
+                  href={item.href}
+                  prefetch
+                  aria-label={item.label}
+                  className={[
+                    "sidebar-sub-link",
+                    active === item.id ? "active" : "",
+                  ].filter(Boolean).join(" ")}
+                >
+                  {item.label}
+                </Link>
+                <span className="sidebar-drag-handle" aria-hidden="true">⋮⋮</span>
+              </div>
+            ))}
+          </div>
+        </section>
       ))}
     </div>
   );

@@ -4,14 +4,21 @@ import { requireTenant } from "@/lib/auth/session";
 import { logAuditEvent } from "@/lib/security/audit";
 
 const allowedSidebarItemIds = [
-  "dashboard",
-  "marketing",
-  "sales",
-  "retention",
-  "finance",
+  "metrics-most-important",
+  "metrics-reverse-engineering",
+  "metrics-financial",
+  "metrics-churn-ltv",
+  "metrics-sales",
+  "metrics-cost-per-call",
+  "metrics-inputs",
   "constraints",
-  "forecasting",
-  "settings",
+  "settings-account",
+  "settings-team",
+  "settings-billing",
+  "settings-integrations",
+  "settings-scheduling",
+  "settings-slack",
+  "settings-telegram",
 ] as const;
 
 function sanitizeOrder(itemIds: string[]) {

@@ -14,7 +14,7 @@ export default async function AccountSettingsPage() {
     .maybeSingle();
 
   return (
-    <AppShell active="settings" tenantName={tenant.name}>
+    <AppShell active="settings-account" tenantName={tenant.name}>
       <section className="page-header compact">
         <p className="eyebrow">{tenant.name}</p>
         <h1>Settings</h1>

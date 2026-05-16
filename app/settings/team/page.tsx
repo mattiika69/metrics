@@ -59,7 +59,7 @@ export default async function TeamSettingsPage({ searchParams }: PageProps) {
     : { data: [] };
 
   return (
-    <AppShell active="settings" tenantName={tenant.name}>
+    <AppShell active="settings-team" tenantName={tenant.name}>
       <section className="page-header">
         <p className="eyebrow">{tenant.name}</p>
         <h1>Settings</h1>

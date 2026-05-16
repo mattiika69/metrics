@@ -26,6 +26,13 @@ export type ActiveRoute =
   | "metrics-principles"
   | "metrics-quality-assurance"
   | "settings"
+  | "settings-account"
+  | "settings-team"
+  | "settings-billing"
+  | "settings-integrations"
+  | "settings-scheduling"
+  | "settings-slack"
+  | "settings-telegram"
   | "account"
   | "admin";
 
@@ -36,14 +43,21 @@ type AppShellProps = {
 };
 
 const primaryItems: SidebarItem[] = [
-  { id: "dashboard", label: "CEO Dashboard", href: "/dashboard" },
-  { id: "marketing", label: "Marketing", href: "/marketing" },
-  { id: "sales", label: "Sales", href: "/sales" },
-  { id: "retention", label: "Retention", href: "/retention" },
-  { id: "finance", label: "Finance", href: "/finance" },
-  { id: "constraints", label: "Constraints", href: "/constraints" },
-  { id: "forecasting", label: "Forecasting", href: "/forecasting" },
-  { id: "settings", label: "Settings", href: "/settings/team" },
+  { id: "metrics-most-important", label: "Most Important Metrics", href: "/dashboard", section: "metrics" },
+  { id: "metrics-reverse-engineering", label: "Reverse Engineering", href: "/forecasting", section: "metrics" },
+  { id: "metrics-financial", label: "Financial", href: "/finance", section: "metrics" },
+  { id: "metrics-churn-ltv", label: "Churn & LTV", href: "/retention", section: "metrics" },
+  { id: "metrics-sales", label: "Sales", href: "/sales", section: "metrics" },
+  { id: "metrics-cost-per-call", label: "Cost Per Call", href: "/metrics/cost-per-call", section: "metrics" },
+  { id: "metrics-inputs", label: "Inputs", href: "/marketing", section: "metrics" },
+  { id: "constraints", label: "Constraints", href: "/constraints", section: "metrics" },
+  { id: "settings-account", label: "Account", href: "/settings/account", section: "settings" },
+  { id: "settings-team", label: "Team", href: "/settings/team", section: "settings" },
+  { id: "settings-billing", label: "Billing", href: "/settings/billing", section: "settings" },
+  { id: "settings-integrations", label: "Integrations", href: "/integrations", section: "settings" },
+  { id: "settings-scheduling", label: "Scheduling", href: "/settings/scheduling", section: "settings" },
+  { id: "settings-slack", label: "Slack", href: "/settings/slack", section: "settings" },
+  { id: "settings-telegram", label: "Telegram", href: "/settings/telegram", section: "settings" },
 ];
 
 async function getOrderedSidebarItems() {
@@ -68,10 +82,11 @@ export async function AppShell({ active, children }: AppShellProps) {
             </span>
             <span>HyperOptimal Metrics</span>
           </Link>
+          <span className="collapse-dot" aria-hidden="true">‹</span>
         </div>
 
         <nav className="sidebar-sections" aria-label="Primary navigation">
-          <SidebarNav active={active === "integrations" ? "settings" : active} items={sidebarItems} />
+          <SidebarNav active={active} items={sidebarItems} />
           {authBypassEnabled ? null : (
             <form action={signOutAction}>
               <button type="submit" className="sidebar-logout">
