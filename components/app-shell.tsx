@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { SidebarNav, type SidebarItem } from "@/components/sidebar-nav";
 import { signOutAction } from "@/lib/auth/actions";
-import { isAuthBypassEnabled } from "@/lib/auth/bypass";
 import { loadSidebarOrder } from "@/lib/navigation/sidebar-actions";
 
 export type ActiveRoute =
@@ -31,6 +30,7 @@ export type ActiveRoute =
   | "settings-scheduling"
   | "settings-slack"
   | "settings-telegram"
+  | "help"
   | "account"
   | "admin";
 
@@ -103,7 +103,31 @@ const primaryItems: SidebarItem[] = [
       { id: "inputs-accounts", label: "Accounts", href: "/inputs?tab=accounts" },
     ],
   },
-  { id: "settings", label: "Settings", href: "/settings/account", section: "settings" },
+  {
+    id: "settings",
+    label: "Settings",
+    href: "/settings/account",
+    section: "settings",
+    children: [
+      {
+        id: "settings-home",
+        label: "Settings",
+        href: "/settings/account",
+        activeRoutes: [
+          "settings",
+          "settings-account",
+          "settings-team",
+          "settings-billing",
+          "settings-integrations",
+          "settings-scheduling",
+          "settings-slack",
+          "settings-telegram",
+        ],
+      },
+      { id: "settings-help", label: "Help", href: "/help", activeRoutes: ["help"] },
+      { id: "settings-logout", label: "Log Out", action: "logout", danger: true },
+    ],
+  },
 ];
 
 async function getOrderedSidebarItems() {
@@ -115,7 +139,6 @@ async function getOrderedSidebarItems() {
 }
 
 export async function AppShell({ active, children }: AppShellProps) {
-  const authBypassEnabled = isAuthBypassEnabled();
   const sidebarItems = await getOrderedSidebarItems();
 
   return (
@@ -134,14 +157,7 @@ export async function AppShell({ active, children }: AppShellProps) {
         </div>
 
         <nav className="sidebar-sections" aria-label="Primary navigation">
-          <SidebarNav active={active} items={sidebarItems} />
-          {authBypassEnabled ? null : (
-            <form action={signOutAction}>
-              <button type="submit" className="sidebar-logout">
-                Log Out
-              </button>
-            </form>
-          )}
+          <SidebarNav active={active} items={sidebarItems} logoutAction={signOutAction} />
         </nav>
       </aside>
       <section className="app-main">

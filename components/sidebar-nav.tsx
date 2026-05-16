@@ -9,8 +9,10 @@ import type { ActiveRoute } from "@/components/app-shell";
 export type SidebarChildItem = {
   id: string;
   label: string;
-  href: string;
+  href?: string;
   activeRoutes?: ActiveRoute[];
+  action?: "logout";
+  danger?: boolean;
 };
 
 export type SidebarItem = {
@@ -35,32 +37,31 @@ function moveItem(items: SidebarItem[], draggedId: string, targetId: string) {
 export function SidebarNav({
   active,
   items,
+  logoutAction,
 }: {
   active: ActiveRoute;
   items: SidebarItem[];
+  logoutAction?: () => void | Promise<void>;
 }) {
   const pathname = usePathname();
   const [orderedItems, setOrderedItems] = useState(items);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const itemIds = useMemo(() => orderedItems.map((item) => item.id), [orderedItems]);
-  const metricsItems = orderedItems.filter((item) => item.section === "metrics");
-  const settingsItems = orderedItems.filter((item) => item.section === "settings");
+  const activeParentId = useMemo(() => {
+    return (
+      items.find((item) => {
+        if (!item.children?.length) return false;
+        if (item.id === "settings" && active.startsWith("settings")) return true;
+        return item.children.some((child) => child.activeRoutes?.includes(active));
+      })?.id ?? null
+    );
+  }, [active, items]);
   const initialExpandedParentId = useMemo(
-    () => items.find((item) => item.section === "metrics" && item.children?.length)?.id ?? null,
-    [items],
+    () => activeParentId ?? items.find((item) => item.children?.length)?.id ?? null,
+    [activeParentId, items],
   );
   const [expandedParentId, setExpandedParentId] = useState<ActiveRoute | null>(initialExpandedParentId);
-  const groups = [
-    {
-      id: "metrics",
-      label: "Metrics",
-      items: metricsItems,
-      expanded: true,
-      accent: true,
-      dividerBefore: false,
-    },
-  ];
 
   function persist(nextItems: SidebarItem[]) {
     startTransition(() => {
@@ -69,7 +70,7 @@ export function SidebarNav({
   }
 
   function isChildActive(child: SidebarChildItem) {
-    if (pathname === child.href) return true;
+    if (child.href && pathname === child.href) return true;
     return child.activeRoutes?.includes(active) ?? false;
   }
 
@@ -84,140 +85,24 @@ export function SidebarNav({
 
   return (
     <div className="sidebar-grouped-nav" aria-label="Draggable sidebar navigation">
-      {groups.map((group) => (
-        <section
-          className={[
-            "sidebar-group",
-            group.dividerBefore ? "with-divider" : "",
-            group.accent ? "with-accent" : "",
-          ].filter(Boolean).join(" ")}
-          key={group.id}
-        >
-          {group.expanded ? (
-            <div className="sidebar-subnav">
-              {group.items.map((item) => {
-                const itemActive = isItemActive(item);
-                const itemExpanded = expandedParentId === item.id;
+      <section className="sidebar-group with-accent">
+        <div className="sidebar-subnav">
+          {orderedItems.map((item, index) => {
+            const itemActive = isItemActive(item);
+            const itemExpanded = expandedParentId === item.id;
+            const isFirstSettingsItem =
+              item.section === "settings" && orderedItems[index - 1]?.section !== "settings";
 
-                return (
-                  <div
-                    key={item.id}
-                    draggable
-                    data-item-id={item.id}
-                    className={[
-                      item.children?.length ? "sidebar-parent-block" : "sidebar-menu-row",
-                      draggedId === item.id ? "dragging" : "",
-                      itemActive ? "parent-active" : "",
-                    ].filter(Boolean).join(" ")}
-                    onDragStart={(event) => {
-                      setDraggedId(item.id);
-                      event.dataTransfer.effectAllowed = "move";
-                      event.dataTransfer.setData("text/plain", item.id);
-                    }}
-                    onDragOver={(event) => {
-                      event.preventDefault();
-                      event.dataTransfer.dropEffect = "move";
-                    }}
-                    onDrop={(event) => {
-                      event.preventDefault();
-                      const droppedId = event.dataTransfer.getData("text/plain") || draggedId;
-                      if (!droppedId || !itemIds.includes(droppedId as ActiveRoute)) return;
-                      const nextItems = moveItem(orderedItems, droppedId, item.id);
-                      setOrderedItems(nextItems);
-                      setDraggedId(null);
-                      persist(nextItems);
-                    }}
-                    onDragEnd={() => setDraggedId(null)}
-                  >
-                    {item.children?.length ? (
-                      <>
-                        <div className="sidebar-parent-row">
-                          <button
-                            type="button"
-                            className="sidebar-parent-collapse"
-                            aria-expanded={itemExpanded}
-                            aria-label={`${itemExpanded ? "Collapse" : "Expand"} ${item.label}`}
-                            onClick={() => toggleParent(item.id)}
-                          >
-                            <svg
-                              className={[
-                                "sidebar-parent-chevron",
-                                itemExpanded ? "expanded" : "",
-                              ].filter(Boolean).join(" ")}
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                              aria-hidden="true"
-                            >
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                          </button>
-                          <button
-                            type="button"
-                            aria-label={item.label}
-                            className={[
-                              "sidebar-parent-link",
-                              itemExpanded ? "expanded" : "",
-                            ].filter(Boolean).join(" ")}
-                            onClick={() => toggleParent(item.id)}
-                          >
-                            {item.label}
-                          </button>
-                          <span className="sidebar-drag-handle" aria-hidden="true">⋮⋮</span>
-                        </div>
-                        {itemExpanded ? (
-                          <div className="sidebar-child-nav">
-                            {item.children.map((child) => (
-                              <Link
-                                href={child.href}
-                                prefetch
-                                aria-label={child.label}
-                                className={[
-                                  "sidebar-sub-link",
-                                  isChildActive(child) ? "active" : "",
-                                ].filter(Boolean).join(" ")}
-                                key={child.id}
-                              >
-                                {child.label}
-                              </Link>
-                            ))}
-                          </div>
-                        ) : null}
-                      </>
-                    ) : (
-                      <>
-                        <Link
-                          href={item.href}
-                          prefetch
-                          aria-label={item.label}
-                          className={[
-                            "sidebar-sub-link",
-                            itemActive ? "active" : "",
-                          ].filter(Boolean).join(" ")}
-                        >
-                          {item.label}
-                        </Link>
-                        <span className="sidebar-drag-handle" aria-hidden="true">⋮⋮</span>
-                      </>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ) : null}
-        </section>
-      ))}
-      {settingsItems.length ? (
-        <section className="sidebar-group with-divider sidebar-settings-direct">
-          <div className="sidebar-subnav">
-            {settingsItems.map((item) => (
+            return (
               <div
                 key={item.id}
                 draggable
                 data-item-id={item.id}
                 className={[
-                  "sidebar-menu-row",
+                  isFirstSettingsItem ? "with-divider" : "",
+                  item.children?.length ? "sidebar-parent-block" : "sidebar-menu-row",
                   draggedId === item.id ? "dragging" : "",
+                  itemActive ? "parent-active" : "",
                 ].filter(Boolean).join(" ")}
                 onDragStart={(event) => {
                   setDraggedId(item.id);
@@ -239,23 +124,103 @@ export function SidebarNav({
                 }}
                 onDragEnd={() => setDraggedId(null)}
               >
-                <Link
-                  href={item.href}
-                  prefetch
-                  aria-label={item.label}
-                  className={[
-                    "sidebar-sub-link",
-                    isItemActive(item) ? "active" : "",
-                  ].filter(Boolean).join(" ")}
-                >
-                  {item.label}
-                </Link>
-                <span className="sidebar-drag-handle" aria-hidden="true">⋮⋮</span>
+                {item.children?.length ? (
+                  <>
+                    <div className="sidebar-parent-row">
+                      <button
+                        type="button"
+                        className="sidebar-parent-collapse"
+                        aria-expanded={itemExpanded}
+                        aria-label={`${itemExpanded ? "Collapse" : "Expand"} ${item.label}`}
+                        onClick={() => toggleParent(item.id)}
+                      >
+                        <svg
+                          className={[
+                            "sidebar-parent-chevron",
+                            itemExpanded ? "expanded" : "",
+                          ].filter(Boolean).join(" ")}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={item.label}
+                        className={[
+                          "sidebar-parent-link",
+                          itemExpanded ? "expanded" : "",
+                        ].filter(Boolean).join(" ")}
+                        onClick={() => toggleParent(item.id)}
+                      >
+                        {item.label}
+                      </button>
+                      <span className="sidebar-drag-handle" aria-hidden="true">⋮⋮</span>
+                    </div>
+                    {itemExpanded ? (
+                      <div className="sidebar-child-nav">
+                        {item.children.map((child) => {
+                          if (child.action === "logout") {
+                            return logoutAction ? (
+                              <form action={logoutAction} key={child.id}>
+                                <button
+                                  type="submit"
+                                  className={[
+                                    "sidebar-sub-link",
+                                    "sidebar-action-link",
+                                    child.danger ? "danger" : "",
+                                  ].filter(Boolean).join(" ")}
+                                >
+                                  {child.label}
+                                </button>
+                              </form>
+                            ) : null;
+                          }
+
+                          if (!child.href) return null;
+
+                          return (
+                            <Link
+                              href={child.href}
+                              prefetch
+                              aria-label={child.label}
+                              className={[
+                                "sidebar-sub-link",
+                                isChildActive(child) ? "active" : "",
+                              ].filter(Boolean).join(" ")}
+                              key={child.id}
+                            >
+                              {child.label}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    ) : null}
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href={item.href}
+                      prefetch
+                      aria-label={item.label}
+                      className={[
+                        "sidebar-sub-link",
+                        itemActive ? "active" : "",
+                      ].filter(Boolean).join(" ")}
+                    >
+                      {item.label}
+                    </Link>
+                    <span className="sidebar-drag-handle" aria-hidden="true">⋮⋮</span>
+                  </>
+                )}
               </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }
