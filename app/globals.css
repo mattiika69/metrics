@@ -7094,3 +7094,248 @@ body:has(.app-shell) {
   max-width: 1120px !important;
   grid-template-columns: 1fr !important;
 }
+
+/* Thin visual pass: match the lighter reference density */
+.side-nav {
+  width: 220px !important;
+  flex-basis: 220px !important;
+}
+
+.side-shell-header {
+  min-height: 66px !important;
+  padding: 15px 10px 12px !important;
+}
+
+.side-brand {
+  font-size: 12.75px !important;
+  font-weight: 800 !important;
+}
+
+.collapse-dot {
+  width: 25px !important;
+  height: 25px !important;
+  flex-basis: 25px !important;
+}
+
+.sidebar-sections {
+  height: calc(100vh - 66px) !important;
+  padding: 11px 8px 14px !important;
+}
+
+.sidebar-parent-block {
+  padding-bottom: 6px !important;
+}
+
+.sidebar-parent-row {
+  min-height: 28px !important;
+}
+
+.sidebar-parent-collapse {
+  width: 17px !important;
+  min-width: 17px !important;
+  min-height: 27px !important;
+}
+
+.sidebar-parent-link {
+  min-height: 28px !important;
+  color: #8794aa !important;
+  font-size: 10px !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.12em !important;
+  padding: 8px 2px 7px !important;
+}
+
+.sidebar-sub-link,
+.sidebar-action-link {
+  min-height: 29px !important;
+  color: #a9b4c4 !important;
+  font-size: 12px !important;
+  font-weight: 450 !important;
+  padding: 7px 8px !important;
+}
+
+.sidebar-sub-link.active {
+  border-color: #4a86f7 !important;
+  background: #204483 !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.sidebar-drag-handle {
+  opacity: 0.035 !important;
+}
+
+.app-content {
+  padding: 47px 44px 72px 31px !important;
+}
+
+.scaling-header,
+.settings-page-title,
+.page-header,
+.page-header.compact {
+  margin-bottom: 16px !important;
+}
+
+.scaling-header h1,
+.settings-page-title h1,
+.page-header h1 {
+  font-size: 18px !important;
+  font-weight: 800 !important;
+}
+
+.scaling-header p,
+.settings-page-title p,
+.page-header .eyebrow {
+  margin-top: 6px !important;
+  font-size: 10.25px !important;
+  letter-spacing: 0.065em !important;
+}
+
+.scaling-metric-grid {
+  grid-template-columns: repeat(8, minmax(118px, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.scaling-metric-card {
+  min-height: 74px !important;
+  border: 1px solid #d8dee8 !important;
+  border-radius: 5px !important;
+  background: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.055) !important;
+  padding: 10px !important;
+}
+
+.metric-card-head {
+  color: #344054 !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  line-height: 1.05 !important;
+}
+
+.info-dot {
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 4px !important;
+  color: #98a2b3 !important;
+  font-size: 8px !important;
+}
+
+.scaling-metric-card strong {
+  margin-top: 9px !important;
+  color: #111827 !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+}
+
+.metric-edit-panel {
+  margin-top: 16px !important;
+  border-color: #d8dee8 !important;
+  border-radius: 6px !important;
+  background: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+}
+
+.metric-edit-panel summary {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+.most-important-toolbar {
+  display: none !important;
+}
+
+.settings-tabs {
+  margin: 0 0 18px !important;
+}
+
+.settings-tabs a {
+  min-height: 29px !important;
+  border-radius: 6px !important;
+  padding: 0 13px !important;
+  font-size: 11px !important;
+}
+
+.app-content > .settings-layout {
+  max-width: 1080px !important;
+  grid-template-columns: minmax(0, 1fr) 320px !important;
+  gap: 22px !important;
+  margin-top: 0 !important;
+}
+
+.app-content > .settings-layout.single-column {
+  max-width: 1080px !important;
+  grid-template-columns: 1fr !important;
+}
+
+.app-content > .settings-layout .settings-panel {
+  border: 1px solid #dbe1ea !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  padding: 22px !important;
+}
+
+.app-content > .settings-layout .settings-panel.full-span {
+  grid-column: 1 / -1 !important;
+}
+
+.app-content > .settings-layout .panel-heading {
+  margin-bottom: 16px !important;
+}
+
+.app-content > .settings-layout h2 {
+  color: #111827 !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+}
+
+.app-content > .settings-layout .step-label {
+  color: #2563eb !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+}
+
+.app-content > .settings-layout .muted {
+  color: #667085 !important;
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+}
+
+.app-content > .settings-layout .settings-list,
+.app-content > .settings-layout .table-list {
+  border-color: #dfe4ec !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+.app-content > .settings-layout .settings-list > div,
+.app-content > .settings-layout .table-row {
+  min-height: 48px !important;
+  padding: 13px 14px !important;
+}
+
+.app-content > .settings-layout input,
+.app-content > .settings-layout select {
+  min-height: 38px !important;
+  border-color: #cfd6e1 !important;
+  border-radius: 7px !important;
+  background: #ffffff !important;
+}
+
+.app-content > .settings-layout .button-primary,
+.app-content > .settings-layout .button-secondary,
+.app-content > .settings-layout button[type="submit"],
+.app-content > .settings-layout .card-action button {
+  min-height: 38px !important;
+  border-radius: 7px !important;
+}
+
+.utility-tabs,
+.utility-chip-row,
+.product-mode-switcher,
+.top-utility-tabs {
+  display: none !important;
+}

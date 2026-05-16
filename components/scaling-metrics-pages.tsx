@@ -1706,32 +1706,6 @@ export async function ScalingMostImportantPage() {
     <AppShell active="metrics-most-important" tenantName={tenant.name}>
       <section className="scaling-page">
         <Header title="Most Important Metrics" />
-        <div className="most-important-toolbar">
-          <div className="most-important-date-controls">
-            <select aria-label="Year">
-              <option>2026</option>
-            </select>
-            <select aria-label="Range">
-              <option>Last 30 Days</option>
-              <option>Last 7 Days</option>
-              <option>Last 14 Days</option>
-              <option>Last 90 Days</option>
-              <option>Last 180 Days</option>
-              <option>Last 365 Days</option>
-            </select>
-            <span className="light-button">Refresh</span>
-          </div>
-          <div className="most-important-filter-controls">
-            <span>Sort</span>
-            <select aria-label="Sort">
-              <option>Default</option>
-            </select>
-            <span>Tag</span>
-            <select aria-label="Tag">
-              <option>All tags</option>
-            </select>
-          </div>
-        </div>
         <div className="scaling-metric-grid">
           {payload.rows.map((row) => (
             <article className="scaling-metric-card" key={row.metricId}>
