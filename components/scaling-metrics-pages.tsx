@@ -1525,6 +1525,7 @@ export async function ScalingReverseEngineeringPage() {
     <AppShell active="metrics-reverse-engineering" tenantName={tenant.name}>
       <section className="scaling-page">
         <Header title="Reverse Engineering" />
+        <PageTabs tabs={pageTabs["reverse-engineering"]} activeKey="current" />
         <p className="reverse-note">Current tab: only Net Profit Goal is editable. Core inputs mirror Goal tab values.</p>
         <div className="reverse-legend">
           <strong>Legend:</strong>
