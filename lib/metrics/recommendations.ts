@@ -14,26 +14,14 @@ function deterministicRecommendation(lines: string[]) {
 }
 
 async function loadAiReferenceContext(admin: SupabaseLike, tenantId: string) {
-  const [contextDoc, learnings] = await Promise.all([
-    admin
-      .from("ai_context_docs")
-      .select("content")
-      .eq("tenant_id", tenantId)
-      .maybeSingle(),
-    admin
-      .from("metric_learnings")
-      .select("title, source, body")
-      .eq("tenant_id", tenantId)
-      .is("archived_at", null)
-      .order("updated_at", { ascending: false })
-      .limit(25),
-  ]);
+  const contextDoc = await admin
+    .from("ai_context_docs")
+    .select("content")
+    .eq("tenant_id", tenantId)
+    .maybeSingle();
 
   return {
     aiContext: typeof contextDoc.data?.content === "string" ? contextDoc.data.content.trim() : "",
-    learnings: (learnings.data ?? [])
-      .map((learning) => `${learning.title} (${learning.source}): ${learning.body}`)
-      .join("\n"),
   };
 }
 
@@ -86,16 +74,13 @@ export async function generateAndStoreRecommendation({
     try {
       model = claudeModel;
       body = await createClaudeText({
-        system: "You are an operating metrics advisor for HyperOptimal Metrics. Use the supplied AI Context Document, saved Learnings, and metric facts. Give concise, practical recommendations. Do not invent data.",
+        system: "You are an operating metrics advisor for HyperOptimal Metrics. Use the supplied AI Context Document and metric facts. Give concise, practical recommendations. Do not invent data.",
         messages: [
           {
             role: "user",
             content: [
               "AI Context Document:",
               referenceContext.aiContext || "No AI Context Document saved.",
-              "",
-              "Saved Learnings:",
-              referenceContext.learnings || "No saved learnings.",
               "",
               "Create recommendations for these top constraints.",
               "Return 4 concise bullets with concrete next actions.",

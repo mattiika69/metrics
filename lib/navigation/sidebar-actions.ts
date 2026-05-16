@@ -4,17 +4,12 @@ import { requireTenant } from "@/lib/auth/session";
 import { logAuditEvent } from "@/lib/security/audit";
 
 const allowedSidebarItemIds = [
-  "metrics-most-important",
-  "metrics-reverse-engineering",
-  "forecasting",
+  "dashboard",
   "metrics-financial",
   "metrics-churn-ltv",
   "metrics-sales",
   "metrics-inputs",
-  "metrics-benchmarking",
-  "constraints",
   "ai-context",
-  "learnings",
   "settings",
 ] as const;
 

@@ -14,7 +14,6 @@ export type ActiveRoute =
   | "integrations"
   | "constraints"
   | "ai-context"
-  | "learnings"
   | "metrics-most-important"
   | "metrics-reverse-engineering"
   | "metrics-financial"
@@ -28,7 +27,6 @@ export type ActiveRoute =
   | "settings"
   | "settings-account"
   | "settings-team"
-  | "settings-learning"
   | "settings-billing"
   | "settings-integrations"
   | "settings-scheduling"
@@ -44,9 +42,20 @@ type AppShellProps = {
 };
 
 const primaryItems: SidebarItem[] = [
-  { id: "metrics-most-important", label: "Most Important Metrics", href: "/dashboard", section: "metrics" },
-  { id: "metrics-reverse-engineering", label: "Reverse Engineering", href: "/metrics/reverse-engineering", section: "metrics" },
-  { id: "forecasting", label: "Forecasting", href: "/forecasting", section: "metrics" },
+  {
+    id: "dashboard",
+    label: "Metrics",
+    href: "/dashboard",
+    section: "metrics",
+    children: [
+      { id: "metrics-ceo-dashboard", label: "CEO Dashboard", href: "/dashboard", activeRoutes: ["dashboard"] },
+      { id: "metrics-most-important-link", label: "Most Important Metrics", href: "/metrics/most-important", activeRoutes: ["metrics-most-important"] },
+      { id: "metrics-benchmarks-link", label: "Benchmarks", href: "/benchmarks", activeRoutes: ["metrics-benchmarking"] },
+      { id: "metrics-constraints-link", label: "Constraints", href: "/constraints", activeRoutes: ["constraints"] },
+      { id: "metrics-reverse-link", label: "Reverse Engineering", href: "/metrics/reverse-engineering", activeRoutes: ["metrics-reverse-engineering"] },
+      { id: "metrics-forecast-link", label: "Forecasting", href: "/forecasting", activeRoutes: ["forecasting"] },
+    ],
+  },
   {
     id: "metrics-financial",
     label: "Financials",
@@ -95,21 +104,8 @@ const primaryItems: SidebarItem[] = [
       { id: "inputs-accounts", label: "Accounts", href: "/inputs?tab=accounts" },
     ],
   },
-  { id: "metrics-benchmarking", label: "Benchmarks", href: "/benchmarks", section: "metrics" },
-  { id: "constraints", label: "Constraints", href: "/constraints", section: "metrics" },
   { id: "ai-context", label: "AI Context Document", href: "/ai-context-doc", section: "metrics" },
-  { id: "learnings", label: "Learnings", href: "/learnings", section: "metrics" },
   { id: "settings", label: "Settings", href: "/settings/account", section: "settings" },
-];
-
-const appLinks = [
-  { label: "Management", href: "https://management.hyperoptimal.com" },
-  { label: "Follow Up", href: "https://followup.hyperoptimal.com" },
-  { label: "Ads", href: "https://ads.hyperoptimal.com" },
-  { label: "Planning", href: "https://planning.hyperoptimal.com" },
-  { label: "Metrics", href: "https://metrics.hyperoptimal.com" },
-  { label: "Funnel", href: "https://funnel.hyperoptimal.com" },
-  { label: "Content", href: "https://content.hyperoptimal.com" },
 ];
 
 async function getOrderedSidebarItems() {
@@ -152,21 +148,6 @@ export async function AppShell({ active, children }: AppShellProps) {
       </aside>
       <section className="app-main">
         <div className="app-content">{children}</div>
-        <footer className="app-footer">
-          <div>
-            <strong>HyperOptimal Metrics</strong>
-            <span>© {new Date().getFullYear()} HyperOptimal. All rights reserved.</span>
-          </div>
-          <nav aria-label="Footer navigation">
-            <Link href="/terms">Terms</Link>
-            <Link href="/privacy">Privacy</Link>
-            {appLinks.map((link) => (
-              <a href={link.href} key={link.label}>
-                {link.label}
-              </a>
-            ))}
-          </nav>
-        </footer>
       </section>
     </main>
   );

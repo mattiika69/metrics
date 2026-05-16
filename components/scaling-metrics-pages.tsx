@@ -6,7 +6,7 @@ import { integrationCatalog } from "@/lib/integrations/catalog";
 import { buildConstraintsDigest, formatConstraintValue } from "@/lib/metrics/constraints";
 import { metricDefinitions } from "@/lib/metrics/definitions";
 import { buildForecastContext } from "@/lib/metrics/forecasting";
-import { loadMetricSnapshotPayload } from "@/lib/metrics/server";
+import { loadMetricSnapshotPayload, loadRawDataCounts } from "@/lib/metrics/server";
 import { loadMetricViewPayload, loadSelectedMetricIds } from "@/lib/metrics/views";
 
 type MetricTabKey =
@@ -1522,6 +1522,173 @@ export async function ScalingSalesCallsPage() {
         </div>
       </section>
     </SourcePageChrome>
+  );
+}
+
+function DashboardMetricCard({
+  row,
+  compact = false,
+}: {
+  row: Awaited<ReturnType<typeof loadMetricViewPayload>>["rows"][number];
+  compact?: boolean;
+}) {
+  return (
+    <article className={compact ? "scaling-metric-card compact" : "scaling-metric-card"}>
+      <div className="metric-card-head">
+        <span>{row.name}</span>
+        <span className="info-dot">i</span>
+      </div>
+      <strong>{row.displayValue}</strong>
+    </article>
+  );
+}
+
+export async function ScalingCeoDashboardPage() {
+  const { supabase, tenant } = await requireTenant();
+  const [payload, digest, forecast, sourceCounts] = await Promise.all([
+    loadMetricViewPayload({ supabase, tenantId: tenant.id, viewKey: "ceo" }),
+    buildConstraintsDigest({ supabase, tenantId: tenant.id, periodKey: "30d" }),
+    buildForecastContext({ supabase, tenantId: tenant.id }),
+    loadRawDataCounts(supabase, tenant.id),
+  ]);
+  const focus = digest.topConstraints[0] ?? digest.rows[0] ?? null;
+  const primaryMetrics = payload.rows.slice(0, 8);
+  const secondaryMetrics = payload.rows.slice(8, 24);
+  const sourceTotal = sourceCounts.reduce((total, source) => total + (source.count ?? 0), 0);
+  const monthlyRevenueRequired = forecast.model.outputs.revenueRequired / 12;
+
+  return (
+    <AppShell active="dashboard" tenantName={tenant.name}>
+      <section className="scaling-page ceo-dashboard-page">
+        <Header title="CEO Dashboard" />
+        <div className="most-important-toolbar ceo-dashboard-toolbar">
+          <div className="most-important-date-controls">
+            <select aria-label="Year">
+              <option>2026</option>
+            </select>
+            <select aria-label="Range">
+              <option>Last 30 Days</option>
+              <option>Last 7 Days</option>
+              <option>Last 14 Days</option>
+              <option>Last 90 Days</option>
+              <option>Last 180 Days</option>
+              <option>Last 365 Days</option>
+            </select>
+            <span className="light-button">Refresh</span>
+          </div>
+          <div className="most-important-filter-controls">
+            <span>Sort</span>
+            <select aria-label="Sort">
+              <option>Default</option>
+            </select>
+            <span>Tag</span>
+            <select aria-label="Tag">
+              <option>All tags</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="ceo-dashboard-layout">
+          <section className="ceo-primary-panel">
+            <div className="ceo-panel-title">
+              <div>
+                <span>Executive Snapshot</span>
+                <h2>Most Important Metrics</h2>
+              </div>
+              <Link href="/metrics/most-important">Edit metrics</Link>
+            </div>
+            <div className="ceo-primary-grid">
+              {primaryMetrics.map((row) => (
+                <DashboardMetricCard row={row} key={row.metricId} compact />
+              ))}
+            </div>
+          </section>
+
+          <section className="ceo-focus-panel">
+            <div className="ceo-panel-title">
+              <div>
+                <span>Operating Focus</span>
+                <h2>{focus?.benchmark.name ?? "Connect data sources"}</h2>
+              </div>
+              <Link href="/constraints">Open constraints</Link>
+            </div>
+            {focus ? (
+              <>
+                <div className="ceo-focus-strip">
+                  <div>
+                    <span>Current</span>
+                    <strong>{formatConstraintValue(focus, focus.actual)}</strong>
+                  </div>
+                  <div>
+                    <span>Scale</span>
+                    <strong>{formatConstraintValue(focus, focus.scale)}</strong>
+                  </div>
+                  <div>
+                    <span>Gap</span>
+                    <strong>{focus.gapPercent === null ? "Needs data" : `${focus.gapPercent.toFixed(1)}%`}</strong>
+                  </div>
+                </div>
+                <ol className="ceo-action-list">
+                  {focus.suggestions.slice(0, 4).map((suggestion) => (
+                    <li key={suggestion}>{suggestion}</li>
+                  ))}
+                </ol>
+              </>
+            ) : (
+              <div className="ceo-empty-panel">Connect sources to identify the highest-priority constraint.</div>
+            )}
+          </section>
+
+          <section className="ceo-forecast-panel">
+            <div className="ceo-panel-title">
+              <div>
+                <span>Forecast</span>
+                <h2>{forecast.model.name}</h2>
+              </div>
+              <Link href="/forecasting">Open model</Link>
+            </div>
+            <div className="ceo-forecast-grid">
+              {forecastOutput("Revenue Required", money(forecast.model.outputs.revenueRequired), `${money(monthlyRevenueRequired)} per month`)}
+              {forecastOutput("Clients Required", forecast.model.outputs.clientsRequired.toFixed(2), `${forecast.model.outputs.newClientsRequired.toFixed(2)} new clients`)}
+              {forecastOutput("Booked Calls Required", forecast.model.outputs.bookedCallsRequired.toFixed(2), `${(forecast.model.outputs.bookedCallsRequired / 52).toFixed(2)} per week`)}
+              {forecastOutput("Daily Spend", money(forecast.model.outputs.dailySpendRequired), "Based on current acquisition cost")}
+            </div>
+          </section>
+
+          <section className="ceo-source-panel">
+            <div className="ceo-panel-title">
+              <div>
+                <span>Source Health</span>
+                <h2>{sourceTotal.toLocaleString()} records</h2>
+              </div>
+              <Link href="/integrations">Manage sources</Link>
+            </div>
+            <div className="ceo-source-list">
+              {sourceCounts.slice(0, 7).map((source) => (
+                <div key={source.table}>
+                  <span>{source.label}</span>
+                  <strong>{source.error ? "Review" : (source.count ?? 0).toLocaleString()}</strong>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        <section className="ceo-metrics-panel">
+          <div className="ceo-panel-title">
+            <div>
+              <span>Scorecard</span>
+              <h2>Operating Metrics</h2>
+            </div>
+          </div>
+          <div className="scaling-metric-grid">
+            {secondaryMetrics.map((row) => (
+              <DashboardMetricCard row={row} key={row.metricId} />
+            ))}
+          </div>
+        </section>
+      </section>
+    </AppShell>
   );
 }
 

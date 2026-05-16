@@ -85,23 +85,6 @@ export function SidebarNav({
           ].filter(Boolean).join(" ")}
           key={group.id}
         >
-          <div className="sidebar-label-row">
-            <button type="button" className="sidebar-label-button" aria-expanded={group.expanded}>
-              <svg
-                className={[
-                  "sidebar-label-chevron",
-                  group.expanded ? "expanded" : "",
-                ].filter(Boolean).join(" ")}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-              <span>{group.label}</span>
-            </button>
-          </div>
           {group.expanded ? (
             <div className="sidebar-subnav">
               {group.items.map((item) => {

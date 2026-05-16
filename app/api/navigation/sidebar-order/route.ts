@@ -4,17 +4,12 @@ import { logAuditEvent } from "@/lib/security/audit";
 export const dynamic = "force-dynamic";
 
 const allowedSidebarItemIds = [
-  "metrics-most-important",
-  "metrics-reverse-engineering",
-  "forecasting",
+  "dashboard",
   "metrics-financial",
   "metrics-churn-ltv",
   "metrics-sales",
   "metrics-inputs",
-  "metrics-benchmarking",
-  "constraints",
   "ai-context",
-  "learnings",
   "settings",
 ];
 

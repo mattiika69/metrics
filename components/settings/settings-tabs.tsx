@@ -3,7 +3,6 @@ import Link from "next/link";
 export type SettingsTab =
   | "account"
   | "team"
-  | "learning"
   | "billing"
   | "integrations"
   | "scheduling"
@@ -13,7 +12,6 @@ export type SettingsTab =
 const settingsTabs = [
   { id: "account", label: "Account", href: "/settings/account" },
   { id: "team", label: "Team", href: "/settings/team" },
-  { id: "learning", label: "Learning", href: "/settings/learning" },
   { id: "billing", label: "Billing", href: "/settings/billing" },
   { id: "integrations", label: "Integrations", href: "/settings/integrations" },
   { id: "scheduling", label: "Scheduling", href: "/settings/scheduling" },
