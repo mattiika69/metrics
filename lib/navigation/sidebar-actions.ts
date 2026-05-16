@@ -9,7 +9,6 @@ const allowedSidebarItemIds = [
   "metrics-financial",
   "metrics-churn-ltv",
   "metrics-sales",
-  "metrics-cost-per-call",
   "metrics-inputs",
   "constraints",
   "settings-account",

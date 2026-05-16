@@ -323,28 +323,6 @@ export async function refreshRecommendationAction(formData: FormData) {
   redirectWith(next, "message", "Recommendation refreshed");
 }
 
-export async function saveQualityChecklistAction(formData: FormData) {
-  const { tenant, user, supabase } = await requireTenant();
-  const weekStartDate = String(formData.get("weekStartDate") ?? "");
-  const itemIds = ["sales_calls", "transactions_in", "transactions_out", "categories", "client_data", "client_payments"];
-  const items = itemIds.map((id) => ({
-    id,
-    completed: formData.get(id) === "on",
-    completedAt: formData.get(id) === "on" ? new Date().toISOString() : null,
-  }));
-
-  await supabase.from("metric_quality_checklists").upsert({
-    tenant_id: tenant.id,
-    week_start_date: weekStartDate,
-    items,
-    updated_by: user.id,
-    updated_at: new Date().toISOString(),
-  }, {
-    onConflict: "tenant_id,week_start_date",
-  });
-  redirect("/metrics/quality-assurance?message=Quality checklist saved");
-}
-
 export async function connectIntegrationAction(formData: FormData) {
   const { tenant, user, membership } = await requireTenant();
   if (membership.role !== "owner" && membership.role !== "admin") {

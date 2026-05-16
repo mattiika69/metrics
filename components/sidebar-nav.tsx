@@ -48,7 +48,7 @@ export function SidebarNav({
       id: "settings",
       label: "Settings",
       items: settingsItems,
-      expanded: settingsItems.some((item) => item.id === active),
+      expanded: true,
       dividerBefore: true,
     },
   ];

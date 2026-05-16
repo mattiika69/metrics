@@ -24,7 +24,6 @@ export type ActiveRoute =
   | "metrics-raw-data"
   | "metrics-benchmarking"
   | "metrics-principles"
-  | "metrics-quality-assurance"
   | "settings"
   | "settings-account"
   | "settings-team"
@@ -46,10 +45,9 @@ const primaryItems: SidebarItem[] = [
   { id: "metrics-most-important", label: "Most Important Metrics", href: "/dashboard", section: "metrics" },
   { id: "metrics-reverse-engineering", label: "Reverse Engineering", href: "/forecasting", section: "metrics" },
   { id: "metrics-financial", label: "Financial", href: "/finance", section: "metrics" },
-  { id: "metrics-churn-ltv", label: "Churn & LTV", href: "/retention", section: "metrics" },
+  { id: "metrics-churn-ltv", label: "Retention", href: "/retention", section: "metrics" },
   { id: "metrics-sales", label: "Sales", href: "/sales", section: "metrics" },
-  { id: "metrics-cost-per-call", label: "Cost Per Call", href: "/metrics/cost-per-call", section: "metrics" },
-  { id: "metrics-inputs", label: "Inputs", href: "/marketing", section: "metrics" },
+  { id: "metrics-inputs", label: "Marketing", href: "/marketing", section: "metrics" },
   { id: "constraints", label: "Constraints", href: "/constraints", section: "metrics" },
   { id: "settings-account", label: "Account", href: "/settings/account", section: "settings" },
   { id: "settings-team", label: "Team", href: "/settings/team", section: "settings" },
@@ -68,7 +66,7 @@ async function getOrderedSidebarItems() {
     .filter((item): item is SidebarItem => Boolean(item));
 }
 
-export async function AppShell({ active, tenantName, children }: AppShellProps) {
+export async function AppShell({ active, children }: AppShellProps) {
   const authBypassEnabled = isAuthBypassEnabled();
   const sidebarItems = await getOrderedSidebarItems();
 
@@ -84,11 +82,6 @@ export async function AppShell({ active, tenantName, children }: AppShellProps) 
               <span>HyperOptimal</span>
             </Link>
             <span className="collapse-dot" aria-hidden="true">‹</span>
-          </div>
-          <div className="org-select" aria-label="Current organization">
-            <span>Org:</span>
-            <strong>{tenantName || "Hyper Optimal Team"}</strong>
-            <span className="org-chevron" aria-hidden="true">⌄</span>
           </div>
         </div>
 

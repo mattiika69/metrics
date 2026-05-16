@@ -15,8 +15,7 @@ type MetricTabKey =
   | "churn-ltv"
   | "sales"
   | "cost-per-call"
-  | "inputs"
-  | "quality-assurance";
+  | "inputs";
 
 type TablePageKind = "financial" | "churn-ltv" | "sales" | "cost-per-call" | "inputs";
 
@@ -32,12 +31,6 @@ type TableRow = {
 };
 
 type TenantSupabase = Awaited<ReturnType<typeof requireTenant>>["supabase"];
-
-type SubTab = {
-  key: string;
-  label: string;
-  href: string;
-};
 
 type BankTransactionRow = {
   id: string;
@@ -99,57 +92,6 @@ type SalesEventRow = {
   closer: string | null;
   channel: string | null;
   raw_data: unknown;
-};
-
-const metricTabs: Array<{ key: MetricTabKey; label: string; href: string }> = [
-  { key: "most-important", label: "Most Important", href: "/dashboard" },
-  { key: "reverse-engineering", label: "Reverse Engineering", href: "/forecasting" },
-  { key: "financial", label: "Financial", href: "/finance" },
-  { key: "churn-ltv", label: "Churn & LTV", href: "/retention" },
-  { key: "sales", label: "Sales", href: "/sales" },
-  { key: "cost-per-call", label: "Cost/Call", href: "/metrics/cost-per-call" },
-  { key: "inputs", label: "Inputs", href: "/marketing" },
-  { key: "quality-assurance", label: "Quality Assurance", href: "/metrics/quality-assurance" },
-];
-
-const subTabs: Record<MetricTabKey, SubTab[]> = {
-  "most-important": [
-    { key: "most-important", label: "Most Important", href: "/dashboard" },
-  ],
-  "reverse-engineering": [
-    { key: "current", label: "Current", href: "/forecasting" },
-    { key: "goal", label: "Goal", href: "/forecasting" },
-    { key: "difference", label: "% Difference", href: "/forecasting" },
-  ],
-  financial: [
-    { key: "overview", label: "Overview", href: "/finance" },
-    { key: "transactions-in", label: "Transactions In", href: "/finance/transactions-in" },
-    { key: "transactions-out", label: "Transactions Out", href: "/finance/transactions-out" },
-    { key: "categories", label: "Categories", href: "/finance/categories" },
-    { key: "cost-per-category", label: "Cost Per Category", href: "/finance/cost-per-category" },
-  ],
-  "churn-ltv": [
-    { key: "overview", label: "Overview", href: "/retention" },
-    { key: "client-data", label: "Client Data", href: "/retention/client-data" },
-    { key: "client-payments", label: "Client Payments", href: "/retention/client-payments" },
-  ],
-  sales: [
-    { key: "overview", label: "Overview", href: "/sales" },
-    { key: "calls", label: "Calls", href: "/sales/calls" },
-  ],
-  "cost-per-call": [
-    { key: "overview", label: "Overview", href: "/metrics/cost-per-call" },
-  ],
-  inputs: [
-    { key: "overview", label: "Overview", href: "/marketing" },
-    { key: "paid-ads", label: "Paid Ads", href: "/marketing" },
-    { key: "cold-email", label: "Cold Email", href: "/marketing" },
-    { key: "newsletter", label: "Newsletter", href: "/marketing" },
-    { key: "accounts", label: "Accounts", href: "/marketing" },
-  ],
-  "quality-assurance": [
-    { key: "overview", label: "Overview", href: "/metrics/quality-assurance" },
-  ],
 };
 
 const weeklyRowsDescending = [
@@ -317,48 +259,7 @@ function Header({
         <h1>{title}</h1>
         <p>MEMBER SINCE MARCH 2026</p>
       </div>
-      <div className="scaling-header-actions" aria-label="Quick actions">
-        <span className="header-pill note">Note</span>
-        <span className="header-pill course">Course</span>
-        <span className="header-pill content">Content</span>
-        <span className="header-pill metrics">Metrics</span>
-        <span className="header-pill constraints">Constraints</span>
-        <span className="header-pill onboarding">Onboarding</span>
-        <span className="header-pill mdp">MDP <em>⊙</em></span>
-        <span className="header-timer">00:00 <em>▶</em><em>▢</em></span>
-        <span className="header-bell">♧<em>9+</em></span>
-      </div>
     </header>
-  );
-}
-
-function MetricTabsRow({ activeTab }: { activeTab: MetricTabKey }) {
-  return (
-      <nav className="scaling-tabs" aria-label="Metrics sections">
-        {metricTabs.map((tab) => (
-          <Link
-            key={tab.key}
-            href={tab.href}
-            className={tab.key === activeTab ? "active" : ""}
-          >
-            {tab.label}
-          </Link>
-        ))}
-      </nav>
-  );
-}
-
-function SubTabs({ activeTab, activeSubtab }: { activeTab: MetricTabKey; activeSubtab?: string }) {
-  const tabs = subTabs[activeTab];
-  const selectedKey = activeSubtab ?? tabs[0]?.key;
-  return (
-    <div className="scaling-subtabs">
-      {tabs.map((tab) => (
-        <Link key={tab.key} href={tab.href} className={tab.key === selectedKey ? "active" : ""}>
-          {tab.label}
-        </Link>
-      ))}
-    </div>
   );
 }
 
@@ -677,7 +578,7 @@ const tableConfigs: Record<TablePageKind, {
     ),
   },
   "churn-ltv": {
-    title: "Churn and LTV Overview",
+    title: "Retention Overview",
     activeRoute: "metrics-churn-ltv",
     activeTab: "churn-ltv",
   },
@@ -719,8 +620,6 @@ export async function ScalingMetricsTablePage({ kind }: { kind: TablePageKind })
     <AppShell active={config.activeRoute} tenantName={tenant.name}>
       <section className="scaling-page">
         <Header title={config.title} />
-        <MetricTabsRow activeTab={config.activeTab} />
-        <SubTabs activeTab={config.activeTab} />
         <PeriodToolbar
           includeAccount={config.includeAccount}
           includeCloser={config.includeCloser}
@@ -795,23 +694,17 @@ function SourcePageChrome({
   activeRoute,
   tenantName,
   title,
-  activeTab,
-  activeSubtab,
   children,
 }: {
   activeRoute: ActiveRoute;
   tenantName: string | null;
   title: string;
-  activeTab: MetricTabKey;
-  activeSubtab: string;
   children: React.ReactNode;
 }) {
   return (
     <AppShell active={activeRoute} tenantName={tenantName}>
       <section className="scaling-page">
         <Header title={title} />
-        <MetricTabsRow activeTab={activeTab} />
-        <SubTabs activeTab={activeTab} activeSubtab={activeSubtab} />
         {children}
       </section>
     </AppShell>
@@ -892,8 +785,6 @@ export async function ScalingTransactionsInPage() {
       activeRoute="metrics-financial"
       tenantName={tenant.name}
       title="Transactions In"
-      activeTab="financial"
-      activeSubtab="transactions-in"
     >
       <MetricSourceToolbar account />
       <section className="source-table-panel">
@@ -944,8 +835,6 @@ export async function ScalingTransactionsOutPage() {
       activeRoute="metrics-financial"
       tenantName={tenant.name}
       title="Transactions Out"
-      activeTab="financial"
-      activeSubtab="transactions-out"
     >
       <MetricSourceToolbar account />
       <section className="source-table-panel">
@@ -1002,8 +891,6 @@ export async function ScalingCategoriesPage() {
       activeRoute="metrics-financial"
       tenantName={tenant.name}
       title="Categories"
-      activeTab="financial"
-      activeSubtab="categories"
     >
       <MetricSourceToolbar />
       <p className="source-help-text">Assign categories to transaction sources. These assignments apply to all transactions with the same source.</p>
@@ -1122,8 +1009,6 @@ export async function ScalingCostPerCategoryPage() {
       activeRoute="metrics-financial"
       tenantName={tenant.name}
       title="Cost Per Category"
-      activeTab="financial"
-      activeSubtab="cost-per-category"
     >
       <MetricSourceToolbar />
       <section className="category-breakdown-panel">
@@ -1199,8 +1084,6 @@ export async function ScalingClientDataPage() {
       activeRoute="metrics-churn-ltv"
       tenantName={tenant.name}
       title="Client Data"
-      activeTab="churn-ltv"
-      activeSubtab="client-data"
     >
       <MetricSourceToolbar range="Full Year" />
       <div className="client-data-heading">
@@ -1288,8 +1171,6 @@ export async function ScalingClientPaymentsPage() {
       activeRoute="metrics-churn-ltv"
       tenantName={tenant.name}
       title="Client Payments"
-      activeTab="churn-ltv"
-      activeSubtab="client-payments"
     >
       <div className="client-payment-toolbar">
         <div className="source-filter-controls">
@@ -1382,8 +1263,6 @@ export async function ScalingSalesCallsPage() {
       activeRoute="metrics-sales"
       tenantName={tenant.name}
       title="Sales Calls"
-      activeTab="sales"
-      activeSubtab="calls"
     >
       <div className="sales-call-toolbar">
         <div className="sales-call-status">
@@ -1495,18 +1374,6 @@ const mostImportantMetricIds = [
   "cash_out",
 ];
 
-function cardTone(category: string, index: number) {
-  const categoryTone: Record<string, string> = {
-    Revenue: "blue",
-    Cash: "blue",
-    Clients: "violet",
-    Costs: "green",
-    Sales: "gray",
-    Performance: "yellow",
-  };
-  return categoryTone[category] ?? ["blue", "green", "red", "yellow", "violet", "gray"][index % 6];
-}
-
 export async function ScalingMostImportantPage() {
   const { supabase, tenant } = await requireTenant();
   const payload = await loadMetricSnapshotPayload({ supabase, tenantId: tenant.id, periodKey: "30d" });
@@ -1518,19 +1385,22 @@ export async function ScalingMostImportantPage() {
     <AppShell active="metrics-most-important" tenantName={tenant.name}>
       <section className="scaling-page">
         <Header title="Most Important Metrics" />
-        <MetricTabsRow activeTab="most-important" />
-        <SubTabs activeTab="most-important" />
         <div className="most-important-toolbar">
-          <div className="period-toolbar-left">
+          <div className="most-important-date-controls">
             <select aria-label="Year">
               <option>2026</option>
             </select>
             <select aria-label="Range">
               <option>Last 30 Days</option>
+              <option>Last 7 Days</option>
+              <option>Last 14 Days</option>
+              <option>Last 90 Days</option>
+              <option>Last 180 Days</option>
+              <option>Last 365 Days</option>
             </select>
             <span className="light-button">Refresh</span>
           </div>
-          <div className="period-toolbar-right compact">
+          <div className="most-important-filter-controls">
             <span>Sort</span>
             <select aria-label="Sort">
               <option>Default</option>
@@ -1539,26 +1409,19 @@ export async function ScalingMostImportantPage() {
             <select aria-label="Tag">
               <option>All tags</option>
             </select>
-            <span>Edit</span>
-            <span className="toggle-off" aria-hidden="true" />
           </div>
         </div>
         <div className="scaling-metric-grid">
           {definitions.map((definition, index) => (
-            <article className={`scaling-metric-card ${cardTone(definition.category, index)}`} key={`${definition.id}-${index}`}>
+            <article className="scaling-metric-card" key={`${definition.id}-${index}`}>
               <div className="metric-card-head">
                 <span>{definition.name}</span>
                 <span className="info-dot">i</span>
-                <span className="override-pill">override</span>
               </div>
               <strong>{metricDisplay(payload, definition.id, definition.format === "currency" ? "$0" : "—")}</strong>
-              <p>OWNER : Unassigned</p>
             </article>
           ))}
         </div>
-        <details className="how-this-works">
-          <summary>How this works</summary>
-        </details>
       </section>
     </AppShell>
   );
@@ -1586,8 +1449,6 @@ export async function ScalingReverseEngineeringPage() {
     <AppShell active="metrics-reverse-engineering" tenantName={tenant.name}>
       <section className="scaling-page">
         <Header title="Reverse Engineering" />
-        <MetricTabsRow activeTab="reverse-engineering" />
-        <SubTabs activeTab="reverse-engineering" />
         <p className="reverse-note">Current tab: only Net Profit Goal is editable. Core inputs mirror Goal tab values.</p>
         <div className="reverse-legend">
           <strong>Legend:</strong>
