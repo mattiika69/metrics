@@ -2787,7 +2787,6 @@ body {
   letter-spacing: 0.04em;
 }
 
-.scaling-tabs,
 .scaling-subtabs,
 .period-toolbar-right,
 .period-toolbar-left {
@@ -2797,7 +2796,6 @@ body {
   gap: 6px;
 }
 
-.scaling-tabs a,
 .scaling-subtabs span,
 .period-pill,
 .light-button,
@@ -2815,11 +2813,6 @@ body {
   white-space: nowrap;
 }
 
-.scaling-tabs a:hover {
-  text-decoration: none;
-}
-
-.scaling-tabs a.active,
 .scaling-subtabs span.active,
 .dark-chip {
   border-color: #111827;
@@ -3256,8 +3249,7 @@ body {
     flex-direction: column;
   }
 
-  .period-toolbar-right,
-  .scaling-tabs {
+  .period-toolbar-right {
     justify-content: flex-start;
   }
 
@@ -3971,15 +3963,6 @@ body {
   line-height: 1;
 }
 
-.scaling-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin: 0 0 17px;
-}
-
-.scaling-tabs a,
 .scaling-subtabs span,
 .period-pill,
 .light-button,
@@ -3998,11 +3981,6 @@ body {
   white-space: nowrap;
 }
 
-.scaling-tabs a:hover {
-  text-decoration: none;
-}
-
-.scaling-tabs a.active,
 .scaling-subtabs span.active,
 .dark-chip {
   border-color: #111827;
@@ -4206,8 +4184,7 @@ body {
     flex-direction: column;
   }
 
-  .period-toolbar-right,
-  .scaling-tabs {
+  .period-toolbar-right {
     justify-content: flex-start;
   }
 
