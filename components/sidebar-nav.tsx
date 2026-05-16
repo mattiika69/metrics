@@ -42,11 +42,15 @@ export function SidebarNav({
   const pathname = usePathname();
   const [orderedItems, setOrderedItems] = useState(items);
   const [draggedId, setDraggedId] = useState<string | null>(null);
-  const [collapsedParents, setCollapsedParents] = useState<Record<string, boolean>>({});
   const [, startTransition] = useTransition();
   const itemIds = useMemo(() => orderedItems.map((item) => item.id), [orderedItems]);
   const metricsItems = orderedItems.filter((item) => item.section === "metrics");
   const settingsItems = orderedItems.filter((item) => item.section === "settings");
+  const initialExpandedParentId = useMemo(
+    () => items.find((item) => item.section === "metrics" && item.children?.length)?.id ?? null,
+    [items],
+  );
+  const [expandedParentId, setExpandedParentId] = useState<ActiveRoute | null>(initialExpandedParentId);
   const groups = [
     {
       id: "metrics",
@@ -74,6 +78,10 @@ export function SidebarNav({
     return active === item.id || (item.id === "settings" && active.startsWith("settings"));
   }
 
+  function toggleParent(itemId: ActiveRoute) {
+    setExpandedParentId((current) => (current === itemId ? null : itemId));
+  }
+
   return (
     <div className="sidebar-grouped-nav" aria-label="Draggable sidebar navigation">
       {groups.map((group) => (
@@ -89,6 +97,7 @@ export function SidebarNav({
             <div className="sidebar-subnav">
               {group.items.map((item) => {
                 const itemActive = isItemActive(item);
+                const itemExpanded = expandedParentId === item.id;
 
                 return (
                   <div
@@ -126,19 +135,14 @@ export function SidebarNav({
                           <button
                             type="button"
                             className="sidebar-parent-collapse"
-                            aria-expanded={!collapsedParents[item.id]}
-                            aria-label={`${collapsedParents[item.id] ? "Expand" : "Collapse"} ${item.label}`}
-                            onClick={() => {
-                              setCollapsedParents((current) => ({
-                                ...current,
-                                [item.id]: !current[item.id],
-                              }));
-                            }}
+                            aria-expanded={itemExpanded}
+                            aria-label={`${itemExpanded ? "Collapse" : "Expand"} ${item.label}`}
+                            onClick={() => toggleParent(item.id)}
                           >
                             <svg
                               className={[
                                 "sidebar-parent-chevron",
-                                collapsedParents[item.id] ? "" : "expanded",
+                                itemExpanded ? "expanded" : "",
                               ].filter(Boolean).join(" ")}
                               fill="none"
                               stroke="currentColor"
@@ -148,20 +152,20 @@ export function SidebarNav({
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
                           </button>
-                          <Link
-                            href={item.href}
-                            prefetch
+                          <button
+                            type="button"
                             aria-label={item.label}
                             className={[
                               "sidebar-parent-link",
-                              active === item.id ? "active" : "",
+                              itemExpanded ? "expanded" : "",
                             ].filter(Boolean).join(" ")}
+                            onClick={() => toggleParent(item.id)}
                           >
                             {item.label}
-                          </Link>
+                          </button>
                           <span className="sidebar-drag-handle" aria-hidden="true">⋮⋮</span>
                         </div>
-                        {!collapsedParents[item.id] ? (
+                        {itemExpanded ? (
                           <div className="sidebar-child-nav">
                             {item.children.map((child) => (
                               <Link
