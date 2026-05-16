@@ -19,6 +19,8 @@ type MetricTabKey =
 
 type TablePageKind = "financial" | "churn-ltv" | "sales" | "cost-per-call" | "inputs";
 
+export type MarketingChannelPageKind = "paid-ads" | "cold-email" | "newsletter" | "accounts";
+
 type TableColumn = {
   label: string;
   align?: "left" | "right";
@@ -142,15 +144,15 @@ const pageTabs: Partial<Record<MetricTabKey, PageTab[]>> = {
   ],
   inputs: [
     { key: "overview", label: "Overview", href: "/marketing" },
-    { key: "cost-per-call", label: "Cost Per Call", href: "/metrics/cost-per-call" },
-    { key: "paid-ads", label: "Paid Ads", href: "/marketing" },
-    { key: "cold-email", label: "Cold Email", href: "/marketing" },
-    { key: "newsletter", label: "Newsletter", href: "/marketing" },
-    { key: "accounts", label: "Accounts", href: "/marketing" },
+    { key: "cost-per-call", label: "Cost Per Call", href: "/marketing/cost-per-call" },
+    { key: "paid-ads", label: "Paid Ads", href: "/marketing/paid-ads" },
+    { key: "cold-email", label: "Cold Email", href: "/marketing/cold-email" },
+    { key: "newsletter", label: "Newsletter", href: "/marketing/newsletter" },
+    { key: "accounts", label: "Accounts", href: "/marketing/accounts" },
   ],
   "cost-per-call": [
     { key: "overview", label: "Overview", href: "/marketing" },
-    { key: "cost-per-call", label: "Cost Per Call", href: "/metrics/cost-per-call" },
+    { key: "cost-per-call", label: "Cost Per Call", href: "/marketing/cost-per-call" },
   ],
 };
 
@@ -617,6 +619,7 @@ const tableConfigs: Record<TablePageKind, {
   title: string;
   activeRoute: ActiveRoute;
   activeTab: MetricTabKey;
+  activeChild?: string;
   includeAccount?: boolean;
   includeCloser?: boolean;
   includeSource?: boolean;
@@ -648,13 +651,15 @@ const tableConfigs: Record<TablePageKind, {
   "cost-per-call": {
     title: "Cost Per Call",
     activeRoute: "metrics-inputs",
-    activeTab: "cost-per-call",
+    activeTab: "inputs",
+    activeChild: "cost-per-call",
     includeSource: true,
   },
   inputs: {
     title: "Inputs Overview",
     activeRoute: "metrics-inputs",
     activeTab: "inputs",
+    activeChild: "overview",
   },
 };
 
@@ -676,7 +681,7 @@ export async function ScalingMetricsTablePage({ kind }: { kind: TablePageKind })
     <AppShell active={config.activeRoute} tenantName={tenant.name}>
       <section className="scaling-page">
         <Header title={config.title} />
-        <PageTabs tabs={pageTabs[config.activeTab]} activeKey="overview" />
+        <PageTabs tabs={pageTabs[config.activeTab]} activeKey={config.activeChild ?? "overview"} />
         <PeriodToolbar
           includeAccount={config.includeAccount}
           includeCloser={config.includeCloser}
@@ -693,6 +698,79 @@ export async function ScalingMetricsTablePage({ kind }: { kind: TablePageKind })
           }
         />
         <DataTable columns={table.columns} rows={table.rows} note={config.note} />
+      </section>
+    </AppShell>
+  );
+}
+
+const marketingChannelConfigs: Record<MarketingChannelPageKind, {
+  title: string;
+  columns: TableColumn[];
+}> = {
+  "paid-ads": {
+    title: "Paid Ads",
+    columns: [
+      { label: "Spend" },
+      { label: "Leads" },
+      { label: "Calls" },
+      { label: "CAC" },
+      { label: "Revenue" },
+    ],
+  },
+  "cold-email": {
+    title: "Cold Email",
+    columns: [
+      { label: "Sent" },
+      { label: "Replies" },
+      { label: "Booked" },
+      { label: "Clients" },
+      { label: "Revenue" },
+    ],
+  },
+  newsletter: {
+    title: "Newsletter",
+    columns: [
+      { label: "Sent" },
+      { label: "Opens" },
+      { label: "Clicks" },
+      { label: "Booked" },
+      { label: "Revenue" },
+    ],
+  },
+  accounts: {
+    title: "Accounts",
+    columns: [
+      { label: "Sources" },
+      { label: "Connected" },
+      { label: "Leads" },
+      { label: "Spend" },
+      { label: "Revenue" },
+    ],
+  },
+};
+
+export async function ScalingMarketingChannelPage({ kind }: { kind: MarketingChannelPageKind }) {
+  const { tenant } = await requireTenant();
+  const config = marketingChannelConfigs[kind];
+  const rows = [
+    ...weeklyRowsDescending.map((label) => ({
+      label,
+      cells: config.columns.map((column) => column.label === "Spend" || column.label === "Revenue" || column.label === "CAC" ? "$0" : "0"),
+    })),
+    {
+      label: "Total",
+      total: true,
+      cells: config.columns.map((column) => column.label === "Spend" || column.label === "Revenue" || column.label === "CAC" ? "$0" : "0"),
+    },
+  ];
+
+  return (
+    <AppShell active="metrics-inputs" tenantName={tenant.name}>
+      <section className="scaling-page">
+        <Header title={config.title} />
+        <PageTabs tabs={pageTabs.inputs} activeKey={kind} />
+        <PeriodToolbar includeSource />
+        <DataTable columns={config.columns} rows={rows} />
       </section>
     </AppShell>
   );
@@ -1460,7 +1538,7 @@ export async function ScalingMostImportantPage() {
   return (
     <AppShell active="metrics-most-important" tenantName={tenant.name}>
       <section className="scaling-page">
-        <Header title="Most Important Metrics" />
+        <Header title="CEO Dashboard" />
         <div className="most-important-toolbar">
           <div className="most-important-date-controls">
             <select aria-label="Year">

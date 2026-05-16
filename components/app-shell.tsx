@@ -42,12 +42,56 @@ type AppShellProps = {
 };
 
 const primaryItems: SidebarItem[] = [
-  { id: "metrics-most-important", label: "Most Important Metrics", href: "/dashboard", section: "metrics" },
+  { id: "metrics-most-important", label: "CEO Dashboard", href: "/dashboard", section: "metrics" },
   { id: "metrics-reverse-engineering", label: "Reverse Engineering", href: "/forecasting", section: "metrics" },
-  { id: "metrics-financial", label: "Financial", href: "/finance", section: "metrics" },
-  { id: "metrics-churn-ltv", label: "Retention", href: "/retention", section: "metrics" },
-  { id: "metrics-sales", label: "Sales", href: "/sales", section: "metrics" },
-  { id: "metrics-inputs", label: "Marketing", href: "/marketing", section: "metrics" },
+  {
+    id: "metrics-financial",
+    label: "Financials",
+    href: "/finance",
+    section: "metrics",
+    children: [
+      { id: "financial-overview", label: "Overview", href: "/finance" },
+      { id: "financial-transactions-in", label: "Transactions In", href: "/finance/transactions-in" },
+      { id: "financial-transactions-out", label: "Transactions Out", href: "/finance/transactions-out" },
+      { id: "financial-categories", label: "Categories", href: "/finance/categories" },
+      { id: "financial-cost-per-category", label: "Cost Per Category", href: "/finance/cost-per-category" },
+    ],
+  },
+  {
+    id: "metrics-churn-ltv",
+    label: "Retention",
+    href: "/retention",
+    section: "metrics",
+    children: [
+      { id: "retention-overview", label: "Overview", href: "/retention" },
+      { id: "retention-client-data", label: "Client Data", href: "/retention/client-data" },
+      { id: "retention-client-payments", label: "Client Payments", href: "/retention/client-payments" },
+    ],
+  },
+  {
+    id: "metrics-sales",
+    label: "Sales",
+    href: "/sales",
+    section: "metrics",
+    children: [
+      { id: "sales-overview", label: "Overview", href: "/sales" },
+      { id: "sales-calls", label: "Calls", href: "/sales/calls" },
+    ],
+  },
+  {
+    id: "metrics-inputs",
+    label: "Marketing",
+    href: "/marketing",
+    section: "metrics",
+    children: [
+      { id: "marketing-overview", label: "Overview", href: "/marketing" },
+      { id: "marketing-cost-per-call", label: "Cost Per Call", href: "/marketing/cost-per-call" },
+      { id: "marketing-paid-ads", label: "Paid Ads", href: "/marketing/paid-ads" },
+      { id: "marketing-cold-email", label: "Cold Email", href: "/marketing/cold-email" },
+      { id: "marketing-newsletter", label: "Newsletter", href: "/marketing/newsletter" },
+      { id: "marketing-accounts", label: "Accounts", href: "/marketing/accounts" },
+    ],
+  },
   { id: "constraints", label: "Constraints", href: "/constraints", section: "metrics" },
   { id: "settings", label: "Settings", href: "/settings/account", section: "settings" },
 ];

@@ -3873,6 +3873,52 @@ body {
   gap: 4px;
 }
 
+.sidebar-parent-block {
+  display: grid;
+  gap: 0;
+  padding: 2px 0 4px;
+}
+
+.sidebar-parent-row {
+  display: flex;
+  min-height: 24px;
+  align-items: center;
+  gap: 4px;
+}
+
+.sidebar-parent-label {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  color: #64748b;
+  font-size: 9.7px;
+  font-weight: 500;
+  letter-spacing: 0.0575em;
+  line-height: 1;
+  padding: 4px 8px 3px;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sidebar-parent-block.parent-active .sidebar-parent-label {
+  color: #9fb2cb;
+}
+
+.sidebar-child-nav {
+  display: grid;
+  gap: 0;
+  margin: 0 0 2px 8px;
+  border-left: 1px solid rgba(71, 85, 105, 0.62);
+  padding-left: 6px;
+}
+
+.sidebar-child-nav .sidebar-sub-link {
+  min-height: 26px;
+  font-size: 11.4px;
+  padding: 4px 8px;
+}
+
 .sidebar-sub-link {
   display: block;
   min-width: 0;
