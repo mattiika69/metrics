@@ -1679,11 +1679,6 @@ tbody tr:nth-child(even) {
   font-weight: 800;
 }
 
-.ai-context-form {
-  display: grid;
-  gap: 16px;
-}
-
 textarea {
   width: 100%;
   min-height: 460px;
@@ -6300,15 +6295,16 @@ body:has(.app-shell) {
 .side-nav {
   width: 220px !important;
   flex: 0 0 220px !important;
-  border-right: 1px solid rgba(51, 65, 85, 0.72) !important;
-  background: linear-gradient(180deg, #1f2d44 0%, #17243a 46%, #0f1a2c 100%) !important;
+  border-right: 1px solid #334155 !important;
+  background: linear-gradient(180deg, #1f2d44 0%, #17243a 52%, #101a2b 100%) !important;
   color: #cbd5e1 !important;
   box-shadow: none !important;
 }
 
 .side-shell-header {
-  border-bottom: 1px solid rgba(55, 65, 81, 0.9) !important;
-  padding: 8px 10px !important;
+  min-height: 40px !important;
+  border-bottom: 1px solid #344155 !important;
+  padding: 8px 10px 9px !important;
 }
 
 .side-brand-row {
@@ -6347,6 +6343,11 @@ body:has(.app-shell) {
 
 .sidebar-sections {
   padding: 10px 8px 12px !important;
+  scrollbar-width: none !important;
+}
+
+.sidebar-sections::-webkit-scrollbar {
+  display: none !important;
 }
 
 .sidebar-grouped-nav {
@@ -6362,7 +6363,7 @@ body:has(.app-shell) {
 
 .sidebar-group.with-divider {
   margin-top: 8px !important;
-  border-top: 1px solid rgba(55, 65, 81, 0.88) !important;
+  border-top: 1px solid #344155 !important;
   padding-top: 8px !important;
 }
 
@@ -6385,18 +6386,18 @@ body:has(.app-shell) {
 
 .sidebar-parent-row {
   display: flex !important;
-  min-height: 28px !important;
+  min-height: 27px !important;
   align-items: center !important;
   gap: 2px !important;
   padding: 0 !important;
 }
 
 .sidebar-parent-collapse {
-  width: 18px !important;
-  min-width: 18px !important;
-  min-height: 26px !important;
+  width: 17px !important;
+  min-width: 17px !important;
+  min-height: 25px !important;
   border-radius: 4px !important;
-  color: #8492a8 !important;
+  color: #7f8da2 !important;
 }
 
 .sidebar-parent-collapse:hover {
@@ -6405,20 +6406,20 @@ body:has(.app-shell) {
 }
 
 .sidebar-parent-chevron {
-  width: 10px !important;
-  height: 10px !important;
+  width: 9px !important;
+  height: 9px !important;
   stroke-width: 2 !important;
 }
 
 .sidebar-parent-link {
-  min-height: 28px !important;
+  min-height: 27px !important;
   border: 1px solid transparent !important;
   border-radius: 4px !important;
   background: transparent !important;
-  color: #8492a8 !important;
-  font-size: 10.75px !important;
+  color: #7e8ca3 !important;
+  font-size: 10.25px !important;
   font-weight: 600 !important;
-  letter-spacing: 0.09em !important;
+  letter-spacing: 0.095em !important;
   line-height: 1 !important;
   padding: 8px 2px 7px !important;
   text-transform: uppercase !important;
@@ -6429,14 +6430,14 @@ body:has(.app-shell) {
 .sidebar-parent-block.parent-active .sidebar-parent-link {
   border-color: transparent !important;
   background: transparent !important;
-  color: #9fb0c7 !important;
+  color: #9aaac1 !important;
   text-decoration: none !important;
 }
 
 .sidebar-child-nav {
   display: grid !important;
   gap: 0 !important;
-  margin: 0 0 9px !important;
+  margin: 0 0 7px !important;
   border-left: 0 !important;
   padding-left: 0 !important;
 }
@@ -6452,8 +6453,8 @@ body:has(.app-shell) {
   border: 1px solid transparent !important;
   border-radius: 4px !important;
   background: transparent !important;
-  color: #aeb8c7 !important;
-  font-size: 12.35px !important;
+  color: #a8b4c4 !important;
+  font-size: 12.25px !important;
   font-weight: 500 !important;
   letter-spacing: 0 !important;
   line-height: 1.15 !important;
@@ -6462,20 +6463,20 @@ body:has(.app-shell) {
 }
 
 .sidebar-sub-link:hover {
-  background: rgba(51, 65, 85, 0.38) !important;
-  color: #e5edf8 !important;
+  background: rgba(51, 65, 85, 0.36) !important;
+  color: #dbe6f4 !important;
 }
 
 .sidebar-sub-link.active {
   border-color: #3b82f6 !important;
-  background: rgba(37, 99, 235, 0.52) !important;
+  background: #1f4280 !important;
   color: #ffffff !important;
   box-shadow: none !important;
 }
 
 .sidebar-settings-direct .sidebar-sub-link {
-  color: #aeb8c7 !important;
-  font-size: 12.5px !important;
+  color: #a8b4c4 !important;
+  font-size: 12.25px !important;
 }
 
 .sidebar-drag-handle {
@@ -6489,7 +6490,7 @@ body:has(.app-shell) {
 .sidebar-parent-row:hover .sidebar-drag-handle,
 .sidebar-menu-row.dragging .sidebar-drag-handle,
 .sidebar-parent-block.dragging .sidebar-drag-handle {
-  opacity: 0.22 !important;
+  opacity: 0.14 !important;
 }
 
 .sidebar-logout {

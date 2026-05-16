@@ -13,7 +13,6 @@ export type ActiveRoute =
   | "forecasting"
   | "integrations"
   | "constraints"
-  | "ai-context"
   | "metrics-most-important"
   | "metrics-reverse-engineering"
   | "metrics-financial"
@@ -104,7 +103,6 @@ const primaryItems: SidebarItem[] = [
       { id: "inputs-accounts", label: "Accounts", href: "/inputs?tab=accounts" },
     ],
   },
-  { id: "ai-context", label: "AI Context Document", href: "/ai-context-doc", section: "metrics" },
   { id: "settings", label: "Settings", href: "/settings/account", section: "settings" },
 ];
 
