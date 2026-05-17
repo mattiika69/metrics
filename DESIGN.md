@@ -48,6 +48,103 @@ HyperOptimal Metrics uses a restrained product UI system inspired by Scaling Met
 - Loading states: use lightweight skeletons or calm loading panels.
 - Error states: plain recovery language, never technical stack traces.
 
+## Shared Sidebar Standard
+
+This sidebar standard is reusable across HyperOptimal SaaS apps. It should feel like a compact professional SaaS navigation system: calm, dense, readable, and consistent across apps. It is a shared design system, not a pixel-perfect copy of any one app.
+
+### Structure
+
+- Use a fixed left sidebar on desktop.
+- Use a collapsible drawer or hidden menu on mobile.
+- Recommended desktop width: `220px`.
+- Sidebar should occupy the full viewport height.
+- Main content starts immediately to the right of the sidebar.
+- Sidebar scrolls independently when navigation exceeds the viewport height.
+
+### Visual Style
+
+- Use a dark navy or charcoal background.
+- Use muted text for inactive items.
+- Use brighter text for active and hover items.
+- Use one clear active state with background plus border or a left rail.
+- Use subtle dividers between navigation groups.
+- Use small badges for counts only when useful.
+- Do not use gradients, decorative blobs, oversized icons, or marketing styling.
+
+### Navigation
+
+- Group related links into sections.
+- Use short labels.
+- Keep row height compact.
+- Active page must be obvious.
+- Collapsed groups should use chevrons.
+- Nested items should be indented consistently.
+- Avoid more than two navigation nesting levels.
+
+### Recommended Tokens
+
+```css
+--sidebar-width: 220px;
+--sidebar-bg: #172033;
+--sidebar-bg-hover: #202c44;
+--sidebar-bg-active: #243f73;
+--sidebar-border: #2d3b52;
+--sidebar-text: #a8b3c7;
+--sidebar-text-muted: #738198;
+--sidebar-text-active: #f8fafc;
+--sidebar-primary: #3b82f6;
+--sidebar-badge-bg: #334155;
+--sidebar-badge-text: #dbeafe;
+--sidebar-padding-x: 10px;
+--sidebar-section-gap: 12px;
+--sidebar-item-height: 32px;
+--sidebar-item-radius: 6px;
+--sidebar-item-padding-x: 10px;
+--sidebar-font-size: 13px;
+--sidebar-section-font-size: 11px;
+--sidebar-badge-font-size: 10px;
+```
+
+### Item Style
+
+- Font size: `13px`.
+- Height: `32px`.
+- Radius: `6px`.
+- Padding: `0 10px`.
+- Display should support optional icon or chevron, label, and optional badge.
+- Hover should use a slightly lighter background.
+- Active state should use blue-tinted background, active text, and optional left rail or border.
+
+### Section Labels
+
+- Uppercase.
+- Small: `11px`.
+- Muted.
+- Letter spacing: `0.06em`.
+- Use sparingly to separate groups.
+
+### Badges
+
+- Use small rounded pills.
+- Minimum width: `24px`.
+- Height: `16px`.
+- Font size: `10px`.
+- Use only for counts, statuses, or alerts.
+
+### Accessibility
+
+- Every nav item should be a real link or button.
+- Active item should use `aria-current="page"` when applicable.
+- Collapsible groups should expose expanded or collapsed state.
+- Keyboard focus must be visible.
+- Contrast must be readable against the dark background.
+
+### Mobile
+
+- Sidebar should not squeeze app content.
+- Use a drawer, slide-over, or collapsible menu.
+- Keep touch targets at least `40px` on mobile.
+
 ## Responsive Rules
 
 - Desktop first.
@@ -61,4 +158,3 @@ HyperOptimal Metrics uses a restrained product UI system inspired by Scaling Met
 - No implementation language such as RLS, Supabase, migration, service role, provider secret, webhook config, or internal setup status on normal client-facing pages.
 - No em dashes.
 - Labels should be concise and consistent.
-

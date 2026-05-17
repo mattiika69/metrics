@@ -153,6 +153,7 @@ export function SidebarNav({
                           "sidebar-parent-link",
                           itemExpanded ? "expanded" : "",
                         ].filter(Boolean).join(" ")}
+                        aria-expanded={itemExpanded}
                         onClick={() => toggleParent(item.id)}
                       >
                         {item.label}
@@ -186,6 +187,7 @@ export function SidebarNav({
                               href={child.href}
                               prefetch
                               aria-label={child.label}
+                              aria-current={isChildActive(child) ? "page" : undefined}
                               className={[
                                 "sidebar-sub-link",
                                 isChildActive(child) ? "active" : "",
@@ -205,6 +207,7 @@ export function SidebarNav({
                       href={item.href}
                       prefetch
                       aria-label={item.label}
+                      aria-current={itemActive ? "page" : undefined}
                       className={[
                         "sidebar-sub-link",
                         itemActive ? "active" : "",

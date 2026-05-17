@@ -967,6 +967,376 @@ pre {
   }
 }
 
+/* Shared SaaS sidebar standard */
+:root {
+  --sidebar-width: 220px;
+  --sidebar-bg: #172033;
+  --sidebar-bg-hover: #202c44;
+  --sidebar-bg-active: #243f73;
+  --sidebar-border: #2d3b52;
+  --sidebar-text: #a8b3c7;
+  --sidebar-text-muted: #738198;
+  --sidebar-text-active: #f8fafc;
+  --sidebar-primary: #3b82f6;
+  --sidebar-badge-bg: #334155;
+  --sidebar-badge-text: #dbeafe;
+  --sidebar-padding-x: 10px;
+  --sidebar-section-gap: 12px;
+  --sidebar-item-height: 32px;
+  --sidebar-item-radius: 6px;
+  --sidebar-item-padding-x: 10px;
+  --sidebar-font-size: 13px;
+  --sidebar-section-font-size: 11px;
+  --sidebar-badge-font-size: 10px;
+}
+
+body:has(.app-shell) .app-shell {
+  display: grid !important;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr) !important;
+  min-height: 100dvh !important;
+  height: 100dvh !important;
+  overflow: hidden !important;
+  background: #f5f7fa !important;
+}
+
+body:has(.app-shell) .side-nav {
+  position: sticky !important;
+  top: 0 !important;
+  width: var(--sidebar-width) !important;
+  min-width: var(--sidebar-width) !important;
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  overflow: hidden !important;
+  border-right: 1px solid var(--sidebar-border) !important;
+  background: var(--sidebar-bg) !important;
+  color: var(--sidebar-text) !important;
+  font-family: var(--font-app), Montserrat, system-ui, sans-serif !important;
+}
+
+body:has(.app-shell) .side-shell-header {
+  height: 68px !important;
+  padding: 14px var(--sidebar-padding-x) 11px !important;
+  border-bottom: 1px solid var(--sidebar-border) !important;
+  background: var(--sidebar-bg) !important;
+}
+
+body:has(.app-shell) .side-brand-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  height: 28px !important;
+}
+
+body:has(.app-shell) .side-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+  color: var(--sidebar-text-active) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  letter-spacing: 0 !important;
+  text-decoration: none !important;
+}
+
+body:has(.app-shell) .brand-mark {
+  display: inline-grid !important;
+  width: 22px !important;
+  height: 22px !important;
+  flex: 0 0 22px !important;
+  place-items: center !important;
+  border-radius: 6px !important;
+  background: var(--sidebar-primary) !important;
+  color: var(--sidebar-text-active) !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+}
+
+body:has(.app-shell) .collapse-dot {
+  display: inline-grid !important;
+  width: 24px !important;
+  height: 24px !important;
+  place-items: center !important;
+  border: 1px solid #40506b !important;
+  border-radius: 999px !important;
+  background: #202c44 !important;
+  color: var(--sidebar-text) !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+}
+
+body:has(.app-shell) .sidebar-sections {
+  height: calc(100dvh - 68px) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 12px var(--sidebar-padding-x) 16px !important;
+  background: var(--sidebar-bg) !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #3a4a63 transparent !important;
+}
+
+body:has(.app-shell) .sidebar-sections::-webkit-scrollbar {
+  width: 7px !important;
+}
+
+body:has(.app-shell) .sidebar-sections::-webkit-scrollbar-thumb {
+  border-radius: 999px !important;
+  background: #3a4a63 !important;
+}
+
+body:has(.app-shell) .sidebar-grouped-nav,
+body:has(.app-shell) .sidebar-group,
+body:has(.app-shell) .sidebar-subnav {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+body:has(.app-shell) .sidebar-parent-block,
+body:has(.app-shell) .sidebar-menu-row {
+  position: relative !important;
+  display: block !important;
+  margin: 0 0 2px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+body:has(.app-shell) .sidebar-parent-block.with-divider,
+body:has(.app-shell) .sidebar-menu-row.with-divider {
+  margin-top: var(--sidebar-section-gap) !important;
+  padding-top: var(--sidebar-section-gap) !important;
+  border-top: 1px solid var(--sidebar-border) !important;
+}
+
+body:has(.app-shell) .sidebar-parent-row,
+body:has(.app-shell) .sidebar-menu-row {
+  min-height: var(--sidebar-item-height) !important;
+}
+
+body:has(.app-shell) .sidebar-parent-row {
+  display: grid !important;
+  grid-template-columns: 18px minmax(0, 1fr) 14px !important;
+  align-items: center !important;
+  gap: 0 !important;
+}
+
+body:has(.app-shell) .sidebar-parent-collapse {
+  display: inline-grid !important;
+  width: 18px !important;
+  height: var(--sidebar-item-height) !important;
+  min-width: 18px !important;
+  min-height: var(--sidebar-item-height) !important;
+  place-items: center !important;
+  border: 0 !important;
+  border-radius: var(--sidebar-item-radius) !important;
+  background: transparent !important;
+  color: var(--sidebar-text-muted) !important;
+  padding: 0 !important;
+  cursor: pointer !important;
+}
+
+body:has(.app-shell) .sidebar-parent-collapse:hover {
+  background: var(--sidebar-bg-hover) !important;
+  color: var(--sidebar-text-active) !important;
+}
+
+body:has(.app-shell) .sidebar-parent-chevron {
+  width: 11px !important;
+  height: 11px !important;
+  transition: transform 140ms ease-out !important;
+}
+
+body:has(.app-shell) .sidebar-parent-chevron.expanded {
+  transform: rotate(90deg) !important;
+}
+
+body:has(.app-shell) .sidebar-parent-link {
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  height: var(--sidebar-item-height) !important;
+  min-height: var(--sidebar-item-height) !important;
+  border: 0 !important;
+  border-radius: var(--sidebar-item-radius) !important;
+  background: transparent !important;
+  color: var(--sidebar-text-muted) !important;
+  font-family: var(--font-app), Montserrat, system-ui, sans-serif !important;
+  font-size: var(--sidebar-section-font-size) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.06em !important;
+  line-height: 1 !important;
+  padding: 0 4px !important;
+  text-align: left !important;
+  text-transform: uppercase !important;
+  cursor: pointer !important;
+}
+
+body:has(.app-shell) .sidebar-parent-link:hover,
+body:has(.app-shell) .sidebar-parent-link.expanded {
+  color: var(--sidebar-text) !important;
+}
+
+body:has(.app-shell) .sidebar-child-nav {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  margin: 0 0 8px 18px !important;
+  padding: 0 0 0 10px !important;
+  border-left: 1px solid var(--sidebar-border) !important;
+}
+
+body:has(.app-shell) .sidebar-child-nav form {
+  margin: 0 !important;
+}
+
+body:has(.app-shell) .sidebar-sub-link,
+body:has(.app-shell) .sidebar-action-link {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  height: var(--sidebar-item-height) !important;
+  min-height: var(--sidebar-item-height) !important;
+  border: 1px solid transparent !important;
+  border-radius: var(--sidebar-item-radius) !important;
+  background: transparent !important;
+  color: var(--sidebar-text) !important;
+  font-family: var(--font-app), Montserrat, system-ui, sans-serif !important;
+  font-size: var(--sidebar-font-size) !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  padding: 0 var(--sidebar-item-padding-x) !important;
+  text-align: left !important;
+  text-decoration: none !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body:has(.app-shell) .sidebar-menu-row > .sidebar-sub-link {
+  padding-left: calc(var(--sidebar-item-padding-x) + 8px) !important;
+}
+
+body:has(.app-shell) .sidebar-sub-link:hover,
+body:has(.app-shell) .sidebar-action-link:hover {
+  border-color: transparent !important;
+  background: var(--sidebar-bg-hover) !important;
+  color: var(--sidebar-text-active) !important;
+}
+
+body:has(.app-shell) .sidebar-sub-link.active,
+body:has(.app-shell) .sidebar-sub-link[aria-current="page"] {
+  border-color: var(--sidebar-primary) !important;
+  background: var(--sidebar-bg-active) !important;
+  color: var(--sidebar-text-active) !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+
+body:has(.app-shell) .sidebar-sub-link.active::before,
+body:has(.app-shell) .sidebar-sub-link[aria-current="page"]::before {
+  position: absolute !important;
+  left: 0 !important;
+  top: 6px !important;
+  width: 2px !important;
+  height: calc(100% - 12px) !important;
+  border-radius: 999px !important;
+  background: var(--sidebar-primary) !important;
+  content: "" !important;
+}
+
+body:has(.app-shell) .sidebar-drag-handle {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 14px !important;
+  height: var(--sidebar-item-height) !important;
+  color: var(--sidebar-text-muted) !important;
+  font-size: 13px !important;
+  line-height: 1 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 120ms ease-out !important;
+}
+
+body:has(.app-shell) .sidebar-menu-row > .sidebar-drag-handle {
+  position: absolute !important;
+  right: 2px !important;
+  top: 0 !important;
+}
+
+body:has(.app-shell) .sidebar-menu-row:hover .sidebar-drag-handle,
+body:has(.app-shell) .sidebar-parent-row:hover .sidebar-drag-handle,
+body:has(.app-shell) .sidebar-menu-row.dragging .sidebar-drag-handle,
+body:has(.app-shell) .sidebar-parent-block.dragging .sidebar-drag-handle {
+  opacity: 0.55 !important;
+}
+
+body:has(.app-shell) .sidebar-action-link.danger {
+  color: #fca5a5 !important;
+}
+
+body:has(.app-shell) .sidebar-action-link.danger:hover {
+  background: rgba(248, 113, 113, 0.12) !important;
+  color: #fecaca !important;
+}
+
+body:has(.app-shell) .app-main {
+  min-width: 0 !important;
+  height: 100dvh !important;
+  overflow: auto !important;
+  background: #f5f7fa !important;
+}
+
+@media (max-width: 860px) {
+  body:has(.app-shell) .app-shell {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  body:has(.app-shell) .side-nav {
+    position: relative !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: 70dvh !important;
+  }
+
+  body:has(.app-shell) .side-shell-header {
+    height: 54px !important;
+    padding: 12px var(--sidebar-padding-x) !important;
+  }
+
+  body:has(.app-shell) .sidebar-sections {
+    height: auto !important;
+    max-height: calc(70dvh - 54px) !important;
+  }
+
+  body:has(.app-shell) .sidebar-parent-collapse,
+  body:has(.app-shell) .sidebar-parent-link,
+  body:has(.app-shell) .sidebar-sub-link,
+  body:has(.app-shell) .sidebar-action-link {
+    min-height: 40px !important;
+  }
+
+  body:has(.app-shell) .app-main {
+    height: auto !important;
+    overflow: visible !important;
+  }
+}
+
 .muted {
   color: var(--muted);
 }
