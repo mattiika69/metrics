@@ -1,5 +1,6 @@
 import "server-only";
 
+import { runAgentReply } from "@/lib/agent/assistant";
 import { logAuditEvent } from "@/lib/security/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -100,9 +101,19 @@ export async function createChannelAgentRequest({
     },
   });
 
+  const reply = await runAgentReply({
+    supabase: admin,
+    tenantId,
+    requestId: data.id,
+    provider,
+    channelId,
+    externalUserId,
+    requestText: trimmed,
+  });
+
   return {
     ok: true as const,
     requestId: data.id as string,
-    message: `AI Agent ${operation} request saved.`,
+    message: reply.responseText,
   };
 }

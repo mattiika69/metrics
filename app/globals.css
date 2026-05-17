@@ -8826,6 +8826,11 @@ body:has(.app-shell) .agent-request-form label > span {
   font-weight: 600;
 }
 
+body:has(.app-shell) .agent-request-form input,
+body:has(.app-shell) .agent-request-form textarea {
+  width: 100%;
+}
+
 body:has(.app-shell) .agent-request-form textarea {
   min-height: 96px;
   resize: vertical;

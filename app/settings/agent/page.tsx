@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/app-shell";
 import { SettingsHeader, SettingsTabs } from "@/components/settings/settings-tabs";
-import { createWebAgentRequestAction } from "@/app/settings/agent/actions";
+import { createWebAgentRequestAction, saveAgentLearningAction } from "@/app/settings/agent/actions";
 import { requireTenant } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -43,6 +43,13 @@ export default async function AgentSettingsPage({ searchParams }: PageProps) {
     .eq("tenant_id", tenant.id)
     .order("created_at", { ascending: false })
     .limit(8);
+  const { data: learnings } = await supabase
+    .from("metric_learnings")
+    .select("id, title, body, source_provider, updated_at")
+    .eq("tenant_id", tenant.id)
+    .is("archived_at", null)
+    .order("updated_at", { ascending: false })
+    .limit(6);
 
   return (
     <AppShell active="settings-agent" tenantName={tenant.name}>
@@ -86,7 +93,7 @@ export default async function AgentSettingsPage({ searchParams }: PageProps) {
             </div>
           </div>
           <p className="muted">
-            AI Agent requests can start from the app, Slack, or Telegram. Every request is saved first.
+            AI Agent requests can start from the app, Slack, or Telegram. Replies use the same context and saved learnings.
           </p>
           <div className="settings-list">
             <div>
@@ -95,7 +102,7 @@ export default async function AgentSettingsPage({ searchParams }: PageProps) {
             </div>
             <div>
               <span>Activity</span>
-              <strong>Saved to the workspace</strong>
+              <strong>Saved before replies</strong>
             </div>
           </div>
         </article>
@@ -137,6 +144,35 @@ export default async function AgentSettingsPage({ searchParams }: PageProps) {
         <article className="settings-panel full-span">
           <div className="panel-heading">
             <div>
+              <p className="step-label">Learning</p>
+              <h2>Save a learning</h2>
+            </div>
+            <span className="pill">Manual</span>
+          </div>
+          <form action={saveAgentLearningAction} className="agent-request-form">
+            <label>
+              <span>Title</span>
+              <input name="title" placeholder="What should the AI Agent remember?" disabled={!canManage} />
+            </label>
+            <label>
+              <span>Learning</span>
+              <textarea
+                name="body"
+                rows={4}
+                placeholder="Add context, rules, examples, or preferences the AI Agent should use."
+                disabled={!canManage}
+                required
+              />
+            </label>
+            <button type="submit" disabled={!canManage}>
+              Save learning
+            </button>
+          </form>
+        </article>
+
+        <article className="settings-panel full-span">
+          <div className="panel-heading">
+            <div>
               <p className="step-label">Recent</p>
               <h2>AI Agent requests</h2>
             </div>
@@ -157,6 +193,33 @@ export default async function AgentSettingsPage({ searchParams }: PageProps) {
               ))
             ) : (
               <p className="muted">No agent requests yet.</p>
+            )}
+          </div>
+        </article>
+
+        <article className="settings-panel full-span">
+          <div className="panel-heading">
+            <div>
+              <p className="step-label">Memory</p>
+              <h2>Saved learnings</h2>
+            </div>
+            <span className="pill">{learnings?.length ?? 0} shown</span>
+          </div>
+          <div className="table-list">
+            {learnings?.length ? (
+              learnings.map((learning) => (
+                <div className="table-row" key={learning.id}>
+                  <div>
+                    <strong>{learning.title}</strong>
+                    <span className="muted">
+                      {learning.source_provider ?? "web"} · {formatDate(learning.updated_at)}
+                    </span>
+                    <p className="muted">{learning.body}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="muted">No saved learnings yet.</p>
             )}
           </div>
         </article>
