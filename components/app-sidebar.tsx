@@ -8,14 +8,11 @@ import type { ActiveRoute } from "@/components/app-shell";
 type AppSidebarProps = {
   active: ActiveRoute;
   items: SidebarItem[];
-  tenantName?: string | null;
   logoutAction?: () => void | Promise<void>;
 };
 
-export function AppSidebar({ active, items, tenantName, logoutAction }: AppSidebarProps) {
+export function AppSidebar({ active, items, logoutAction }: AppSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
-  const [orgOpen, setOrgOpen] = useState(false);
-  const displayTenantName = tenantName || "HyperOptimal Team";
 
   if (collapsed) {
     return (
@@ -50,24 +47,6 @@ export function AppSidebar({ active, items, tenantName, logoutAction }: AppSideb
           >
             ‹
           </button>
-        </div>
-
-        <div className="sidebar-org-switcher">
-          <span>Org:</span>
-          <button
-            type="button"
-            aria-haspopup="menu"
-            aria-expanded={orgOpen}
-            onClick={() => setOrgOpen((current) => !current)}
-          >
-            <span>{displayTenantName}</span>
-            <span aria-hidden="true">⌄</span>
-          </button>
-          {orgOpen ? (
-            <div className="sidebar-org-menu" role="menu">
-              <div role="menuitem">{displayTenantName}</div>
-            </div>
-          ) : null}
         </div>
       </div>
 

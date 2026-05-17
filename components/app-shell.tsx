@@ -120,12 +120,12 @@ async function getOrderedSidebarItems() {
     .filter((item): item is SidebarItem => Boolean(item));
 }
 
-export async function AppShell({ active, tenantName, children }: AppShellProps) {
+export async function AppShell({ active, children }: AppShellProps) {
   const sidebarItems = await getOrderedSidebarItems();
 
   return (
     <main className="app-shell">
-      <AppSidebar active={active} items={sidebarItems} tenantName={tenantName} logoutAction={signOutAction} />
+      <AppSidebar active={active} items={sidebarItems} logoutAction={signOutAction} />
       <section className="app-main">
         <div className="app-content">{children}</div>
       </section>
