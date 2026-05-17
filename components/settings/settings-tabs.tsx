@@ -18,7 +18,7 @@ const settingsTabs = [
   { id: "scheduling", label: "Scheduling", href: "/settings/scheduling" },
   { id: "slack", label: "Slack", href: "/settings/slack" },
   { id: "telegram", label: "Telegram", href: "/settings/telegram" },
-  { id: "agent", label: "Agent", href: "/settings/agent" },
+  { id: "agent", label: "AI Agent", href: "/settings/agent" },
 ] as const;
 
 export function SettingsTabs({ active }: { active: SettingsTab }) {

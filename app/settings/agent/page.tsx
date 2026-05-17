@@ -24,14 +24,14 @@ export default async function AgentSettingsPage() {
 
   return (
     <AppShell active="settings-agent" tenantName={tenant.name}>
-      <SettingsHeader title="Agent" />
+      <SettingsHeader title="AI Agent" />
       <SettingsTabs active="agent" />
 
       <section className="settings-layout">
         <article className="settings-panel">
           <div className="panel-heading">
             <div>
-              <p className="step-label">Agent</p>
+              <p className="step-label">AI Agent</p>
               <h2>Workspace access</h2>
             </div>
             <span className="pill">{canManage ? "Enabled" : "View only"}</span>
@@ -60,7 +60,7 @@ export default async function AgentSettingsPage() {
             </div>
           </div>
           <p className="muted">
-            Agent requests are saved before work begins and are reviewed against workspace access.
+            AI Agent requests are saved before work begins and are reviewed against workspace access.
           </p>
           <div className="settings-list">
             <div>
@@ -78,7 +78,7 @@ export default async function AgentSettingsPage() {
           <div className="panel-heading">
             <div>
               <p className="step-label">Recent</p>
-              <h2>Agent requests</h2>
+              <h2>AI Agent requests</h2>
             </div>
             <span className="pill">{requests?.length ?? 0} shown</span>
           </div>
