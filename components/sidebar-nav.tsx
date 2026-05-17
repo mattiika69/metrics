@@ -128,9 +128,12 @@ export function SidebarNav({
                     <div className="sidebar-parent-row">
                       <button
                         type="button"
-                        className="sidebar-parent-collapse"
+                        aria-label={item.label}
+                        className={[
+                          "sidebar-parent-trigger",
+                          itemExpanded ? "expanded" : "",
+                        ].filter(Boolean).join(" ")}
                         aria-expanded={itemExpanded}
-                        aria-label={`${itemExpanded ? "Collapse" : "Expand"} ${item.label}`}
                         onClick={() => toggleParent(item.id)}
                       >
                         <svg
@@ -145,18 +148,7 @@ export function SidebarNav({
                         >
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
-                      </button>
-                      <button
-                        type="button"
-                        aria-label={item.label}
-                        className={[
-                          "sidebar-parent-link",
-                          itemExpanded ? "expanded" : "",
-                        ].filter(Boolean).join(" ")}
-                        aria-expanded={itemExpanded}
-                        onClick={() => toggleParent(item.id)}
-                      >
-                        {item.label}
+                        <span>{item.label}</span>
                       </button>
                       <span className="sidebar-drag-handle" aria-hidden="true">⋮⋮</span>
                     </div>

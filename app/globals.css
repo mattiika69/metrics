@@ -1049,60 +1049,6 @@ body:has(.app-shell) .collapse-dot {
   cursor: pointer !important;
 }
 
-body:has(.app-shell) .sidebar-org-switcher {
-  position: relative !important;
-  display: grid !important;
-  grid-template-columns: auto minmax(0, 1fr) !important;
-  align-items: center !important;
-  gap: 5px !important;
-  margin-top: 6px !important;
-}
-
-body:has(.app-shell) .sidebar-org-switcher > span {
-  color: #64748b !important;
-  font-size: 9px !important;
-  line-height: 1 !important;
-}
-
-body:has(.app-shell) .sidebar-org-switcher > button {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  min-width: 0 !important;
-  height: 20px !important;
-  border: 1px solid rgba(51, 65, 85, 0.76) !important;
-  border-radius: 4px !important;
-  background: rgba(51, 65, 85, 0.72) !important;
-  color: #cbd5e1 !important;
-  font-family: var(--font-app), Montserrat, system-ui, sans-serif !important;
-  font-size: 9px !important;
-  line-height: 1 !important;
-  padding: 0 7px !important;
-  cursor: pointer !important;
-}
-
-body:has(.app-shell) .sidebar-org-switcher > button span:first-child {
-  min-width: 0 !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
-}
-
-body:has(.app-shell) .sidebar-org-menu {
-  position: absolute !important;
-  z-index: 20 !important;
-  top: 24px !important;
-  left: 25px !important;
-  right: 0 !important;
-  border: 1px solid #334155 !important;
-  border-radius: 6px !important;
-  background: #1f2937 !important;
-  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.34) !important;
-  color: #d1d5db !important;
-  font-size: 10px !important;
-  padding: 5px 6px !important;
-}
-
 body:has(.app-shell) .sidebar-sections {
   height: calc(100vh - 72px) !important;
   padding: 6px 8px !important;
@@ -8375,6 +8321,176 @@ body:has(.app-shell) .sidebar-parent-row:hover .sidebar-drag-handle,
 body:has(.app-shell) .sidebar-menu-row.dragging .sidebar-drag-handle,
 body:has(.app-shell) .sidebar-parent-block.dragging .sidebar-drag-handle {
   opacity: 0.16 !important;
+}
+
+/* Sidebar reference lock: direct selectors mirror the Scaling Metrics compact nav. */
+.app-shell .side-nav {
+  width: 220px !important;
+  min-width: 220px !important;
+  flex: 0 0 220px !important;
+  height: 100vh !important;
+  overflow: hidden !important;
+  border-right: 1px solid rgba(51, 65, 85, 0.7) !important;
+  background: linear-gradient(to bottom, #1e293b, #1e293b, #0f172a) !important;
+}
+
+.app-shell .side-shell-header {
+  height: 41px !important;
+  min-height: 41px !important;
+  padding: 8px 10px !important;
+  border-bottom: 1px solid #374151 !important;
+}
+
+.app-shell .side-brand {
+  gap: 8px !important;
+  color: #ffffff !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+}
+
+.app-shell .brand-mark {
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+
+.app-shell .collapse-dot {
+  width: 24px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(71, 85, 105, 0.7) !important;
+  border-radius: 999px !important;
+  background: rgba(51, 65, 85, 0.5) !important;
+  color: #cbd5e1 !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+}
+
+.app-shell .sidebar-sections {
+  height: calc(100vh - 41px) !important;
+  overflow-y: auto !important;
+  padding: 6px 8px !important;
+  scrollbar-width: none !important;
+}
+
+.app-shell .sidebar-sections::-webkit-scrollbar {
+  display: none !important;
+}
+
+.app-shell .sidebar-parent-block,
+.app-shell .sidebar-menu-row {
+  margin: 0 0 4px !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+.app-shell .sidebar-menu-row.with-divider {
+  margin-top: 8px !important;
+  padding-top: 8px !important;
+  border-top: 1px solid #374151 !important;
+}
+
+.app-shell .sidebar-parent-row,
+.app-shell .sidebar-menu-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1px !important;
+}
+
+.app-shell .sidebar-parent-trigger {
+  min-height: 20px !important;
+  display: inline-flex !important;
+  flex: 1 1 auto !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 4px !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  color: #64748b !important;
+  padding: 2px 4px !important;
+  text-align: left !important;
+  cursor: pointer !important;
+}
+
+.app-shell .sidebar-parent-trigger:hover {
+  background: rgba(51, 65, 85, 0.35) !important;
+  color: #cbd5e1 !important;
+}
+
+.app-shell .sidebar-parent-trigger span {
+  color: inherit !important;
+  font-size: 9.7px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.0575em !important;
+  line-height: 1 !important;
+  text-transform: uppercase !important;
+}
+
+.app-shell .sidebar-parent-chevron {
+  width: 12px !important;
+  height: 12px !important;
+  flex: 0 0 12px !important;
+  color: currentColor !important;
+}
+
+.app-shell .sidebar-parent-chevron.expanded {
+  transform: rotate(90deg) !important;
+}
+
+.app-shell .sidebar-child-nav {
+  margin-top: 2px !important;
+  padding: 0 !important;
+}
+
+.app-shell .sidebar-sub-link,
+.app-shell .sidebar-action-link {
+  min-height: 24px !important;
+  display: flex !important;
+  flex: 1 1 auto !important;
+  align-items: center !important;
+  border: 1px solid transparent !important;
+  border-radius: 4px !important;
+  background: transparent !important;
+  color: #9ca3af !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 16px !important;
+  padding: 4px 8px !important;
+}
+
+.app-shell .sidebar-sub-link:hover,
+.app-shell .sidebar-action-link:hover {
+  background: #374151 !important;
+  color: #ffffff !important;
+  text-decoration: none !important;
+}
+
+.app-shell .sidebar-sub-link.active {
+  border-color: rgba(96, 165, 250, 0.6) !important;
+  background: rgba(37, 99, 235, 0.2) !important;
+  color: #dbeafe !important;
+  font-weight: 600 !important;
+}
+
+.app-shell .sidebar-drag-handle {
+  padding: 0 6px !important;
+  color: #d1d5db !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  opacity: 0.08 !important;
+  cursor: grab !important;
+}
+
+.app-shell .sidebar-menu-row:hover .sidebar-drag-handle,
+.app-shell .sidebar-parent-row:hover .sidebar-drag-handle,
+.app-shell .sidebar-menu-row.dragging .sidebar-drag-handle,
+.app-shell .sidebar-parent-block.dragging .sidebar-drag-handle {
+  opacity: 0.45 !important;
 }
 
 /* Hidden admin area */
