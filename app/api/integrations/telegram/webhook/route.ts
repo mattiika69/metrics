@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { createChannelAgentRequest, extractAgentRequestText } from "@/lib/agent/channel";
 import { sendTelegramMessage } from "@/lib/integrations/telegram";
 import { buildChannelCommandResponse, resolveChannelCommand } from "@/lib/metrics/channel";
 import { logAuditEvent } from "@/lib/security/audit";
@@ -238,9 +239,20 @@ export async function POST(request: Request) {
       payload,
     });
 
+    const agentRequestText = extractAgentRequestText({ text });
     const command = commandFromText(text);
     let responseText: string | null = null;
-    if (command && command !== "start" && command !== "link") {
+    if (agentRequestText !== null) {
+      responseText = (await createChannelAgentRequest({
+        tenantId: integration.tenant_id,
+        provider: "telegram",
+        channelId: chatId,
+        externalUserId: message?.from?.id ? String(message.from.id) : null,
+        requestText: agentRequestText,
+        metadata: { messageId: message?.message_id ?? null },
+      })).message;
+    }
+    if (agentRequestText === null && command && command !== "start" && command !== "link") {
       responseText = await buildChannelCommandResponse(integration.tenant_id, command);
     }
     if (command === "start") {
@@ -256,14 +268,14 @@ export async function POST(request: Request) {
         direction: "outbound",
         external_channel_id: chatId,
         body: responseText,
-        payload: { command },
+        payload: { command, agent: agentRequestText !== null },
       });
       await admin.from("integration_outbound_messages").insert({
         tenant_id: integration.tenant_id,
         provider: "telegram",
         target_id: chatId,
         body: responseText,
-        payload: { command },
+        payload: { command, agent: agentRequestText !== null },
         status: "sent",
       });
     }

@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { createChannelAgentRequest, extractAgentRequestText } from "@/lib/agent/channel";
 import { verifySlackSignature } from "@/lib/integrations/slack";
 import { sendSlackMessage } from "@/lib/integrations/slack-oauth";
 import { buildChannelCommandResponse, resolveChannelCommand } from "@/lib/metrics/channel";
@@ -95,13 +96,34 @@ export async function POST(request: Request) {
       event_type: eventType,
       payload,
     });
+    await admin.from("integration_messages").insert({
+      tenant_id: integration.tenant_id,
+      integration_id: integration.id,
+      provider: "slack",
+      direction: "inbound",
+      external_message_id: payload.event?.ts ?? null,
+      external_channel_id: payload.event?.channel ?? null,
+      external_user_id: payload.event?.user ?? null,
+      body: typeof payload.event?.text === "string" ? payload.event.text : "",
+      payload,
+    });
 
     const eventText = payload.event?.text;
+    const agentRequestText = extractAgentRequestText({ text: eventText });
     const command = commandFromText(eventText);
     const channel = payload.event?.channel;
 
-    if (command && channel) {
-      const responseText = await buildChannelCommandResponse(integration.tenant_id, command);
+    if ((agentRequestText !== null || command) && channel) {
+      const responseText = agentRequestText !== null
+        ? (await createChannelAgentRequest({
+          tenantId: integration.tenant_id,
+          provider: "slack",
+          channelId: channel,
+          externalUserId: payload.event?.user ?? null,
+          requestText: agentRequestText,
+          metadata: { teamId, eventType },
+        })).message
+        : await buildChannelCommandResponse(integration.tenant_id, command!);
       const { data: secret } = await admin
         .from("metric_integration_secrets")
         .select("secret_values")
@@ -122,14 +144,14 @@ export async function POST(request: Request) {
         direction: "outbound",
         external_channel_id: channel,
         body: responseText,
-        payload: { command },
+        payload: { command, agent: agentRequestText !== null },
       });
       await admin.from("integration_outbound_messages").insert({
         tenant_id: integration.tenant_id,
         provider: "slack",
         target_id: channel,
         body: responseText,
-        payload: { command },
+        payload: { command, agent: agentRequestText !== null },
         status: "sent",
       });
     }

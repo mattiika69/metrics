@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { createChannelAgentRequest, extractAgentRequestText } from "@/lib/agent/channel";
 import { verifySlackSignature } from "@/lib/integrations/slack";
 import { buildChannelCommandResponse, resolveChannelCommand } from "@/lib/metrics/channel";
 import { logAuditEvent } from "@/lib/security/audit";
@@ -28,6 +29,8 @@ export async function POST(request: Request) {
   const teamId = params.get("team_id");
   const channelId = params.get("channel_id");
   const userId = params.get("user_id");
+  const commandName = params.get("command");
+  const commandText = params.get("text");
   const command = parseCommand(params.get("command"), params.get("text"));
 
   if (!teamId) return Response.json({ response_type: "ephemeral", text: "Slack team could not be resolved." });
@@ -72,7 +75,20 @@ export async function POST(request: Request) {
     status: "mapped",
   });
 
-  const text = await buildChannelCommandResponse(integration.tenant_id, command);
+  const agentRequestText = extractAgentRequestText({
+    commandName,
+    text: commandText,
+  });
+  const text = agentRequestText !== null
+    ? (await createChannelAgentRequest({
+      tenantId: integration.tenant_id,
+      provider: "slack",
+      channelId,
+      externalUserId: userId,
+      requestText: agentRequestText,
+      metadata: { teamId, command: commandName },
+    })).message
+    : await buildChannelCommandResponse(integration.tenant_id, command);
 
   await admin.from("integration_messages").insert({
     tenant_id: integration.tenant_id,
@@ -81,20 +97,20 @@ export async function POST(request: Request) {
     direction: "outbound",
     external_channel_id: channelId,
     body: text,
-    payload: { command },
+    payload: { command, agent: agentRequestText !== null },
   });
   await admin.from("integration_outbound_messages").insert({
     tenant_id: integration.tenant_id,
     provider: "slack",
     target_id: channelId ?? "unknown",
     body: text,
-    payload: { command },
+    payload: { command, agent: agentRequestText !== null },
     status: "sent",
   });
 
   await logAuditEvent({
     tenantId: integration.tenant_id,
-    eventType: `slack_${command}`,
+    eventType: agentRequestText !== null ? "slack_agent" : `slack_${command}`,
     targetType: "slack",
     metadata: { teamId, channelId, userId },
   });

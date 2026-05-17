@@ -8810,6 +8810,31 @@ body:has(.app-shell) .metric-edit-panel {
   background: var(--app-panel) !important;
 }
 
+body:has(.app-shell) .agent-request-form {
+  display: grid;
+  gap: 14px;
+}
+
+body:has(.app-shell) .agent-request-form label {
+  display: grid;
+  gap: 6px;
+}
+
+body:has(.app-shell) .agent-request-form label > span {
+  color: #344054;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+body:has(.app-shell) .agent-request-form textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+body:has(.app-shell) .agent-request-form button {
+  justify-self: start;
+}
+
 body:has(.app-shell) .metric-edit-panel summary {
   cursor: pointer !important;
 }
