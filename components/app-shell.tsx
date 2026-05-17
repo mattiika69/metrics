@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { SidebarNav, type SidebarItem } from "@/components/sidebar-nav";
+import { AppSidebar } from "@/components/app-sidebar";
+import type { SidebarItem } from "@/components/sidebar-nav";
 import { signOutAction } from "@/lib/auth/actions";
 import { loadSidebarOrder } from "@/lib/navigation/sidebar-actions";
 
@@ -120,28 +120,12 @@ async function getOrderedSidebarItems() {
     .filter((item): item is SidebarItem => Boolean(item));
 }
 
-export async function AppShell({ active, children }: AppShellProps) {
+export async function AppShell({ active, tenantName, children }: AppShellProps) {
   const sidebarItems = await getOrderedSidebarItems();
 
   return (
     <main className="app-shell">
-      <aside className="side-nav">
-        <div className="side-shell-header">
-          <div className="side-brand-row">
-            <Link href="/dashboard" className="side-brand">
-              <span className="brand-mark" aria-hidden="true">
-                H
-              </span>
-              <span>HyperOptimal</span>
-            </Link>
-            <span className="collapse-dot" aria-hidden="true">‹</span>
-          </div>
-        </div>
-
-        <nav className="sidebar-sections" aria-label="Primary navigation">
-          <SidebarNav active={active} items={sidebarItems} logoutAction={signOutAction} />
-        </nav>
-      </aside>
+      <AppSidebar active={active} items={sidebarItems} tenantName={tenantName} logoutAction={signOutAction} />
       <section className="app-main">
         <div className="app-content">{children}</div>
       </section>
