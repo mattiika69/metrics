@@ -19,8 +19,8 @@ test.describe("auth pages", () => {
     await expect(page.getByLabel("First Name")).toBeVisible();
     await expect(page.getByLabel("Last Name")).toBeVisible();
     await expect(page.getByLabel("Email")).toBeVisible();
-    await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
-    await expect(page.getByLabel("Confirm Password")).toBeVisible();
+    await expect(page.locator('input[name="password"]')).toBeVisible();
+    await expect(page.locator('input[name="confirmPassword"]')).toBeVisible();
     await expect(page.getByRole("button", { name: "Create account" })).toBeVisible();
   });
 
@@ -28,7 +28,7 @@ test.describe("auth pages", () => {
     await page.goto("/forgot-password");
 
     await expect(page.getByRole("heading", { name: "HyperOptimal" })).toBeVisible();
-    await expect(page.getByText("Reset your password")).toBeVisible();
+    await expect(page.getByText("Reset your password", { exact: true })).toBeVisible();
     await expect(page.getByLabel("Email")).toBeVisible();
     await expect(page.getByRole("button", { name: "Send reset link" })).toBeVisible();
   });

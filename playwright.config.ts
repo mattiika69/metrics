@@ -1,7 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000";
+const serverPort = process.env.PLAYWRIGHT_PORT ?? "3100";
+const baseURL =
+  process.env.PLAYWRIGHT_BASE_URL ?? `http://127.0.0.1:${serverPort}`;
 const useWebServer = !process.env.PLAYWRIGHT_BASE_URL;
+const webServerCommand = process.env.CI
+  ? `npm run build && npm run start -- -p ${serverPort}`
+  : `npm run dev -- -p ${serverPort}`;
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -21,13 +26,13 @@ export default defineConfig({
   },
   webServer: useWebServer
     ? {
-        command: "npm run dev",
+        command: webServerCommand,
         url: `${baseURL}/login`,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,
         env: {
           ...process.env,
-          DISABLE_LOGIN_AUTH: process.env.DISABLE_LOGIN_AUTH ?? "true",
+          DISABLE_LOGIN_AUTH: process.env.DISABLE_LOGIN_AUTH ?? "false",
         },
       }
     : undefined,

@@ -2,6 +2,8 @@ import Link from "next/link";
 import { acceptTeamInvitationAction } from "@/lib/settings/team-actions";
 import { createClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };

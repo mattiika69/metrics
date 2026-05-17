@@ -3,6 +3,8 @@ import { SettingsHeader, SettingsTabs } from "@/components/settings/settings-tab
 import { startStripeCheckoutAction } from "@/lib/auth/actions";
 import { requireTenant } from "@/lib/auth/session";
 
+export const dynamic = "force-dynamic";
+
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };

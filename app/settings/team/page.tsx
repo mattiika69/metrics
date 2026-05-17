@@ -6,6 +6,8 @@ import {
   revokeTeamInvitationAction,
 } from "@/lib/settings/team-actions";
 
+export const dynamic = "force-dynamic";
+
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };

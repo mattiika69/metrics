@@ -2,6 +2,8 @@ import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { requireTenant } from "@/lib/auth/session";
 
+export const dynamic = "force-dynamic";
+
 export default async function AccountPage() {
   const { user, tenant, membership } = await requireTenant();
 
