@@ -1,3 +1,5 @@
+import "server-only";
+
 import { randomBytes } from "node:crypto";
 
 export const slackOAuthStateCookie = "hom_slack_oauth_state";

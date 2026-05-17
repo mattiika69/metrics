@@ -1,3 +1,5 @@
+import "server-only";
+
 import { createClaudeText } from "@/lib/ai/claude";
 import { buildConstraintsDigest, formatConstraintValue } from "@/lib/metrics/constraints";
 import { createAdminClient } from "@/lib/supabase/admin";

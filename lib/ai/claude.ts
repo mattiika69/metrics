@@ -1,3 +1,5 @@
+import "server-only";
+
 type ClaudeMessage = {
   role: "user" | "assistant";
   content: string;
