@@ -7958,3 +7958,252 @@ body:has(.app-shell) .sidebar-parent-block.dragging .sidebar-drag-handle {
     grid-template-columns: 1fr;
   }
 }
+
+/* MVP UI polish: scoped final pass for shell, tables, states, and mobile fallback. */
+:root {
+  --app-surface: #f5f7fa;
+  --app-panel: #fcfdff;
+  --app-panel-muted: #f8fafc;
+  --app-line: #d8e0ea;
+  --app-ink: #111827;
+  --app-muted: #667085;
+  --app-blue: #2563eb;
+  --app-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+body:has(.app-shell) {
+  background: var(--app-surface) !important;
+}
+
+body:has(.app-shell) .app-main {
+  min-width: 0 !important;
+  background: var(--app-surface) !important;
+}
+
+body:has(.app-shell) .app-content {
+  min-width: 0 !important;
+}
+
+body:has(.app-shell) button,
+body:has(.app-shell) a,
+body:has(.app-shell) select,
+body:has(.app-shell) input,
+body:has(.app-shell) textarea,
+body:has(.app-shell) summary {
+  transition: background-color 160ms ease-out, border-color 160ms ease-out, box-shadow 160ms ease-out, color 160ms ease-out;
+}
+
+body:has(.app-shell) button:focus-visible,
+body:has(.app-shell) a:focus-visible,
+body:has(.app-shell) select:focus-visible,
+body:has(.app-shell) input:focus-visible,
+body:has(.app-shell) textarea:focus-visible,
+body:has(.app-shell) summary:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, 0.62) !important;
+  outline-offset: 2px !important;
+}
+
+body:has(.app-shell) .scaling-page {
+  min-width: 0 !important;
+}
+
+body:has(.app-shell) .scaling-metric-card {
+  overflow: hidden !important;
+}
+
+body:has(.app-shell) .metric-card-head {
+  min-width: 0 !important;
+}
+
+body:has(.app-shell) .metric-card-head span:first-child {
+  min-width: 0 !important;
+}
+
+body:has(.app-shell) .info-dot {
+  flex: 0 0 auto !important;
+}
+
+body:has(.app-shell) .scaling-table-scroll,
+body:has(.app-shell) .source-table-scroll,
+body:has(.app-shell) .admin-table-wrap {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+body:has(.app-shell) .source-empty-cell,
+body:has(.app-shell) .empty-state,
+body:has(.app-shell) .ceo-empty-panel,
+body:has(.app-shell) .admin-empty-state {
+  border: 1px dashed #cbd5e1 !important;
+  border-radius: 8px !important;
+  background: var(--app-panel-muted) !important;
+  color: var(--app-muted) !important;
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+  text-align: center !important;
+}
+
+body:has(.app-shell) .source-empty-cell {
+  padding: 24px !important;
+}
+
+body:has(.app-shell) .app-content > .settings-layout .settings-panel,
+body:has(.app-shell) .scaling-table-panel,
+body:has(.app-shell) .source-table-panel,
+body:has(.app-shell) .metric-edit-panel {
+  border-color: var(--app-line) !important;
+  background: var(--app-panel) !important;
+}
+
+body:has(.app-shell) .metric-edit-panel summary {
+  cursor: pointer !important;
+}
+
+.app-status-page {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  background: var(--app-surface);
+  color: var(--app-ink);
+  font-family: var(--font-app);
+  padding: 24px;
+}
+
+.app-status-card {
+  width: min(420px, 100%);
+  border: 1px solid var(--app-line);
+  border-radius: 10px;
+  background: var(--app-panel);
+  box-shadow: var(--app-shadow);
+  padding: 28px;
+  text-align: center;
+}
+
+.app-status-card h1 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 750;
+}
+
+.app-status-card p {
+  margin: 10px 0 0;
+  color: var(--app-muted);
+  font-size: 13px;
+}
+
+.app-status-card button {
+  margin-top: 18px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--app-blue);
+  color: #f8fafc;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 16px;
+}
+
+.app-status-skeleton {
+  height: 8px;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e2e8f0;
+}
+
+.app-status-skeleton::after {
+  display: block;
+  width: 42%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0), rgba(37, 99, 235, 0.32), rgba(37, 99, 235, 0));
+  content: "";
+  animation: app-status-load 1.15s ease-in-out infinite;
+}
+
+@keyframes app-status-load {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(260%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body:has(.app-shell) *,
+  .app-status-skeleton::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+@media (max-width: 860px) {
+  body:has(.app-shell) {
+    overflow: auto !important;
+  }
+
+  body:has(.app-shell) .app-shell {
+    display: block !important;
+    height: auto !important;
+    min-height: 100dvh !important;
+    overflow: visible !important;
+  }
+
+  body:has(.app-shell) .side-nav {
+    position: relative !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: 58vh !important;
+  }
+
+  body:has(.app-shell) .sidebar-sections {
+    height: auto !important;
+    max-height: calc(58vh - 41px) !important;
+  }
+
+  body:has(.app-shell) .app-main {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  body:has(.app-shell) .app-content {
+    overflow: visible !important;
+    padding: 24px 18px 40px !important;
+  }
+
+  body:has(.app-shell) .scaling-header,
+  body:has(.app-shell) .period-toolbar,
+  body:has(.app-shell) .most-important-toolbar {
+    display: flex !important;
+    align-items: stretch !important;
+    flex-direction: column !important;
+  }
+
+  body:has(.app-shell) .most-important-date-controls,
+  body:has(.app-shell) .most-important-filter-controls,
+  body:has(.app-shell) .period-toolbar-left,
+  body:has(.app-shell) .period-toolbar-right {
+    justify-content: flex-start !important;
+  }
+
+  body:has(.app-shell) .scaling-metric-grid,
+  body:has(.app-shell) .ceo-primary-grid,
+  body:has(.app-shell) .ceo-dashboard-layout,
+  body:has(.app-shell) .app-content > .settings-layout,
+  body:has(.app-shell) .app-content > .settings-layout.single-column {
+    grid-template-columns: 1fr !important;
+  }
+
+  body:has(.app-shell) .scaling-subtabs,
+  body:has(.app-shell) .settings-tabs {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    padding-bottom: 4px !important;
+  }
+}

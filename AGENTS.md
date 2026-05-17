@@ -1,5 +1,22 @@
 # Repository Operating Rules
 
+## Always-Read Index
+
+Read this file before editing. For task-specific context, load the deeper files only when relevant:
+
+- `PRODUCT.md` for product goals, users, MVP scope, workflows, business rules, and persistence rules.
+- `DESIGN.md` for visual style, UX standards, layout rules, responsive behavior, accessibility, and loading, empty, and error states.
+- `TESTING_GUIDE.md` for verification commands and testing scope.
+- `CONTRIBUTING.md` for coding conventions and repo workflow.
+
+Before UI, product-shell, dashboard, navigation, form, or client-facing copy work, use the impeccable skill when available. Keep changes small, focused, and task-scoped. Do not rewrite architecture unless explicitly requested. Do not add dependencies unless necessary.
+
+Do not expose secrets. Do not weaken auth, RLS, or authorization. Do not use service role keys in client code.
+
+Persistent app data must write to Supabase/Postgres. Do not store real app state in `localStorage`, `sessionStorage`, IndexedDB, JSON files, mock stores, hardcoded constants, or frontend-only state. Client state is allowed only for temporary UI state such as open modals, selected tabs, unsaved drafts, filters, loading states, and optimistic UI.
+
+Before non-trivial edits, inspect relevant files and give a short plan. Before completion, run the smallest relevant checks and summarize changes.
+
 ## Cloud Source of Truth
 
 Everything durable must be written to and synced with the cloud.
