@@ -30,6 +30,7 @@ export type ActiveRoute =
   | "settings-scheduling"
   | "settings-slack"
   | "settings-telegram"
+  | "settings-agent"
   | "help"
   | "account"
   | "admin";

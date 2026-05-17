@@ -7,7 +7,8 @@ export type SettingsTab =
   | "integrations"
   | "scheduling"
   | "slack"
-  | "telegram";
+  | "telegram"
+  | "agent";
 
 const settingsTabs = [
   { id: "account", label: "Account", href: "/settings/account" },
@@ -17,6 +18,7 @@ const settingsTabs = [
   { id: "scheduling", label: "Scheduling", href: "/settings/scheduling" },
   { id: "slack", label: "Slack", href: "/settings/slack" },
   { id: "telegram", label: "Telegram", href: "/settings/telegram" },
+  { id: "agent", label: "Agent", href: "/settings/agent" },
 ] as const;
 
 export function SettingsTabs({ active }: { active: SettingsTab }) {
