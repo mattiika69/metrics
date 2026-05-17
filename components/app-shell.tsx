@@ -108,25 +108,6 @@ const primaryItems: SidebarItem[] = [
     label: "Settings",
     href: "/settings/account",
     section: "settings",
-    children: [
-      {
-        id: "settings-home",
-        label: "Settings",
-        href: "/settings/account",
-        activeRoutes: [
-          "settings",
-          "settings-account",
-          "settings-team",
-          "settings-billing",
-          "settings-integrations",
-          "settings-scheduling",
-          "settings-slack",
-          "settings-telegram",
-        ],
-      },
-      { id: "settings-help", label: "Help", href: "/help", activeRoutes: ["help"] },
-      { id: "settings-logout", label: "Log Out", action: "logout", danger: true },
-    ],
   },
 ];
 

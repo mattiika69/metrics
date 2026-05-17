@@ -52,7 +52,6 @@ export function SidebarNav({
     return (
       items.find((item) => {
         if (!item.children?.length) return false;
-        if (item.id === "settings" && active.startsWith("settings")) return true;
         return item.children.some((child) => child.activeRoutes?.includes(active));
       })?.id ?? null
     );

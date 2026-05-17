@@ -7661,6 +7661,84 @@ body:has(.app-shell) .sidebar-action-link.danger:hover {
   color: #fca5a5 !important;
 }
 
+/* Sidebar final correction: Settings is a direct link, section handles are invisible until needed. */
+body:has(.app-shell) .sidebar-sections {
+  scrollbar-width: none !important;
+}
+
+body:has(.app-shell) .sidebar-sections::-webkit-scrollbar {
+  display: none !important;
+}
+
+body:has(.app-shell) .sidebar-parent-row {
+  min-height: 24px !important;
+  padding: 2px 4px !important;
+}
+
+body:has(.app-shell) .sidebar-parent-collapse {
+  width: 15px !important;
+  min-width: 15px !important;
+  height: 18px !important;
+  min-height: 18px !important;
+}
+
+body:has(.app-shell) .sidebar-parent-chevron {
+  width: 11px !important;
+  height: 11px !important;
+  color: #8a98ad !important;
+}
+
+body:has(.app-shell) .sidebar-parent-link {
+  min-height: 18px !important;
+  color: #8a98ad !important;
+  font-size: 9.5px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.058em !important;
+  line-height: 1 !important;
+  padding: 2px 4px !important;
+}
+
+body:has(.app-shell) .sidebar-child-nav {
+  margin-top: 2px !important;
+  padding-left: 0 !important;
+}
+
+body:has(.app-shell) .sidebar-sub-link,
+body:has(.app-shell) .sidebar-action-link {
+  min-height: 26px !important;
+  display: flex !important;
+  align-items: center !important;
+  color: #a8b3c4 !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+  line-height: 1.1 !important;
+  padding: 0 8px !important;
+}
+
+body:has(.app-shell) .sidebar-sub-link.active {
+  border-color: #3b82f6 !important;
+  background: rgba(37, 99, 235, 0.35) !important;
+  color: #ffffff !important;
+  font-weight: 400 !important;
+}
+
+body:has(.app-shell) .sidebar-menu-row.with-divider {
+  margin-top: 8px !important;
+  padding-top: 8px !important;
+}
+
+body:has(.app-shell) .sidebar-drag-handle {
+  opacity: 0 !important;
+  color: #94a3b8 !important;
+}
+
+body:has(.app-shell) .sidebar-menu-row:hover .sidebar-drag-handle,
+body:has(.app-shell) .sidebar-parent-row:hover .sidebar-drag-handle,
+body:has(.app-shell) .sidebar-menu-row.dragging .sidebar-drag-handle,
+body:has(.app-shell) .sidebar-parent-block.dragging .sidebar-drag-handle {
+  opacity: 0.16 !important;
+}
+
 /* Hidden admin area */
 .admin-shell {
   display: grid;
