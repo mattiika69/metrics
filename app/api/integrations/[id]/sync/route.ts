@@ -1,6 +1,6 @@
 import { requireApiTenant } from "@/lib/auth/api";
 import { getIntegrationDefinition } from "@/lib/integrations/catalog";
-import { calculateAndStoreMetricSnapshots } from "@/lib/metrics/server";
+import { syncCoreIntegration } from "@/lib/integrations/core-sync";
 import { logAuditEvent } from "@/lib/security/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -39,26 +39,55 @@ export async function POST(_request: Request, routeContext: RouteContext) {
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
 
-  await calculateAndStoreMetricSnapshots({
-    tenantId: context.tenant.id,
-    periodKey: "30d",
-  });
-
-  await logAuditEvent({
-    tenantId: context.tenant.id,
-    actorUserId: context.user.id,
-    eventType: "metric_integration_sync_requested",
-    targetType: "integration",
-    targetId: id,
-    metadata: {
+  try {
+    const result = await syncCoreIntegration({
+      tenantId: context.tenant.id,
       provider: id,
-      note: "manual_refresh",
-    },
-  });
+      actorUserId: context.user.id,
+    });
+    await admin
+      .from("metric_integrations")
+      .update({
+        status: "active",
+        last_sync_at: new Date().toISOString(),
+        last_error: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("tenant_id", context.tenant.id)
+      .eq("provider", id);
+    await logAuditEvent({
+      tenantId: context.tenant.id,
+      actorUserId: context.user.id,
+      eventType: "metric_integration_synced",
+      targetType: "integration",
+      targetId: id,
+      metadata: result,
+    });
 
-  return Response.json({
-    ok: true,
-    syncedAt: now,
-    message: "Data refreshed.",
-  });
+    return Response.json({
+      ok: true,
+      syncedAt: now,
+      ...result,
+    });
+  } catch (syncError) {
+    const message = syncError instanceof Error ? syncError.message : "Sync failed.";
+    await admin
+      .from("metric_integrations")
+      .update({
+        status: "error",
+        last_error: message,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("tenant_id", context.tenant.id)
+      .eq("provider", id);
+    await logAuditEvent({
+      tenantId: context.tenant.id,
+      actorUserId: context.user.id,
+      eventType: "metric_integration_sync_failed",
+      targetType: "integration",
+      targetId: id,
+      metadata: { provider: id, error: message },
+    });
+    return Response.json({ error: message }, { status: 400 });
+  }
 }

@@ -358,7 +358,7 @@ export async function connectIntegrationAction(formData: FormData) {
   const values: Record<string, string> = {};
   for (const field of definition.fields) {
     values[field.name] = String(formData.get(field.name) ?? "").trim();
-    if (!values[field.name]) redirect(`/integrations/${provider}?message=Missing ${field.label}`);
+    if (field.required !== false && !values[field.name]) redirect(`/integrations/${provider}?message=Missing ${field.label}`);
   }
 
   const admin = createAdminClient();
@@ -369,6 +369,7 @@ export async function connectIntegrationAction(formData: FormData) {
       provider,
       status: "active",
       display_name: definition.name,
+      external_account_id: values.accountUrl || values.formId || null,
       settings: { connectedFrom: "web" },
       updated_at: new Date().toISOString(),
     }, {

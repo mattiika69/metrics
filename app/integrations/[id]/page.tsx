@@ -120,7 +120,7 @@ export default async function IntegrationDetailPage({ params, searchParams }: Pa
                 {definition.fields.map((field) => (
                   <label key={field.name}>
                     {field.label}
-                    <input name={field.name} type={field.type} placeholder={field.placeholder} required />
+                    <input name={field.name} type={field.type} placeholder={field.placeholder} required={field.required !== false} />
                   </label>
                 ))}
                 {definition.fields.length === 0 ? <p className="muted">No extra details are needed for this connection.</p> : null}

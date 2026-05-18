@@ -18,6 +18,35 @@ function textSecret(values: Record<string, unknown> | null | undefined, key: str
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
+function textFromXml(value: string) {
+  return value
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, "\"")
+    .replace(/&#39;/g, "'")
+    .trim();
+}
+
+function xmlTag(block: string, tag: string) {
+  const match = block.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i"));
+  return match ? textFromXml(match[1]) : null;
+}
+
+function parseFeedItems(text: string) {
+  const blocks = text.match(/<item[\s\S]*?<\/item>|<entry[\s\S]*?<\/entry>/gi) ?? [];
+  return blocks.map((block, index) => {
+    const title = xmlTag(block, "title");
+    const link = xmlTag(block, "link") ?? block.match(/<link[^>]*href=["']([^"']+)["']/i)?.[1] ?? null;
+    const published = xmlTag(block, "pubDate") ?? xmlTag(block, "published") ?? xmlTag(block, "updated");
+    const body = xmlTag(block, "description") ?? xmlTag(block, "summary") ?? xmlTag(block, "content");
+    const id = xmlTag(block, "guid") ?? xmlTag(block, "id") ?? link ?? `${title ?? "feed"}:${index}`;
+    return { id, title, link, published, body };
+  });
+}
+
 async function loadSecret(tenantId: string, provider: string) {
   const admin = createAdminClient();
   const { data } = await admin
@@ -175,6 +204,85 @@ async function syncCalendly(tenantId: string): Promise<SyncResult> {
   return { provider: "calendly", rowsRead: events.length, rowsWritten: rows.length, message: "Calendly scheduled events synced." };
 }
 
+function plaidBaseUrl(environment: string | null) {
+  if (environment === "production") return "https://production.plaid.com";
+  if (environment === "development") return "https://development.plaid.com";
+  return "https://sandbox.plaid.com";
+}
+
+async function syncPlaid(tenantId: string): Promise<SyncResult> {
+  const secret = await loadSecret(tenantId, "plaid");
+  const clientId = textSecret(secret, "clientId");
+  const plaidSecret = textSecret(secret, "secret");
+  const accessToken = textSecret(secret, "accessToken");
+  const environment = textSecret(secret, "environment") ?? "sandbox";
+  if (!clientId || !plaidSecret || !accessToken) {
+    throw new Error("Plaid client ID, secret, and access token are required.");
+  }
+
+  const endDate = new Date();
+  const startDate = new Date(Date.now() - 1000 * 60 * 60 * 24 * 90);
+  const response = await fetch(`${plaidBaseUrl(environment)}/transactions/get`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      client_id: clientId,
+      secret: plaidSecret,
+      access_token: accessToken,
+      start_date: startDate.toISOString().slice(0, 10),
+      end_date: endDate.toISOString().slice(0, 10),
+      options: { count: 500, offset: 0 },
+    }),
+  });
+  const payload = await response.json().catch(() => ({})) as {
+    transactions?: Array<Record<string, unknown>>;
+    accounts?: Array<Record<string, unknown>>;
+    error_message?: string;
+  };
+  if (!response.ok) throw new Error(payload.error_message ?? `Plaid sync failed: ${response.status}`);
+
+  const accountById = new Map((payload.accounts ?? []).map((account) => [String(account.account_id), account]));
+  const rows = (payload.transactions ?? []).map((transaction) => {
+    const id = String(transaction.transaction_id ?? hashId(JSON.stringify(transaction)));
+    const amount = Number(transaction.amount ?? 0);
+    const account = accountById.get(String(transaction.account_id));
+    const category = Array.isArray(transaction.category)
+      ? transaction.category.filter((value) => typeof value === "string").join(" / ")
+      : typeof transaction.personal_finance_category === "object" && transaction.personal_finance_category
+        ? String((transaction.personal_finance_category as { primary?: unknown }).primary ?? "")
+        : null;
+    return {
+      id: `plaid:${id}`,
+      tenant_id: tenantId,
+      source: "plaid",
+      transaction_id: id,
+      amount: Math.abs(amount),
+      direction: amount > 0 ? "outbound" : "inbound",
+      transaction_date: typeof transaction.date === "string" ? transaction.date : new Date().toISOString().slice(0, 10),
+      name: typeof transaction.name === "string" ? transaction.name : null,
+      category,
+      raw_data: {
+        ...transaction,
+        account_name: typeof account?.name === "string" ? account.name : null,
+        account_mask: typeof account?.mask === "string" ? account.mask : null,
+      },
+      updated_at: new Date().toISOString(),
+    };
+  });
+
+  if (rows.length) {
+    const { error } = await createAdminClient().from("bank_transactions").upsert(rows, { onConflict: "tenant_id,source,transaction_id" });
+    if (error) throw new Error(error.message);
+  }
+
+  return {
+    provider: "plaid",
+    rowsRead: payload.transactions?.length ?? 0,
+    rowsWritten: rows.length,
+    message: "Plaid transactions synced.",
+  };
+}
+
 function answerValue(answer: Record<string, unknown>) {
   for (const key of ["email", "phone_number", "text", "number", "choice"]) {
     const value = answer[key];
@@ -230,6 +338,70 @@ async function syncTypeform(tenantId: string): Promise<SyncResult> {
     if (error) throw new Error(error.message);
   }
   return { provider: "typeform", rowsRead: rows.length, rowsWritten: rows.length, message: "Typeform responses synced." };
+}
+
+async function syncFeedInput(tenantId: string, provider: "cold-email" | "newsletter" | "paid-ads"): Promise<SyncResult> {
+  const secret = await loadSecret(tenantId, provider);
+  const accountUrl = textSecret(secret, "accountUrl");
+  if (!accountUrl) throw new Error("Account or feed URL is required.");
+
+  const response = await fetch(accountUrl, {
+    headers: {
+      Accept: "application/rss+xml, application/atom+xml, text/xml, text/html;q=0.8",
+      "User-Agent": "HyperOptimalMetrics/1.0",
+    },
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error(`Source URL could not be read: ${response.status}`);
+
+  const text = await response.text();
+  const items = parseFeedItems(text);
+  const admin = createAdminClient();
+
+  if (provider === "paid-ads") {
+    const rows = items.map((item) => ({
+      id: `${provider}:${hashId(item.id)}`,
+      tenant_id: tenantId,
+      source: provider,
+      source_id: item.id,
+      posted_at: item.published ? new Date(item.published).toISOString() : new Date().toISOString(),
+      content: [item.title, item.body, item.link].filter(Boolean).join("\n\n"),
+      raw_data: item,
+      updated_at: new Date().toISOString(),
+    }));
+    if (rows.length) {
+      const { error } = await admin.from("social_posts").upsert(rows, { onConflict: "tenant_id,source,source_id" });
+      if (error) throw new Error(error.message);
+    }
+    return {
+      provider,
+      rowsRead: items.length,
+      rowsWritten: rows.length,
+      message: rows.length ? "Paid ads feed synced." : "Connection saved. No feed items were found at that URL.",
+    };
+  }
+
+  const rows = items.map((item) => ({
+    id: `${provider}:${hashId(item.id)}`,
+    tenant_id: tenantId,
+    source: provider,
+    source_id: item.id,
+    submitted_at: item.published ? new Date(item.published).toISOString() : new Date().toISOString(),
+    name: item.title,
+    email: item.body?.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] ?? null,
+    raw_data: item,
+    updated_at: new Date().toISOString(),
+  }));
+  if (rows.length) {
+    const { error } = await admin.from("form_leads").upsert(rows, { onConflict: "tenant_id,source,source_id" });
+    if (error) throw new Error(error.message);
+  }
+  return {
+    provider,
+    rowsRead: items.length,
+    rowsWritten: rows.length,
+    message: rows.length ? `${provider === "newsletter" ? "Newsletter" : "Cold email"} feed synced.` : "Connection saved. No feed items were found at that URL.",
+  };
 }
 
 function parseCsv(text: string) {
@@ -306,8 +478,12 @@ export async function syncCoreIntegration({
   try {
     let result: SyncResult;
     if (provider === "stripe") result = await syncStripe(tenantId);
+    else if (provider === "plaid") result = await syncPlaid(tenantId);
     else if (provider === "calendly") result = await syncCalendly(tenantId);
     else if (provider === "typeform") result = await syncTypeform(tenantId);
+    else if (provider === "cold-email" || provider === "newsletter" || provider === "paid-ads") {
+      result = await syncFeedInput(tenantId, provider);
+    }
     else {
       result = {
         provider,

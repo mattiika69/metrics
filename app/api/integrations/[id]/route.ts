@@ -60,6 +60,7 @@ export async function POST(request: Request, routeContext: RouteContext) {
   const body = await request.json().catch(() => ({}));
   const values = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
   const missing = definition.fields.filter((field) => {
+    if (field.required === false) return false;
     const value = values[field.name];
     return typeof value !== "string" || value.trim().length === 0;
   });
@@ -80,6 +81,11 @@ export async function POST(request: Request, routeContext: RouteContext) {
       provider: id,
       status: "active",
       display_name: definition.name,
+      external_account_id: typeof values.accountUrl === "string"
+        ? values.accountUrl
+        : typeof values.formId === "string"
+          ? values.formId
+          : null,
       settings: { connectedFrom: "web" },
       updated_at: now,
     }, {
