@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/app-shell";
+import { TeamRealtimeRefresh } from "@/components/settings/team-realtime-refresh";
 import { SettingsHeader, SettingsTabs } from "@/components/settings/settings-tabs";
 import { requireTenant } from "@/lib/auth/session";
 import {
@@ -81,6 +82,7 @@ export default async function TeamSettingsPage({ searchParams }: PageProps) {
 
   return (
     <AppShell active="settings-team" tenantName={tenant.name}>
+      <TeamRealtimeRefresh tenantId={tenant.id} />
       <SettingsHeader title="Team" />
       <section className="settings-notices">
         {message ? <p className="notice">{message}</p> : null}

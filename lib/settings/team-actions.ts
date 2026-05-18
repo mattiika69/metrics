@@ -2,6 +2,7 @@
 
 import { createHash, randomBytes } from "node:crypto";
 import { headers } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { sendTenantEmail } from "@/lib/email/send";
 import {
@@ -159,6 +160,32 @@ async function getOwnerCount(
   return count ?? 0;
 }
 
+async function getExistingMemberByEmail(
+  admin: ReturnType<typeof createAdminClient>,
+  tenantId: string,
+  email: string,
+) {
+  const { data: profiles, error: profileError } = await admin
+    .from("user_profiles")
+    .select("user_id")
+    .eq("email", email)
+    .limit(10);
+
+  if (profileError) throw new Error(profileError.message);
+  const userIds = profiles?.map((profile) => profile.user_id).filter(Boolean) ?? [];
+  if (!userIds.length) return null;
+
+  const { data: memberships, error: membershipError } = await admin
+    .from("tenant_memberships")
+    .select("tenant_id, user_id, role")
+    .eq("tenant_id", tenantId)
+    .in("user_id", userIds)
+    .limit(1);
+
+  if (membershipError) throw new Error(membershipError.message);
+  return (memberships?.[0] ?? null) as TeamMembershipRow | null;
+}
+
 async function acceptInvitationRecord(input: {
   invitation: InvitationRow;
   userId: string;
@@ -246,6 +273,10 @@ export async function inviteTeamMemberAction(formData: FormData) {
     redirectWith("/settings/team", "error", "Enter a valid email address.");
   }
 
+  if (email === normalizeEmail(user.email ?? "")) {
+    redirectWith("/settings/team", "error", "You are already a member of this workspace.");
+  }
+
   const rateLimit = await checkRateLimit({
     route: "settings:team_invite",
     key: `${tenant.id}:${user.id}`,
@@ -271,6 +302,20 @@ export async function inviteTeamMemberAction(formData: FormData) {
   const tokenHash = hashInvitationToken(token);
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
   const admin = createAdminClient();
+  let existingMember: TeamMembershipRow | null = null;
+  try {
+    existingMember = await getExistingMemberByEmail(admin, tenant.id, email);
+  } catch (error) {
+    redirectWith(
+      "/settings/team",
+      "error",
+      error instanceof Error ? error.message : "Unable to check team membership.",
+    );
+  }
+  if (existingMember) {
+    redirectWith("/settings/team", "error", "That email is already a team member.");
+  }
+
   const { data: invitation, error } = await admin
     .from("tenant_invitations")
     .insert({
@@ -349,6 +394,7 @@ export async function inviteTeamMemberAction(formData: FormData) {
     );
   }
 
+  revalidatePath("/settings/team");
   redirectWith("/settings/team", "message", "Invitation sent.");
 }
 
@@ -365,7 +411,7 @@ export async function revokeTeamInvitationAction(formData: FormData) {
   }
 
   const admin = createAdminClient();
-  const { error } = await admin
+  const { data: revoked, error } = await admin
     .from("tenant_invitations")
     .update({
       status: "revoked",
@@ -375,10 +421,16 @@ export async function revokeTeamInvitationAction(formData: FormData) {
     })
     .eq("id", invitationId)
     .eq("tenant_id", tenant.id)
-    .eq("status", "pending");
+    .eq("status", "pending")
+    .select("id")
+    .maybeSingle();
 
   if (error) {
     redirectWith("/settings/team", "error", error.message);
+  }
+
+  if (!revoked) {
+    redirectWith("/settings/team", "error", "Invitation is no longer pending.");
   }
 
   await logAuditEvent({
@@ -389,6 +441,7 @@ export async function revokeTeamInvitationAction(formData: FormData) {
     targetId: invitationId,
   });
 
+  revalidatePath("/settings/team");
   redirectWith("/settings/team", "message", "Invitation revoked.");
 }
 
@@ -465,6 +518,7 @@ export async function updateTeamMemberRoleAction(formData: FormData) {
     },
   });
 
+  revalidatePath("/settings/team");
   redirectWith("/settings/team", "message", "Team member role updated.");
 }
 
@@ -532,6 +586,7 @@ export async function removeTeamMemberAction(formData: FormData) {
     },
   });
 
+  revalidatePath("/settings/team");
   redirectWith("/settings/team", "message", "Team member removed.");
 }
 

@@ -24,6 +24,32 @@ function tokenHash(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
+async function getExistingMemberByEmail(
+  admin: ReturnType<typeof createAdminClient>,
+  tenantId: string,
+  email: string,
+) {
+  const { data: profiles, error: profileError } = await admin
+    .from("user_profiles")
+    .select("user_id")
+    .eq("email", email)
+    .limit(10);
+
+  if (profileError) throw new Error(profileError.message);
+  const userIds = profiles?.map((profile) => profile.user_id).filter(Boolean) ?? [];
+  if (!userIds.length) return null;
+
+  const { data: memberships, error: membershipError } = await admin
+    .from("tenant_memberships")
+    .select("tenant_id, user_id, role")
+    .eq("tenant_id", tenantId)
+    .in("user_id", userIds)
+    .limit(1);
+
+  if (membershipError) throw new Error(membershipError.message);
+  return memberships?.[0] ?? null;
+}
+
 async function getOrigin() {
   return (
     (await headers()).get("origin") ??
@@ -61,9 +87,34 @@ export async function POST(request: Request) {
     return Response.json({ error: "A valid email is required." }, { status: 400 });
   }
 
+  const admin = createAdminClient();
+  if (email === normalizeEmail(context.user.email)) {
+    return Response.json(
+      { error: "You are already a member of this workspace." },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const existingMember = await getExistingMemberByEmail(admin, context.tenant.id, email);
+    if (existingMember) {
+      return Response.json(
+        { error: "That email is already a team member." },
+        { status: 409 },
+      );
+    }
+  } catch (error) {
+    return Response.json(
+      {
+        error:
+          error instanceof Error ? error.message : "Unable to check team membership.",
+      },
+      { status: 400 },
+    );
+  }
+
   const rawToken = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-  const admin = createAdminClient();
   const { data: invitation, error } = await admin
     .from("tenant_invitations")
     .insert({
@@ -155,7 +206,7 @@ export async function DELETE(request: Request) {
   if (!invitationId) return Response.json({ error: "Invitation id is required." }, { status: 400 });
 
   const admin = createAdminClient();
-  const { error } = await admin
+  const { data: revoked, error } = await admin
     .from("tenant_invitations")
     .update({
       status: "revoked",
@@ -165,9 +216,17 @@ export async function DELETE(request: Request) {
     })
     .eq("id", invitationId)
     .eq("tenant_id", context.tenant.id)
-    .eq("status", "pending");
+    .eq("status", "pending")
+    .select("id")
+    .maybeSingle();
 
   if (error) return Response.json({ error: error.message }, { status: 400 });
+  if (!revoked) {
+    return Response.json(
+      { error: "Invitation is no longer pending." },
+      { status: 409 },
+    );
+  }
 
   await logAuditEvent({
     tenantId: context.tenant.id,
