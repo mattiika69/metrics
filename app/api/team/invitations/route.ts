@@ -1,8 +1,12 @@
 import { createHash, randomBytes } from "node:crypto";
 import { headers } from "next/headers";
 import { requireAdminContext, routeIdFromUrl } from "@/lib/api/context";
-import { createResendClient, getDefaultFromEmail } from "@/lib/email/resend";
-import { productEmailSubject, productEmailText } from "@/lib/email/templates";
+import { sendTenantEmail } from "@/lib/email/send";
+import {
+  escapeEmailHtml,
+  productEmailSubject,
+  productEmailText,
+} from "@/lib/email/templates";
 import { logAuditEvent } from "@/lib/security/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -87,43 +91,32 @@ export async function POST(request: Request) {
   const inviteUrl = `${await getOrigin()}/invite/accept?token=${encodeURIComponent(rawToken)}`;
 
   try {
-    const resend = createResendClient();
-    const from = getDefaultFromEmail();
     const subject = productEmailSubject("team_invited");
     const text = productEmailText(
       "team_invited",
       `Accept the invitation here: ${inviteUrl}`,
     );
-    const result = await resend.emails.send({
-      from,
+    const result = await sendTenantEmail({
+      tenantId: context.tenant.id,
+      actorUserId: context.user.id,
       to: [email],
       subject,
       text,
-      html: `<p>You were invited to join <strong>${context.tenant.name}</strong> in HyperOptimal Metrics.</p><p><a href="${inviteUrl}">Accept invitation</a></p>`,
+      html: `<p>You were invited to join <strong>${escapeEmailHtml(context.tenant.name)}</strong> in HyperOptimal Metrics.</p><p><a href="${escapeEmailHtml(inviteUrl)}">Accept invitation</a></p>`,
+      template: "team_invited",
+      metadata: { role },
     });
 
     await admin
       .from("tenant_invitations")
       .update({
-        email_delivery_status: result.error ? "failed" : "sent",
-        email_delivery_error: result.error?.message ?? null,
+        email_delivery_status: result.ok ? "sent" : "failed",
+        email_delivery_error: result.error,
         updated_at: new Date().toISOString(),
       })
       .eq("id", invitation.id);
 
-    await admin.from("email_messages").insert({
-      tenant_id: context.tenant.id,
-      created_by: context.user.id,
-      provider: "resend",
-      provider_message_id: result.data?.id ?? null,
-      from_email: from,
-      to_emails: [email],
-      subject,
-      status: result.error ? "error" : "sent",
-      payload: { template: "team_invited", error: result.error },
-    });
-
-    if (result.error) throw new Error(result.error.message);
+    if (!result.ok) throw new Error(result.error ?? "Unable to send invitation.");
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to send invitation.";
     await admin

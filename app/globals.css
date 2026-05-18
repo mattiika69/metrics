@@ -9171,6 +9171,74 @@ body:has(.app-shell) .metric-edit-panel summary {
   cursor: pointer !important;
 }
 
+body:has(.app-shell) .settings-page-title,
+body:has(.app-shell) .settings-notices,
+body:has(.app-shell) .app-content > .settings-tabs,
+body:has(.app-shell) .app-content > .settings-layout {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+body:has(.app-shell) .app-content > .settings-layout {
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px) !important;
+}
+
+body:has(.app-shell) .app-content > .settings-layout.single-column {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+body:has(.app-shell) .team-row-actions {
+  flex-wrap: wrap !important;
+  justify-content: flex-end !important;
+}
+
+body:has(.app-shell) .team-row-actions .inline-form {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+body:has(.app-shell) .team-row-actions select {
+  min-width: 112px !important;
+  height: 32px !important;
+}
+
+.invite-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.invite-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--app-line, #d4dce8);
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 12px;
+}
+
+.invite-card div {
+  display: grid;
+  gap: 3px;
+}
+
+.invite-card strong {
+  color: #101827;
+  font-size: 13px;
+}
+
+.invite-card span {
+  color: #667085;
+  font-size: 12px;
+}
+
+.invite-card button {
+  flex: 0 0 auto;
+}
+
 .app-status-page {
   display: grid;
   min-height: 100dvh;
@@ -9316,5 +9384,14 @@ body:has(.app-shell) .metric-edit-panel summary {
     overflow-x: auto !important;
     flex-wrap: nowrap !important;
     padding-bottom: 4px !important;
+  }
+
+  .invite-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .invite-card button {
+    width: 100%;
   }
 }

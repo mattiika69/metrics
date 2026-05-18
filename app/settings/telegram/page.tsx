@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/app-shell";
 import { SettingsHeader, SettingsTabs } from "@/components/settings/settings-tabs";
 import { createTelegramLinkCodeAction } from "@/app/metrics/actions";
+import { saveTelegramUsernameAction } from "@/app/settings/telegram/actions";
 import { requireTenant } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +15,17 @@ function param(params: Record<string, string | string[] | undefined>, key: strin
   return Array.isArray(value) ? value[0] : value;
 }
 
+function objectSettings(value: unknown) {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function settingText(settings: Record<string, unknown>, key: string) {
+  const value = settings[key];
+  return typeof value === "string" ? value : "";
+}
+
 export default async function TelegramSettingsPage({ searchParams }: PageProps) {
   const { supabase, tenant } = await requireTenant();
   const params = await searchParams;
@@ -21,13 +33,19 @@ export default async function TelegramSettingsPage({ searchParams }: PageProps) 
   const error = param(params, "error");
   const code = param(params, "code");
   const expires = param(params, "expires");
-  const { data: connection } = await supabase
+  const { data: connections } = await supabase
     .from("tenant_integrations")
     .select("id, status, display_name, external_channel_id, external_user_id, settings, updated_at")
     .eq("tenant_id", tenant.id)
     .eq("provider", "telegram")
-    .neq("status", "disabled")
-    .maybeSingle();
+    .order("updated_at", { ascending: false });
+  const connection =
+    connections?.find((row) => row.status !== "disabled" && row.external_channel_id) ??
+    connections?.find((row) => row.status !== "disabled") ??
+    connections?.[0] ??
+    null;
+  const settings = objectSettings(connection?.settings);
+  const telegramUsername = settingText(settings, "telegramUsername");
 
   return (
     <AppShell active="settings-telegram" tenantName={tenant.name}>
@@ -39,6 +57,29 @@ export default async function TelegramSettingsPage({ searchParams }: PageProps) 
       <SettingsTabs active="telegram" />
 
       <section className="settings-layout">
+        <article className="settings-panel full-span">
+          <div className="panel-heading">
+            <div>
+              <p className="step-label">Username</p>
+              <h2>Telegram recipient</h2>
+            </div>
+          </div>
+          <form action={saveTelegramUsernameAction} className="form-stack compact">
+            <label>
+              Telegram username
+              <input
+                name="telegramUsername"
+                placeholder="username"
+                defaultValue={telegramUsername}
+                autoComplete="off"
+              />
+            </label>
+            <p className="muted">
+              Save the username that should receive workspace messages.
+            </p>
+            <button type="submit">Save username</button>
+          </form>
+        </article>
         <article className="settings-panel">
           <div className="panel-heading">
             <div>

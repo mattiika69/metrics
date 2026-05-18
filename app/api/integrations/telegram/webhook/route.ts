@@ -52,6 +52,12 @@ function codeFromText(text: string) {
   return null;
 }
 
+function objectSettings(value: unknown) {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
 async function consumeLinkCode({
   code,
   chatId,
@@ -76,11 +82,22 @@ async function consumeLinkCode({
 
   const { data: existing } = await admin
     .from("tenant_integrations")
-    .select("id")
+    .select("id, settings")
     .eq("tenant_id", link.tenant_id)
     .eq("provider", "telegram")
     .eq("external_channel_id", chatId)
     .maybeSingle();
+  const { data: fallbackRows } = existing
+    ? { data: [] }
+    : await admin
+        .from("tenant_integrations")
+        .select("id, settings")
+        .eq("tenant_id", link.tenant_id)
+        .eq("provider", "telegram")
+        .order("updated_at", { ascending: false })
+        .limit(1);
+  const fallback = fallbackRows?.[0] ?? null;
+  const baseSettings = objectSettings(existing?.settings ?? fallback?.settings);
 
   const row = {
     tenant_id: link.tenant_id,
@@ -89,12 +106,13 @@ async function consumeLinkCode({
     external_channel_id: chatId,
     external_user_id: fromUserId,
     display_name: chatTitle ?? "Telegram",
-    settings: { linkedBy: "code" },
+    settings: { ...baseSettings, linkedBy: "code" },
     updated_at: new Date().toISOString(),
   };
 
-  const result = existing
-    ? await admin.from("tenant_integrations").update(row).eq("id", existing.id).select("id").single()
+  const targetRow = existing ?? fallback;
+  const result = targetRow
+    ? await admin.from("tenant_integrations").update(row).eq("id", targetRow.id).select("id").single()
     : await admin.from("tenant_integrations").insert(row).select("id").single();
 
   if (result.error) return { ok: false as const, message: result.error.message };

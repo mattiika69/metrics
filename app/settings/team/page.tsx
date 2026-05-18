@@ -3,7 +3,9 @@ import { SettingsHeader, SettingsTabs } from "@/components/settings/settings-tab
 import { requireTenant } from "@/lib/auth/session";
 import {
   inviteTeamMemberAction,
+  removeTeamMemberAction,
   revokeTeamInvitationAction,
+  updateTeamMemberRoleAction,
 } from "@/lib/settings/team-actions";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +30,16 @@ function getParam(
 
 function canManageTeam(role: string) {
   return role === "owner" || role === "admin";
+}
+
+function canChangeMember(input: {
+  actorRole: string;
+  targetRole: string;
+  isSelf: boolean;
+}) {
+  if (input.isSelf) return false;
+  if (input.targetRole === "owner" && input.actorRole !== "owner") return false;
+  return input.actorRole === "owner" || input.actorRole === "admin";
 }
 
 function invitationStatus(status: string, emailStatus: string | null) {
@@ -87,18 +99,54 @@ export default async function TeamSettingsPage({ searchParams }: PageProps) {
           <div className="table-list">
             {members?.map((member) => {
               const profile = profileByUserId.get(member.user_id);
+              const isSelf = member.user_id === user.id;
+              const canEdit = canChangeMember({
+                actorRole: membership.role,
+                targetRole: member.role,
+                isSelf,
+              });
 
               return (
                 <div className="table-row" key={member.user_id}>
                   <div>
                     <strong>
-                      {profile?.full_name || profile?.email || (member.user_id === user.id ? user.email : "Team member")}
+                      {profile?.full_name || profile?.email || (isSelf ? user.email : "Team member")}
                     </strong>
                     <span className="muted">
-                      {member.user_id === user.id ? "You" : profile?.email}
+                      {isSelf ? "You" : profile?.email}
                     </span>
                   </div>
-                  <span className="pill">{member.role}</span>
+                  <div className="row-actions team-row-actions">
+                    {canEdit ? (
+                      <form action={updateTeamMemberRoleAction} className="inline-form">
+                        <input type="hidden" name="userId" value={member.user_id} />
+                        <select
+                          name="role"
+                          defaultValue={member.role}
+                          aria-label={`Role for ${profile?.email ?? "team member"}`}
+                        >
+                          {membership.role === "owner" ? (
+                            <option value="owner">Owner</option>
+                          ) : null}
+                          <option value="admin">Admin</option>
+                          <option value="member">Member</option>
+                        </select>
+                        <button type="submit" className="button-secondary">
+                          Save
+                        </button>
+                      </form>
+                    ) : (
+                      <span className="pill">{member.role}</span>
+                    )}
+                    {canEdit ? (
+                      <form action={removeTeamMemberAction}>
+                        <input type="hidden" name="userId" value={member.user_id} />
+                        <button type="submit" className="button-danger">
+                          Remove
+                        </button>
+                      </form>
+                    ) : null}
+                  </div>
                 </div>
               );
             })}

@@ -5,6 +5,15 @@ export type ProductEmailTemplate =
   | "billing_attention"
   | "integration_connected";
 
+export function escapeEmailHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 export function productEmailSubject(template: ProductEmailTemplate) {
   switch (template) {
     case "workspace_created":

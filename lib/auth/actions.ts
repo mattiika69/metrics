@@ -214,7 +214,11 @@ export async function signInAction(formData: FormData) {
         error: error.message,
       },
     });
-    redirectWith(withNext("/login", next, "/dashboard"), "error", error.message);
+    redirectWith(
+      withNext("/login", next, "/dashboard"),
+      "error",
+      "Email or password was not accepted. Try again or reset your password.",
+    );
   }
 
   await logAuditEvent({

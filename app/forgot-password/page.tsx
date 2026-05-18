@@ -1,7 +1,23 @@
 import Link from "next/link";
 import { forgotPasswordAction } from "@/lib/auth/actions";
 
-export default function ForgotPasswordPage() {
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function getParam(
+  params: Record<string, string | string[] | undefined>,
+  key: string,
+) {
+  const value = params[key];
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function ForgotPasswordPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const error = getParam(params, "error");
+  const message = getParam(params, "message");
+
   return (
     <main className="auth-shell">
       <section className="auth-panel">
@@ -12,6 +28,8 @@ export default function ForgotPasswordPage() {
         <p className="auth-copy">
           Enter your email address and we&apos;ll send you a link to reset your password.
         </p>
+        {message ? <p className="notice">{message}</p> : null}
+        {error ? <p className="notice error">{error}</p> : null}
         <form action={forgotPasswordAction} className="auth-form">
           <label className="auth-field">
             Email
