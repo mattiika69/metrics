@@ -41,8 +41,8 @@ host = "smtp.resend.com"
 port = 465
 user = "resend"
 pass = "env(SUPABASE_AUTH_EMAIL_SMTP_PASS)"
-admin_email = "noreply@hyperoptimal.com"
-sender_name = "HyperOptimal Metrics"
+admin_email = "team@hyperoptimal.com"
+sender_name = "HyperOptimal"
 
 [auth.email.template.invite]
 subject = "You have been invited to HyperOptimal Metrics"
