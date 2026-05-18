@@ -47,6 +47,93 @@ function parseFeedItems(text: string) {
   });
 }
 
+function firstString(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+    if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  }
+  return null;
+}
+
+function firstNumber(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string" && value.trim()) {
+      const parsed = Number(value.replace(/[$,]/g, ""));
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return null;
+}
+
+function firstNestedString(record: Record<string, unknown>, paths: string[][]) {
+  for (const path of paths) {
+    let value: unknown = record;
+    for (const key of path) {
+      value = value && typeof value === "object" ? (value as Record<string, unknown>)[key] : undefined;
+    }
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function parseDate(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const date = new Date(value > 10_000_000_000 ? value : value * 1000);
+    if (!Number.isNaN(date.getTime())) return date.toISOString();
+  }
+  if (typeof value === "string" && value.trim()) {
+    const date = new Date(value);
+    if (!Number.isNaN(date.getTime())) return date.toISOString();
+  }
+  return new Date().toISOString();
+}
+
+function extractRecords(payload: unknown, keys: string[]) {
+  if (Array.isArray(payload)) return payload.filter((item): item is Record<string, unknown> => item !== null && typeof item === "object");
+  if (!payload || typeof payload !== "object") return [];
+  const record = payload as Record<string, unknown>;
+  for (const key of keys) {
+    const value = record[key];
+    if (Array.isArray(value)) {
+      return value.filter((item): item is Record<string, unknown> => item !== null && typeof item === "object");
+    }
+  }
+  const nested = record.data;
+  if (nested && typeof nested === "object" && !Array.isArray(nested)) {
+    return extractRecords(nested, keys);
+  }
+  return [];
+}
+
+function authHeaders(secret: Record<string, unknown> | null): Record<string, string> {
+  const token = textSecret(secret, "apiKey")
+    ?? textSecret(secret, "accessToken")
+    ?? textSecret(secret, "bearerToken")
+    ?? textSecret(secret, "pageAccessToken");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+async function fetchJsonEndpoint(url: string, secret: Record<string, unknown> | null) {
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/json",
+      ...authHeaders(secret),
+    },
+    cache: "no-store",
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = payload && typeof payload === "object" && "message" in payload
+      ? String((payload as { message?: unknown }).message)
+      : `Sync failed: ${response.status}`;
+    throw new Error(message);
+  }
+  return payload;
+}
+
 async function loadSecret(tenantId: string, provider: string) {
   const admin = createAdminClient();
   const { data } = await admin
@@ -162,6 +249,71 @@ async function syncStripe(tenantId: string): Promise<SyncResult> {
   return { provider: "stripe", rowsRead: charges.length, rowsWritten: rows.length, message: "Stripe charges synced." };
 }
 
+async function syncPaymentProvider(tenantId: string, provider: "whop" | "fanbasis"): Promise<SyncResult> {
+  const secret = await loadSecret(tenantId, provider);
+  const apiUrl = textSecret(secret, "apiUrl") ?? (provider === "whop" ? "https://api.whop.com/api/v2/payments" : null);
+  if (!apiUrl) throw new Error(`${provider === "whop" ? "Whop" : "Fanbasis"} payments API URL is required.`);
+
+  const payload = await fetchJsonEndpoint(apiUrl, secret);
+  const payments = extractRecords(payload, ["data", "payments", "transactions", "orders", "items", "results"]);
+  const admin = createAdminClient();
+  const rows = payments.map((payment) => {
+    const id = firstString(payment, ["id", "payment_id", "transaction_id", "order_id", "uuid"]) ?? hashId(JSON.stringify(payment));
+    const amountCents = firstNumber(payment, ["amount_cents", "total_cents", "price_cents"])
+      ?? Math.round((firstNumber(payment, ["amount", "total", "price", "revenue"]) ?? 0) * 100);
+    const email = firstString(payment, ["customer_email", "email", "buyer_email"])
+      ?? firstNestedString(payment, [["customer", "email"], ["buyer", "email"], ["user", "email"]]);
+    const name = firstString(payment, ["customer_name", "name", "buyer_name"])
+      ?? firstNestedString(payment, [["customer", "name"], ["buyer", "name"], ["user", "name"]]);
+    const status = firstString(payment, ["status", "payment_status", "state"]) ?? "paid";
+    return {
+      id: `${provider}:${id}`,
+      tenant_id: tenantId,
+      source: provider,
+      source_id: id,
+      customer_email: email,
+      customer_name: name,
+      amount_cents: amountCents,
+      refunded_amount_cents: firstNumber(payment, ["refunded_amount_cents", "amount_refunded_cents"]) ?? 0,
+      currency: (firstString(payment, ["currency"]) ?? "usd").toLowerCase(),
+      status,
+      payment_date: parseDate(payment.created_at ?? payment.createdAt ?? payment.paid_at ?? payment.date),
+      description: firstString(payment, ["description", "product_name", "title"]),
+      is_subscription: Boolean(payment.subscription_id ?? payment.membership_id ?? payment.recurring),
+      provider_customer_id: firstString(payment, ["customer_id", "buyer_id", "user_id"]),
+      provider_subscription_id: firstString(payment, ["subscription_id", "membership_id"]),
+      raw_data: payment,
+      updated_at: new Date().toISOString(),
+    };
+  });
+
+  if (rows.length) {
+    const { error } = await admin.from("normalized_payments").upsert(rows, { onConflict: "tenant_id,source,source_id" });
+    if (error) throw new Error(error.message);
+    const clientRows = rows
+      .filter((row) => row.customer_email)
+      .map((row) => ({
+        tenant_id: tenantId,
+        email: row.customer_email,
+        name: row.customer_name,
+        first_payment_date: row.payment_date.slice(0, 10),
+        status_end: "active",
+        raw_data: { source: provider },
+        updated_at: new Date().toISOString(),
+      }));
+    if (clientRows.length) {
+      await admin.from("client_records").upsert(clientRows, { onConflict: "tenant_id,email" });
+    }
+  }
+
+  return {
+    provider,
+    rowsRead: payments.length,
+    rowsWritten: rows.length,
+    message: `${provider === "whop" ? "Whop" : "Fanbasis"} payments synced.`,
+  };
+}
+
 async function syncCalendly(tenantId: string): Promise<SyncResult> {
   const secret = await loadSecret(tenantId, "calendly");
   const accessToken = textSecret(secret, "accessToken");
@@ -202,6 +354,50 @@ async function syncCalendly(tenantId: string): Promise<SyncResult> {
     if (error) throw new Error(error.message);
   }
   return { provider: "calendly", rowsRead: events.length, rowsWritten: rows.length, message: "Calendly scheduled events synced." };
+}
+
+async function syncSalesCallProvider(tenantId: string, provider: "calcom" | "iclosed"): Promise<SyncResult> {
+  const secret = await loadSecret(tenantId, provider);
+  const apiUrl = textSecret(secret, "apiUrl") ?? (provider === "calcom" ? "https://api.cal.com/v2/bookings?limit=100" : null);
+  if (!apiUrl) throw new Error(`${provider === "calcom" ? "Cal.com" : "iClosed"} calls API URL is required.`);
+
+  const payload = await fetchJsonEndpoint(apiUrl, secret);
+  const events = extractRecords(payload, ["data", "bookings", "calls", "events", "items", "results"]);
+  const rows = events.map((event) => {
+    const id = firstString(event, ["id", "uid", "uuid", "booking_id", "event_id"]) ?? hashId(JSON.stringify(event));
+    const status = (firstString(event, ["status", "state", "call_status"]) ?? "booked").toLowerCase();
+    const email = firstString(event, ["email", "contact_email", "attendee_email"])
+      ?? firstNestedString(event, [["attendees", "0", "email"], ["customer", "email"], ["lead", "email"]]);
+    const name = firstString(event, ["name", "title", "contact_name", "attendee_name"])
+      ?? firstNestedString(event, [["customer", "name"], ["lead", "name"]]);
+    return {
+      id: `${provider}:${id}`,
+      tenant_id: tenantId,
+      source: provider,
+      source_id: id,
+      event_date: parseDate(event.start_time ?? event.startTime ?? event.scheduled_at ?? event.created_at ?? event.date),
+      contact_email: email,
+      contact_name: name,
+      status: status.includes("cancel") ? "cancelled" : status.includes("show") || status.includes("completed") ? "shown" : status,
+      is_qualified: !status.includes("unqualified"),
+      offer_sent: Boolean(event.offer_sent ?? event.offerSent),
+      closer: firstString(event, ["closer", "owner", "host"]),
+      channel: provider,
+      raw_data: event,
+      updated_at: new Date().toISOString(),
+    };
+  });
+
+  if (rows.length) {
+    const { error } = await createAdminClient().from("sales_events").upsert(rows, { onConflict: "tenant_id,source,source_id" });
+    if (error) throw new Error(error.message);
+  }
+  return {
+    provider,
+    rowsRead: events.length,
+    rowsWritten: rows.length,
+    message: `${provider === "calcom" ? "Cal.com" : "iClosed"} calls synced.`,
+  };
 }
 
 function plaidBaseUrl(environment: string | null) {
@@ -283,6 +479,59 @@ async function syncPlaid(tenantId: string): Promise<SyncResult> {
   };
 }
 
+function quickBooksBaseUrl(environment: string | null) {
+  return environment === "production"
+    ? "https://quickbooks.api.intuit.com"
+    : "https://sandbox-quickbooks.api.intuit.com";
+}
+
+async function syncQuickBooks(tenantId: string): Promise<SyncResult> {
+  const secret = await loadSecret(tenantId, "quickbooks");
+  const accessToken = textSecret(secret, "accessToken");
+  const realmId = textSecret(secret, "realmId");
+  const environment = textSecret(secret, "environment") ?? "sandbox";
+  if (!accessToken || !realmId) throw new Error("QuickBooks access token and company ID are required.");
+
+  const query = encodeURIComponent("select * from Purchase maxresults 100");
+  const response = await fetch(`${quickBooksBaseUrl(environment)}/v3/company/${realmId}/query?query=${query}`, {
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    cache: "no-store",
+  });
+  const payload = await response.json().catch(() => ({})) as {
+    QueryResponse?: { Purchase?: Array<Record<string, unknown>> };
+    Fault?: { Error?: Array<{ Message?: string }> };
+  };
+  if (!response.ok) throw new Error(payload.Fault?.Error?.[0]?.Message ?? `QuickBooks sync failed: ${response.status}`);
+
+  const purchases = payload.QueryResponse?.Purchase ?? [];
+  const rows = purchases.map((purchase) => {
+    const id = String(purchase.Id ?? hashId(JSON.stringify(purchase)));
+    const amount = Number(purchase.TotalAmt ?? purchase.Amount ?? 0);
+    return {
+      id: `quickbooks:${id}`,
+      tenant_id: tenantId,
+      source: "quickbooks",
+      transaction_id: id,
+      amount: Math.abs(amount),
+      direction: "outbound",
+      transaction_date: parseDate(purchase.TxnDate).slice(0, 10),
+      name: firstString(purchase, ["DocNumber", "PrivateNote"]) ?? firstNestedString(purchase, [["EntityRef", "name"]]),
+      category: firstNestedString(purchase, [["AccountRef", "name"]]),
+      raw_data: purchase,
+      updated_at: new Date().toISOString(),
+    };
+  });
+
+  if (rows.length) {
+    const { error } = await createAdminClient().from("bank_transactions").upsert(rows, { onConflict: "tenant_id,source,transaction_id" });
+    if (error) throw new Error(error.message);
+  }
+  return { provider: "quickbooks", rowsRead: purchases.length, rowsWritten: rows.length, message: "QuickBooks purchases synced." };
+}
+
 function answerValue(answer: Record<string, unknown>) {
   for (const key of ["email", "phone_number", "text", "number", "choice"]) {
     const value = answer[key];
@@ -338,6 +587,120 @@ async function syncTypeform(tenantId: string): Promise<SyncResult> {
     if (error) throw new Error(error.message);
   }
   return { provider: "typeform", rowsRead: rows.length, rowsWritten: rows.length, message: "Typeform responses synced." };
+}
+
+async function syncLeadProvider(tenantId: string, provider: "heyflow"): Promise<SyncResult> {
+  const secret = await loadSecret(tenantId, provider);
+  const apiUrl = textSecret(secret, "apiUrl");
+  if (!apiUrl) throw new Error("Heyflow submissions API URL is required.");
+
+  const payload = await fetchJsonEndpoint(apiUrl, secret);
+  const leads = extractRecords(payload, ["data", "submissions", "responses", "leads", "items", "results"]);
+  const rows = leads.map((lead) => {
+    const id = firstString(lead, ["id", "submission_id", "response_id", "uuid"]) ?? hashId(JSON.stringify(lead));
+    return {
+      id: `${provider}:${id}`,
+      tenant_id: tenantId,
+      source: provider,
+      source_id: id,
+      submitted_at: parseDate(lead.submitted_at ?? lead.created_at ?? lead.createdAt ?? lead.date),
+      name: firstString(lead, ["name", "full_name", "first_name"]),
+      email: firstString(lead, ["email", "customer_email"]),
+      phone: firstString(lead, ["phone", "phone_number"]),
+      raw_data: lead,
+      updated_at: new Date().toISOString(),
+    };
+  });
+  if (rows.length) {
+    const { error } = await createAdminClient().from("form_leads").upsert(rows, { onConflict: "tenant_id,source,source_id" });
+    if (error) throw new Error(error.message);
+  }
+  return { provider, rowsRead: leads.length, rowsWritten: rows.length, message: "Heyflow submissions synced." };
+}
+
+async function syncCallRecordingProvider(tenantId: string, provider: "readai" | "fathom" | "fireflies"): Promise<SyncResult> {
+  const secret = await loadSecret(tenantId, provider);
+  const apiUrl = textSecret(secret, "apiUrl");
+  if (!apiUrl) throw new Error(`${provider === "readai" ? "Read.ai" : provider === "fathom" ? "Fathom" : "Fireflies"} recordings API URL is required.`);
+
+  const payload = await fetchJsonEndpoint(apiUrl, secret);
+  const recordings = extractRecords(payload, ["data", "meetings", "recordings", "calls", "transcripts", "items", "results"]);
+  const admin = createAdminClient();
+  const rows = recordings.map((recording) => {
+    const id = firstString(recording, ["id", "meeting_id", "recording_id", "uuid"]) ?? hashId(JSON.stringify(recording));
+    return {
+      id: `${provider}:${id}`,
+      tenant_id: tenantId,
+      source: provider,
+      source_id: id,
+      recorded_at: parseDate(recording.recorded_at ?? recording.started_at ?? recording.start_time ?? recording.created_at ?? recording.date),
+      title: firstString(recording, ["title", "name", "meeting_title"]),
+      summary: firstString(recording, ["summary", "notes", "transcript_summary"]),
+      recording_url: firstString(recording, ["recording_url", "video_url", "audio_url", "url"]),
+      contact_email: firstString(recording, ["contact_email", "email", "attendee_email"]),
+      raw_data: recording,
+      updated_at: new Date().toISOString(),
+    };
+  });
+  if (rows.length) {
+    const { error } = await admin.from("call_recordings").upsert(rows, { onConflict: "tenant_id,source,source_id" });
+    if (error) throw new Error(error.message);
+
+    const salesRows = rows.map((row) => ({
+      id: `${provider}:sales:${row.source_id}`,
+      tenant_id: tenantId,
+      source: provider,
+      source_id: row.source_id,
+      event_date: row.recorded_at,
+      contact_email: row.contact_email,
+      contact_name: row.title,
+      status: "shown",
+      is_qualified: true,
+      offer_sent: false,
+      channel: provider,
+      raw_data: row.raw_data,
+      updated_at: new Date().toISOString(),
+    }));
+    await admin.from("sales_events").upsert(salesRows, { onConflict: "tenant_id,source,source_id" });
+  }
+  return {
+    provider,
+    rowsRead: recordings.length,
+    rowsWritten: rows.length,
+    message: `${provider === "readai" ? "Read.ai" : provider === "fathom" ? "Fathom" : "Fireflies"} recordings synced.`,
+  };
+}
+
+async function syncSocialProvider(tenantId: string, provider: "linkedin" | "twitter" | "instagram" | "facebook"): Promise<SyncResult> {
+  const secret = await loadSecret(tenantId, provider);
+  const apiUrl = textSecret(secret, "apiUrl");
+  if (!apiUrl) throw new Error(`${provider === "twitter" ? "X / Twitter" : provider} posts API URL is required.`);
+
+  const payload = await fetchJsonEndpoint(apiUrl, secret);
+  const posts = extractRecords(payload, ["data", "posts", "tweets", "media", "items", "results"]);
+  const rows = posts.map((post) => {
+    const id = firstString(post, ["id", "post_id", "tweet_id", "media_id", "urn"]) ?? hashId(JSON.stringify(post));
+    const metrics = (post.metrics ?? post.public_metrics ?? post.insights ?? {}) as Record<string, unknown>;
+    return {
+      id: `${provider}:${id}`,
+      tenant_id: tenantId,
+      source: provider,
+      source_id: id,
+      posted_at: parseDate(post.posted_at ?? post.created_at ?? post.createdAt ?? post.timestamp),
+      content: firstString(post, ["text", "caption", "content", "message", "body"]),
+      views: firstNumber(post, ["views", "impressions"]) ?? firstNumber(metrics, ["views", "impressions"]) ?? 0,
+      likes: firstNumber(post, ["likes", "like_count"]) ?? firstNumber(metrics, ["likes", "like_count"]) ?? 0,
+      comments: firstNumber(post, ["comments", "comment_count", "replies"]) ?? firstNumber(metrics, ["comments", "comment_count", "reply_count"]) ?? 0,
+      shares: firstNumber(post, ["shares", "share_count", "retweets"]) ?? firstNumber(metrics, ["shares", "share_count", "retweet_count"]) ?? 0,
+      raw_data: post,
+      updated_at: new Date().toISOString(),
+    };
+  });
+  if (rows.length) {
+    const { error } = await createAdminClient().from("social_posts").upsert(rows, { onConflict: "tenant_id,source,source_id" });
+    if (error) throw new Error(error.message);
+  }
+  return { provider, rowsRead: posts.length, rowsWritten: rows.length, message: `${provider} posts synced.` };
 }
 
 async function syncFeedInput(tenantId: string, provider: "cold-email" | "newsletter" | "paid-ads"): Promise<SyncResult> {
@@ -478,9 +841,19 @@ export async function syncCoreIntegration({
   try {
     let result: SyncResult;
     if (provider === "stripe") result = await syncStripe(tenantId);
+    else if (provider === "whop" || provider === "fanbasis") result = await syncPaymentProvider(tenantId, provider);
     else if (provider === "plaid") result = await syncPlaid(tenantId);
+    else if (provider === "quickbooks") result = await syncQuickBooks(tenantId);
     else if (provider === "calendly") result = await syncCalendly(tenantId);
+    else if (provider === "calcom" || provider === "iclosed") result = await syncSalesCallProvider(tenantId, provider);
     else if (provider === "typeform") result = await syncTypeform(tenantId);
+    else if (provider === "heyflow") result = await syncLeadProvider(tenantId, provider);
+    else if (provider === "readai" || provider === "fathom" || provider === "fireflies") {
+      result = await syncCallRecordingProvider(tenantId, provider);
+    }
+    else if (provider === "linkedin" || provider === "twitter" || provider === "instagram" || provider === "facebook") {
+      result = await syncSocialProvider(tenantId, provider);
+    }
     else if (provider === "cold-email" || provider === "newsletter" || provider === "paid-ads") {
       result = await syncFeedInput(tenantId, provider);
     }
