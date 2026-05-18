@@ -355,13 +355,36 @@ export async function connectIntegrationAction(formData: FormData) {
     redirect(`/settings/integrations?message=Use the dedicated connection flow`);
   }
 
-  const values: Record<string, string> = {};
-  for (const field of definition.fields) {
-    values[field.name] = String(formData.get(field.name) ?? "").trim();
-    if (field.required !== false && !values[field.name]) redirect(`/integrations/${provider}?message=Missing ${field.label}`);
-  }
-
   const admin = createAdminClient();
+  const { data: existingConnection } = await admin
+    .from("metric_integrations")
+    .select("id, external_account_id")
+    .eq("tenant_id", tenant.id)
+    .eq("provider", provider)
+    .maybeSingle();
+  const { data: existingSecretRow } = await admin
+    .from("metric_integration_secrets")
+    .select("secret_values")
+    .eq("tenant_id", tenant.id)
+    .eq("provider", provider)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const existingSecrets = existingSecretRow?.secret_values &&
+    typeof existingSecretRow.secret_values === "object" &&
+    !Array.isArray(existingSecretRow.secret_values)
+    ? existingSecretRow.secret_values as Record<string, string>
+    : {};
+  const submittedValues: Record<string, string> = {};
+  for (const field of definition.fields) {
+    const value = String(formData.get(field.name) ?? "").trim();
+    if (value) submittedValues[field.name] = value;
+    if (field.required !== false && !value && !existingSecrets[field.name]) {
+      redirect(`/integrations/${provider}?message=Missing ${field.label}`);
+    }
+  }
+  const values = { ...existingSecrets, ...submittedValues };
+
   const { data } = await admin
     .from("metric_integrations")
     .upsert({
@@ -369,7 +392,7 @@ export async function connectIntegrationAction(formData: FormData) {
       provider,
       status: "active",
       display_name: definition.name,
-      external_account_id: values.accountUrl || values.formId || null,
+      external_account_id: values.accountUrl || values.formId || existingConnection?.external_account_id || null,
       settings: { connectedFrom: "web" },
       updated_at: new Date().toISOString(),
     }, {
@@ -378,7 +401,7 @@ export async function connectIntegrationAction(formData: FormData) {
     .select("id")
     .single();
 
-  if (data) {
+  if (data && (Object.keys(submittedValues).length > 0 || !existingConnection)) {
     await admin.from("metric_integration_secrets").insert({
       tenant_id: tenant.id,
       metric_integration_id: data.id,
@@ -458,6 +481,42 @@ export async function syncIntegrationAction(formData: FormData) {
     redirectWith(`/integrations/${provider}`, "error", message);
   }
   redirectWith(`/integrations/${provider}`, "message", resultMessage);
+}
+
+export async function disconnectIntegrationAction(formData: FormData) {
+  const { tenant, user, membership } = await requireTenant();
+  if (membership.role !== "owner" && membership.role !== "admin") {
+    redirect("/settings/integrations?message=Only admins can manage integrations");
+  }
+
+  const provider = String(formData.get("provider") ?? "");
+  const definition = getIntegrationDefinition(provider);
+  if (!definition) redirect("/settings/integrations?message=Integration not found");
+
+  const admin = createAdminClient();
+  if (definition.group === "Messaging") {
+    await admin
+      .from("tenant_integrations")
+      .update({ status: "disabled", updated_at: new Date().toISOString() })
+      .eq("tenant_id", tenant.id)
+      .eq("provider", provider);
+  } else {
+    await admin
+      .from("metric_integrations")
+      .update({ status: "disabled", updated_at: new Date().toISOString() })
+      .eq("tenant_id", tenant.id)
+      .eq("provider", provider);
+  }
+
+  await logAuditEvent({
+    tenantId: tenant.id,
+    actorUserId: user.id,
+    eventType: "integration_disconnected",
+    targetType: "integration",
+    targetId: provider,
+    metadata: { provider },
+  });
+  redirectWith(`/integrations/${provider}`, "message", "Integration disconnected");
 }
 
 export async function importCsvBankingAction(formData: FormData) {
