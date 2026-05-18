@@ -45,7 +45,7 @@ admin_email = "team@hyperoptimal.com"
 sender_name = "HyperOptimal"
 
 [auth.email.template.invite]
-subject = "You have been invited to HyperOptimal Metrics"
+subject = "You're invited to a new workspace"
 content_path = "templates/invite.html"
 
 [auth.email.template.confirmation]

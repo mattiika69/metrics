@@ -16,11 +16,14 @@ function getParam(
 export default async function LoginPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const next = getParam(params, "next");
+  const email = getParam(params, "email") ?? "";
   const error = getParam(params, "error");
   const message = getParam(params, "message");
-  const signupHref = next
-    ? `/signup?next=${encodeURIComponent(next)}`
-    : "/signup";
+  const signupParams = new URLSearchParams();
+  if (next) signupParams.set("next", next);
+  if (email) signupParams.set("email", email);
+  const signupQuery = signupParams.toString();
+  const signupHref = signupQuery ? `/signup?${signupQuery}` : "/signup";
 
   return (
     <main className="auth-shell">
@@ -35,7 +38,13 @@ export default async function LoginPage({ searchParams }: PageProps) {
           {next ? <input type="hidden" name="next" value={next} /> : null}
           <label className="auth-field">
             Email
-            <input name="email" type="email" autoComplete="email" required />
+            <input
+              name="email"
+              type="email"
+              autoComplete="email"
+              defaultValue={email}
+              required
+            />
           </label>
           <label className="auth-field">
             <span className="auth-label-row">

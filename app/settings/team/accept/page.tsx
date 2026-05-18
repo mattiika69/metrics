@@ -1,4 +1,6 @@
+import { createHash } from "node:crypto";
 import Link from "next/link";
+import { signOutAction } from "@/lib/auth/actions";
 import {
   acceptTeamInvitationAction,
   acceptTeamInvitationByEmailAction,
@@ -24,6 +26,7 @@ type PendingInvitation = {
   id: string;
   email: string;
   role: "admin" | "member";
+  status: "pending" | "accepted" | "revoked" | "expired";
   expires_at: string;
   tenants:
     | {
@@ -35,11 +38,26 @@ type PendingInvitation = {
     | null;
 };
 
+function hashInvitationToken(token: string) {
+  return createHash("sha256").update(token).digest("hex");
+}
+
 function tenantName(invitation: PendingInvitation) {
   const tenant = Array.isArray(invitation.tenants)
     ? invitation.tenants[0]
     : invitation.tenants;
   return tenant?.name ?? "this workspace";
+}
+
+function isExpired(invitation: Pick<PendingInvitation, "expires_at">) {
+  return new Date(invitation.expires_at).getTime() < Date.now();
+}
+
+function authHref(path: "/login" | "/signup", next: string, email: string) {
+  const params = new URLSearchParams();
+  params.set("next", next);
+  if (email) params.set("email", email);
+  return `${path}?${params.toString()}`;
 }
 
 export default async function AcceptTeamInvitationPage({
@@ -54,13 +72,25 @@ export default async function AcceptTeamInvitationPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const signedInEmail = user?.email?.toLowerCase() ?? "";
+  let tokenInvitation: PendingInvitation | null = null;
   let pendingInvitations: PendingInvitation[] = [];
+
+  if (token) {
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from("tenant_invitations")
+      .select("id, email, role, status, expires_at, tenants(name)")
+      .eq("token_hash", hashInvitationToken(token))
+      .maybeSingle();
+    tokenInvitation = (data ?? null) as PendingInvitation | null;
+  }
 
   if (!token && user?.email) {
     const admin = createAdminClient();
     const { data } = await admin
       .from("tenant_invitations")
-      .select("id, email, role, expires_at, tenants(name)")
+      .select("id, email, role, status, expires_at, tenants(name)")
       .eq("email", user.email.toLowerCase())
       .eq("status", "pending")
       .order("created_at", { ascending: false })
@@ -68,22 +98,68 @@ export default async function AcceptTeamInvitationPage({
     pendingInvitations = (data ?? []) as PendingInvitation[];
   }
 
+  const tokenEmail = tokenInvitation?.email ?? "";
+  const tokenWorkspace = tokenInvitation ? tenantName(tokenInvitation) : "";
+  const tokenExpired = tokenInvitation ? isExpired(tokenInvitation) : false;
+  const tokenPending = tokenInvitation?.status === "pending" && !tokenExpired;
+  const wrongAccount = Boolean(
+    tokenInvitation &&
+      user &&
+      signedInEmail &&
+      signedInEmail !== tokenInvitation.email,
+  );
+
   return (
     <main className="auth-shell">
       <section className="auth-panel">
         <p className="eyebrow">Team invitation</p>
-        <h1>Join team</h1>
+        <h1>
+          {tokenInvitation ? `Join ${tokenWorkspace}` : "Join team"}
+        </h1>
         <p className="lede">
-          Accept the invitation with the same email address that received it.
+          {tokenInvitation
+            ? `This invitation was sent to ${tokenEmail}.`
+            : "Accept the invitation with the same email address that received it."}
         </p>
         {message ? <p className="notice">{message}</p> : null}
         {error ? <p className="notice error">{error}</p> : null}
+        {token && !tokenInvitation ? (
+          <p className="notice error">
+            This invitation link is not valid. Ask the workspace owner to send a new invitation.
+          </p>
+        ) : null}
+        {tokenInvitation && tokenExpired ? (
+          <p className="notice error">
+            This invitation has expired. Ask the workspace owner to send a new invitation.
+          </p>
+        ) : null}
+        {tokenInvitation && tokenInvitation.status === "accepted" ? (
+          <p className="notice">
+            This invitation has already been accepted. Sign in with {tokenEmail} to open
+            the workspace.
+          </p>
+        ) : null}
+        {tokenInvitation && tokenInvitation.status === "revoked" ? (
+          <p className="notice error">
+            This invitation was revoked. Ask the workspace owner to send a new invitation.
+          </p>
+        ) : null}
+        {wrongAccount ? (
+          <div className="notice error">
+            <p>
+              You are signed in as {signedInEmail}. This invitation belongs to {tokenEmail}.
+            </p>
+            <form action={signOutAction} className="form-stack">
+              <button type="submit">Sign out</button>
+            </form>
+          </div>
+        ) : null}
         {!token && !user ? (
           <p className="notice">
             Sign in with the invited email address and we&apos;ll check for pending invitations.
           </p>
         ) : null}
-        {token && user ? (
+        {token && user && tokenPending && !wrongAccount ? (
           <form action={acceptTeamInvitationAction} className="form-stack">
             <input type="hidden" name="token" value={token} />
             <button type="submit">Accept invitation</button>
@@ -116,16 +192,16 @@ export default async function AcceptTeamInvitationPage({
             </p>
           )
         ) : null}
-        {token && !user ? (
+        {tokenInvitation && tokenPending && !user ? (
           <div className="button-row">
             <Link
-              href={`/login?next=${encodeURIComponent(next)}`}
+              href={authHref("/login", next, tokenEmail)}
               className="button-primary"
             >
               Log in
             </Link>
             <Link
-              href={`/signup?next=${encodeURIComponent(next)}`}
+              href={authHref("/signup", next, tokenEmail)}
               className="button-secondary"
             >
               Create account

@@ -77,6 +77,7 @@ export default async function TeamSettingsPage({ searchParams }: PageProps) {
         .from("tenant_invitations")
         .select("id, email, role, status, email_delivery_status, email_delivery_error, expires_at, created_at")
         .eq("tenant_id", tenant.id)
+        .eq("status", "pending")
         .order("created_at", { ascending: false })
     : { data: [] };
 

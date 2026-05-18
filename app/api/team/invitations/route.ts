@@ -68,6 +68,7 @@ export async function GET() {
     .from("tenant_invitations")
     .select("id, email, role, status, email_delivery_status, email_delivery_error, expires_at, created_at")
     .eq("tenant_id", context.tenant.id)
+    .eq("status", "pending")
     .order("created_at", { ascending: false });
 
   if (error) return Response.json({ error: error.message }, { status: 400 });

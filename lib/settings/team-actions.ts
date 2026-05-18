@@ -257,6 +257,7 @@ async function acceptInvitationRecord(input: {
     metadata: { role },
   });
 
+  revalidatePath("/settings/team");
   redirectWith("/settings/team", "message", "Invitation accepted.");
 }
 
@@ -632,6 +633,7 @@ export async function acceptTeamInvitationAction(formData: FormData) {
     },
   });
 
+  revalidatePath("/settings/team");
   redirectWith("/settings/team", "message", "Invitation accepted.");
 }
 

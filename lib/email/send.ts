@@ -8,7 +8,7 @@ const FALLBACK_FROM_EMAIL = "not-configured@hyperoptimal.invalid";
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type SendTenantEmailInput = {
-  tenantId: string;
+  tenantId: string | null;
   actorUserId: string | null;
   to: string[];
   subject: string;
@@ -133,8 +133,7 @@ export async function sendTenantEmail(input: SendTenantEmailInput): Promise<Send
         status: "error",
         payload: emailPayload(input, { error: message, failureStage: "configuration" }),
       })
-      .eq("id", emailMessage.id)
-      .eq("tenant_id", input.tenantId);
+      .eq("id", emailMessage.id);
     await logAuditEvent({
       tenantId: input.tenantId,
       actorUserId: input.actorUserId,
@@ -184,8 +183,7 @@ export async function sendTenantEmail(input: SendTenantEmailInput): Promise<Send
           provider_message_id: providerMessageId,
           payload: emailPayload(input, { error: message, failureStage: "provider" }),
         })
-        .eq("id", emailMessage.id)
-        .eq("tenant_id", input.tenantId);
+        .eq("id", emailMessage.id);
       await logAuditEvent({
         tenantId: input.tenantId,
         actorUserId: input.actorUserId,
@@ -213,8 +211,7 @@ export async function sendTenantEmail(input: SendTenantEmailInput): Promise<Send
         provider_message_id: providerMessageId,
         payload: emailPayload(input),
       })
-      .eq("id", emailMessage.id)
-      .eq("tenant_id", input.tenantId);
+      .eq("id", emailMessage.id);
     await logAuditEvent({
       tenantId: input.tenantId,
       actorUserId: input.actorUserId,
@@ -240,8 +237,7 @@ export async function sendTenantEmail(input: SendTenantEmailInput): Promise<Send
         status: "error",
         payload: emailPayload(input, { error: message, failureStage: "send" }),
       })
-      .eq("id", emailMessage.id)
-      .eq("tenant_id", input.tenantId);
+      .eq("id", emailMessage.id);
     await logAuditEvent({
       tenantId: input.tenantId,
       actorUserId: input.actorUserId,

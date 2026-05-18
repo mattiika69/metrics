@@ -2,6 +2,7 @@ export type ProductEmailTemplate =
   | "workspace_created"
   | "admin_invited"
   | "team_invited"
+  | "password_reset"
   | "billing_attention"
   | "integration_connected";
 
@@ -21,7 +22,9 @@ export function productEmailSubject(template: ProductEmailTemplate) {
     case "admin_invited":
       return "You have been invited to manage HyperOptimal Metrics";
     case "team_invited":
-      return "You have been invited to HyperOptimal Metrics";
+      return "You're invited to a new workspace";
+    case "password_reset":
+      return "Reset your HyperOptimal Metrics password";
     case "billing_attention":
       return "HyperOptimal Metrics billing needs attention";
     case "integration_connected":
@@ -37,6 +40,8 @@ export function productEmailText(template: ProductEmailTemplate, detail: string)
       return `You have been invited to help administer HyperOptimal Metrics. ${detail}`;
     case "team_invited":
       return `You have been invited to join a HyperOptimal Metrics team. ${detail}`;
+    case "password_reset":
+      return `Use this secure link to reset your HyperOptimal Metrics password. ${detail}`;
     case "billing_attention":
       return `A billing action is needed for HyperOptimal Metrics. ${detail}`;
     case "integration_connected":

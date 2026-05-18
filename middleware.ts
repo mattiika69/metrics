@@ -3,8 +3,11 @@ import { type NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
   if (
-    process.env.DISABLE_LOGIN_AUTH === "true" ||
-    process.env.AUTH_BYPASS_ENABLED === "true"
+    process.env.NODE_ENV !== "production" &&
+    (
+      process.env.DISABLE_LOGIN_AUTH === "true" ||
+      process.env.AUTH_BYPASS_ENABLED === "true"
+    )
   ) {
     return NextResponse.next({ request });
   }

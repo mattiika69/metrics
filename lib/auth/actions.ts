@@ -2,6 +2,12 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { sendTenantEmail } from "@/lib/email/send";
+import {
+  escapeEmailHtml,
+  productEmailSubject,
+  productEmailText,
+} from "@/lib/email/templates";
 import { getRequestIp } from "@/lib/request/ip";
 import { logAuditEvent } from "@/lib/security/audit";
 import { checkRateLimit } from "@/lib/security/rate-limit";
@@ -80,6 +86,104 @@ async function getOrigin() {
   );
 }
 
+async function resolveEmailTenant(email: string) {
+  const admin = createAdminClient();
+  const { data: profiles } = await admin
+    .from("user_profiles")
+    .select("user_id")
+    .eq("email", email)
+    .limit(1);
+  const userId = profiles?.[0]?.user_id ?? null;
+
+  if (!userId) {
+    return {
+      userId: null,
+      tenantId: null,
+    };
+  }
+
+  const { data: memberships } = await admin
+    .from("tenant_memberships")
+    .select("tenant_id")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true })
+    .limit(1);
+
+  return {
+    userId,
+    tenantId: memberships?.[0]?.tenant_id ?? null,
+  };
+}
+
+async function sendPasswordResetEmail(email: string) {
+  const admin = createAdminClient();
+  const origin = await getOrigin();
+  const redirectTo = `${origin}/auth/callback?next=/reset-password`;
+  const { data, error } = await admin.auth.admin.generateLink({
+    type: "recovery",
+    email,
+    options: {
+      redirectTo,
+    },
+  });
+
+  if (error) {
+    await logAuditEvent({
+      eventType: "password_reset_requested_failed",
+      targetType: "auth_user",
+      metadata: {
+        email,
+        error: error.message,
+      },
+    });
+    return {
+      ok: true,
+      skipped: true,
+      error: null,
+    };
+  }
+
+  const resetUrl = data.properties?.action_link;
+  if (!resetUrl) {
+    return {
+      ok: false,
+      skipped: false,
+      error: "Password reset link could not be created.",
+    };
+  }
+
+  const recipient = await resolveEmailTenant(email);
+  const safeResetUrl = escapeEmailHtml(resetUrl);
+  const subject = productEmailSubject("password_reset");
+  const text = productEmailText(
+    "password_reset",
+    `Reset your password here: ${resetUrl}`,
+  );
+  const html = `
+    <p>Use this secure link to reset your HyperOptimal Metrics password.</p>
+    <p><a href="${safeResetUrl}">Reset password</a></p>
+    <p>If you did not request this, you can ignore this email.</p>
+  `;
+  const result = await sendTenantEmail({
+    tenantId: recipient.tenantId,
+    actorUserId: recipient.userId,
+    to: [email],
+    subject,
+    text,
+    html,
+    template: "password_reset",
+    metadata: {
+      authEmail: true,
+    },
+  });
+
+  return {
+    ok: result.ok,
+    skipped: false,
+    error: result.error,
+  };
+}
+
 async function checkAuthRateLimit(
   action: string,
   email: string | null,
@@ -114,12 +218,15 @@ export async function signUpAction(formData: FormData) {
   const lastName = formValue(formData, "lastName");
   const organizationName = formValue(formData, "organizationName");
   const next = safeNextPath(formValue(formData, "next"), "/get-started");
+  const isInviteFlow = next.startsWith("/settings/team/accept");
 
-  if (!email || !password || !organizationName) {
+  if (!email || !password || (!organizationName && !isInviteFlow)) {
     redirectWith(
       withNext("/signup", next, "/get-started"),
       "error",
-      "Organization, email, and password are required.",
+      isInviteFlow
+        ? "Email and password are required."
+        : "Organization, email, and password are required.",
     );
   }
 
@@ -144,7 +251,7 @@ export async function signUpAction(formData: FormData) {
         first_name: firstName || null,
         last_name: lastName || null,
         full_name: fullName || null,
-        organization_name: organizationName,
+        organization_name: organizationName || null,
       },
     },
   });
@@ -168,7 +275,7 @@ export async function signUpAction(formData: FormData) {
     targetId: data.user?.id ?? null,
     metadata: {
       email,
-      organizationName,
+      organizationName: organizationName || null,
       requiresConfirmation: !data.session,
     },
   });
@@ -258,21 +365,22 @@ export async function forgotPasswordAction(formData: FormData) {
 
   await checkAuthRateLimit("forgot_password", email, "/forgot-password");
 
-  const supabase = await createClient();
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${await getOrigin()}/auth/callback?next=/reset-password`,
-  });
+  const result = await sendPasswordResetEmail(email);
 
-  if (error) {
+  if (!result.ok) {
     await logAuditEvent({
       eventType: "password_reset_requested_failed",
       targetType: "auth_user",
       metadata: {
         email,
-        error: error.message,
+        error: result.error,
       },
     });
-    redirectWith("/forgot-password", "error", error.message);
+    redirectWith(
+      "/forgot-password",
+      "error",
+      "Password reset email could not be sent. Try again in a few minutes.",
+    );
   }
 
   await logAuditEvent({

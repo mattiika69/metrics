@@ -20,6 +20,13 @@ type BypassMembership = {
 };
 
 export function isAuthBypassEnabled() {
+  if (
+    process.env.NODE_ENV === "production" &&
+    process.env.ALLOW_PRODUCTION_AUTH_BYPASS !== "true"
+  ) {
+    return false;
+  }
+
   return (
     process.env.DISABLE_LOGIN_AUTH === "true" ||
     process.env.AUTH_BYPASS_ENABLED === "true"

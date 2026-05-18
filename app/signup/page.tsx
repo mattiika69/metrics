@@ -16,32 +16,44 @@ function getParam(
 export default async function SignupPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const next = getParam(params, "next");
+  const email = getParam(params, "email") ?? "";
   const error = getParam(params, "error");
   const message = getParam(params, "message");
-  const loginHref = next
-    ? `/login?next=${encodeURIComponent(next)}`
-    : "/login";
+  const isInviteFlow = Boolean(next?.startsWith("/settings/team/accept"));
+  const loginParams = new URLSearchParams();
+  if (next) loginParams.set("next", next);
+  if (email) loginParams.set("email", email);
+  const loginQuery = loginParams.toString();
+  const loginHref = loginQuery ? `/login?${loginQuery}` : "/login";
 
   return (
     <main className="auth-shell">
       <section className="auth-panel">
         <div className="auth-heading">
           <h1>HyperOptimal</h1>
-          <p>Create your account</p>
+          <p>
+            {isInviteFlow
+              ? "Create your account to join the workspace"
+              : "Create your account"}
+          </p>
         </div>
         {message ? <p className="notice">{message}</p> : null}
         {error ? <p className="notice error">{error}</p> : null}
         <form action={signUpAction} className="auth-form">
           {next ? <input type="hidden" name="next" value={next} /> : null}
-          <label className="auth-field">
-            Organization Name
-            <input
-              name="organizationName"
-              placeholder="Your company name"
-              autoComplete="organization"
-              required
-            />
-          </label>
+          {isInviteFlow ? (
+            <input type="hidden" name="organizationName" value="" />
+          ) : (
+            <label className="auth-field">
+              Organization Name
+              <input
+                name="organizationName"
+                placeholder="Your company name"
+                autoComplete="organization"
+                required
+              />
+            </label>
+          )}
           <div className="auth-two-col">
             <label className="auth-field">
               First Name
@@ -54,7 +66,13 @@ export default async function SignupPage({ searchParams }: PageProps) {
           </div>
           <label className="auth-field">
             Email
-            <input name="email" type="email" autoComplete="email" required />
+            <input
+              name="email"
+              type="email"
+              autoComplete="email"
+              defaultValue={email}
+              required
+            />
           </label>
           <label className="auth-field">
             Password
