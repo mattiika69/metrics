@@ -1,3 +1,5 @@
+import "server-only";
+
 import { getActiveTenantId } from "@/lib/auth/active-tenant";
 import { getAuthBypassContext, isAuthBypassEnabled } from "@/lib/auth/bypass";
 import { createClient } from "@/lib/supabase/server";

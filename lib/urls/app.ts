@@ -47,16 +47,16 @@ export async function getAppBaseUrl() {
   const requestOrigin = headerStore.get("origin") ?? headerStore.get("x-forwarded-host");
   const isProduction =
     process.env.VERCEL_ENV === "production" || process.env.NODE_ENV === "production";
+  const configuredUrls = [
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.NEXT_PUBLIC_SITE_URL,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+    process.env.VERCEL_URL,
+  ];
 
   return (
     firstUsableUrl(
-      [
-        process.env.NEXT_PUBLIC_APP_URL,
-        process.env.NEXT_PUBLIC_SITE_URL,
-        process.env.VERCEL_PROJECT_PRODUCTION_URL,
-        process.env.VERCEL_URL,
-        requestOrigin,
-      ],
+      isProduction ? configuredUrls : [...configuredUrls, requestOrigin],
       !isProduction,
     ) ?? (isProduction ? PRODUCTION_APP_URL : "http://localhost:3000")
   );

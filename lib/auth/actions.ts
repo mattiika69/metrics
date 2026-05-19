@@ -2,6 +2,7 @@
 
 import { createHash, randomBytes } from "node:crypto";
 import { redirect } from "next/navigation";
+import { clearActiveTenantId } from "@/lib/auth/active-tenant";
 import { sendTenantEmail } from "@/lib/email/send";
 import {
   escapeEmailHtml,
@@ -480,6 +481,7 @@ export async function signOutAction(formData?: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
   await supabase.auth.signOut();
+  await clearActiveTenantId();
   await logAuditEvent({
     actorUserId: user?.id ?? null,
     eventType: "logout",

@@ -1,3 +1,5 @@
+import "server-only";
+
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildConstraintsDigest, formatConstraintsForChannel } from "@/lib/metrics/constraints";
 import { metricDefinitions } from "@/lib/metrics/definitions";

@@ -1,5 +1,6 @@
 import { requireApiTenant } from "@/lib/auth/api";
 import { getIntegrationDefinition } from "@/lib/integrations/catalog";
+import { storeMetricIntegrationSecret } from "@/lib/integrations/secret-store";
 import { logAuditEvent } from "@/lib/security/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -96,11 +97,12 @@ export async function POST(request: Request, routeContext: RouteContext) {
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
 
-  await admin.from("metric_integration_secrets").insert({
-    tenant_id: context.tenant.id,
-    metric_integration_id: connection.id,
+  await storeMetricIntegrationSecret({
+    admin,
+    tenantId: context.tenant.id,
+    metricIntegrationId: connection.id,
     provider: id,
-    secret_values: values,
+    values,
   });
 
   await logAuditEvent({

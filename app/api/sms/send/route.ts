@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { sendRoezanMessage } from "@/lib/sms/roezan";
 import { logAuditEvent } from "@/lib/security/audit";
 import { checkRateLimit } from "@/lib/security/rate-limit";
@@ -13,6 +14,10 @@ type SendSmsPayload = {
   email?: string;
   media?: string[];
 };
+
+function hashRecipient(value: string) {
+  return createHash("sha256").update(value.trim()).digest("hex").slice(0, 16);
+}
 
 export async function POST(request: Request) {
   const payload = await request.json().catch(() => null) as SendSmsPayload | null;
@@ -52,7 +57,7 @@ export async function POST(request: Request) {
     tenantId: payload.tenantId,
     actorUserId: user.id,
     metadata: {
-      phone: payload.phone,
+      phoneHash: hashRecipient(payload.phone),
     },
   });
 
@@ -109,7 +114,7 @@ export async function POST(request: Request) {
       eventType: "sms_send_failed",
       targetType: "sms_message",
       metadata: {
-        phone: payload.phone,
+        phoneHash: hashRecipient(payload.phone),
         responseStatus: result.status,
       },
     });
@@ -125,7 +130,7 @@ export async function POST(request: Request) {
     eventType: "sms_sent",
     targetType: "sms_message",
     metadata: {
-      phone: payload.phone,
+      phoneHash: hashRecipient(payload.phone),
       responseStatus: result.status,
     },
   });

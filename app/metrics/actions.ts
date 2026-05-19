@@ -4,6 +4,10 @@ import { redirect } from "next/navigation";
 import { requireTenant } from "@/lib/auth/session";
 import { getIntegrationDefinition } from "@/lib/integrations/catalog";
 import { importCsvBanking, syncCoreIntegration } from "@/lib/integrations/core-sync";
+import {
+  loadMetricIntegrationSecret,
+  storeMetricIntegrationSecret,
+} from "@/lib/integrations/secret-store";
 import { sendTelegramMessage } from "@/lib/integrations/telegram";
 import { createTelegramLinkCode } from "@/lib/integrations/telegram";
 import { calculateForecast, normalizeForecastAssumptions } from "@/lib/metrics/forecasting";
@@ -37,6 +41,11 @@ function parseOptionalNumber(value: FormDataEntryValue | null) {
   if (typeof value !== "string" || !value.trim()) return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function stringFromSecretValue(values: Record<string, unknown>, key: string) {
+  const value = values[key];
+  return typeof value === "string" ? value : "";
 }
 
 export async function recalculateMetricsAction(formData: FormData) {
@@ -362,19 +371,8 @@ export async function connectIntegrationAction(formData: FormData) {
     .eq("tenant_id", tenant.id)
     .eq("provider", provider)
     .maybeSingle();
-  const { data: existingSecretRow } = await admin
-    .from("metric_integration_secrets")
-    .select("secret_values")
-    .eq("tenant_id", tenant.id)
-    .eq("provider", provider)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  const existingSecrets = existingSecretRow?.secret_values &&
-    typeof existingSecretRow.secret_values === "object" &&
-    !Array.isArray(existingSecretRow.secret_values)
-    ? existingSecretRow.secret_values as Record<string, string>
-    : {};
+  const existingSecrets =
+    (await loadMetricIntegrationSecret({ admin, tenantId: tenant.id, provider })) ?? {};
   const submittedValues: Record<string, string> = {};
   for (const field of definition.fields) {
     const value = String(formData.get(field.name) ?? "").trim();
@@ -392,7 +390,11 @@ export async function connectIntegrationAction(formData: FormData) {
       provider,
       status: "active",
       display_name: definition.name,
-      external_account_id: values.accountUrl || values.formId || existingConnection?.external_account_id || null,
+      external_account_id:
+        stringFromSecretValue(values, "accountUrl") ||
+        stringFromSecretValue(values, "formId") ||
+        existingConnection?.external_account_id ||
+        null,
       settings: { connectedFrom: "web" },
       updated_at: new Date().toISOString(),
     }, {
@@ -402,11 +404,12 @@ export async function connectIntegrationAction(formData: FormData) {
     .single();
 
   if (data && (Object.keys(submittedValues).length > 0 || !existingConnection)) {
-    await admin.from("metric_integration_secrets").insert({
-      tenant_id: tenant.id,
-      metric_integration_id: data.id,
+    await storeMetricIntegrationSecret({
+      admin,
+      tenantId: tenant.id,
+      metricIntegrationId: data.id,
       provider,
-      secret_values: values,
+      values,
     });
   }
 

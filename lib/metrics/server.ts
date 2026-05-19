@@ -1,3 +1,5 @@
+import "server-only";
+
 import { createAdminClient } from "@/lib/supabase/admin";
 import { computeMetrics, type MetricSnapshotValue } from "@/lib/metrics/compute";
 import { metricDefinitions } from "@/lib/metrics/definitions";

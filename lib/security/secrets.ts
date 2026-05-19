@@ -2,6 +2,13 @@ import "server-only";
 
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 
+type EncryptedSecretJson = {
+  algorithm: "aes-256-gcm";
+  iv: string;
+  tag: string;
+  ciphertext: string;
+};
+
 function getSecretKey() {
   const secret = process.env.INTEGRATION_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -27,7 +34,7 @@ export function encryptSecretJson(value: unknown) {
     iv: iv.toString("base64"),
     tag: tag.toString("base64"),
     ciphertext: ciphertext.toString("base64"),
-  };
+  } satisfies EncryptedSecretJson;
 }
 
 export function decryptSecretJson<T>(payload: {
@@ -47,4 +54,13 @@ export function decryptSecretJson<T>(payload: {
   ]).toString("utf8");
 
   return JSON.parse(plaintext) as T;
+}
+
+export function isEncryptedSecretJson(value: unknown): value is EncryptedSecretJson {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const payload = value as Record<string, unknown>;
+  return payload.algorithm === "aes-256-gcm" &&
+    typeof payload.iv === "string" &&
+    typeof payload.tag === "string" &&
+    typeof payload.ciphertext === "string";
 }

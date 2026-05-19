@@ -58,6 +58,10 @@ function isTeamAdmin(role: string) {
   return role === "owner" || role === "admin";
 }
 
+function hasVerifiedEmail(user: { email_confirmed_at?: string | null }) {
+  return Boolean(user.email_confirmed_at);
+}
+
 function invitationRole(value: string) {
   return value === "admin" ? "admin" : "member";
 }
@@ -600,6 +604,14 @@ export async function acceptTeamInvitationAction(formData: FormData) {
     redirect(`/login?next=${encodeURIComponent(`/settings/team/accept?token=${token}`)}`);
   }
 
+  if (!hasVerifiedEmail(user)) {
+    redirectWith(
+      `/settings/team/accept?token=${encodeURIComponent(token)}`,
+      "error",
+      "Verify your email address before accepting this invitation.",
+    );
+  }
+
   const { data, error } = await supabase
     .rpc("accept_tenant_invitation", {
       invitation_token: token,
@@ -640,6 +652,14 @@ export async function acceptTeamInvitationByEmailAction(formData: FormData) {
 
   if (!user) {
     redirect(`/login?next=${encodeURIComponent("/settings/team/accept")}`);
+  }
+
+  if (!hasVerifiedEmail(user)) {
+    redirectWith(
+      "/settings/team/accept",
+      "error",
+      "Verify your email address before accepting this invitation.",
+    );
   }
 
   const email = normalizeEmail(user.email ?? "");

@@ -1,3 +1,5 @@
+import "server-only";
+
 import { redirect } from "next/navigation";
 import { getActiveTenantId } from "@/lib/auth/active-tenant";
 import { getAuthBypassContext, isAuthBypassEnabled } from "@/lib/auth/bypass";

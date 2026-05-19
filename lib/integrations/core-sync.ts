@@ -1,4 +1,7 @@
+import "server-only";
+
 import { createHash } from "node:crypto";
+import { loadMetricIntegrationSecret } from "@/lib/integrations/secret-store";
 import { calculateAndStoreMetricSnapshots } from "@/lib/metrics/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -135,17 +138,7 @@ async function fetchJsonEndpoint(url: string, secret: Record<string, unknown> | 
 }
 
 async function loadSecret(tenantId: string, provider: string) {
-  const admin = createAdminClient();
-  const { data } = await admin
-    .from("metric_integration_secrets")
-    .select("secret_values")
-    .eq("tenant_id", tenantId)
-    .eq("provider", provider)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  return data?.secret_values as Record<string, unknown> | null;
+  return loadMetricIntegrationSecret({ tenantId, provider });
 }
 
 async function startRun(tenantId: string, provider: string, actorUserId?: string | null) {

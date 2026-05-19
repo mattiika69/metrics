@@ -1,3 +1,5 @@
+import "server-only";
+
 import { requireApiTenant } from "@/lib/auth/api";
 
 export async function requireTenantContext() {

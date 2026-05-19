@@ -1,3 +1,5 @@
+import "server-only";
+
 import { cookies } from "next/headers";
 
 export const activeTenantCookieName = "hyperoptimal_active_tenant_id";
@@ -16,4 +18,9 @@ export async function setActiveTenantId(tenantId: string) {
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
   });
+}
+
+export async function clearActiveTenantId() {
+  const cookieStore = await cookies();
+  cookieStore.delete(activeTenantCookieName);
 }
