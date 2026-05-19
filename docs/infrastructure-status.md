@@ -24,7 +24,7 @@ Do not save product state only to local files, browser storage, memory, or build
 - Tenant-owned tables use `tenant_id`.
 - Application tables have RLS enabled through Supabase migrations.
 - Service-role access is server-only and reserved for trusted admin, webhook, and integration paths.
-- Temporary auth bypass is restricted to `DISABLE_LOGIN_AUTH`, `AUTH_BYPASS_EMAIL`, `AUTH_BYPASS_TENANT_ID`, and `AUTH_BYPASS_USER_ID`, with backwards-compatible legacy aliases still accepted.
+- Temporary auth bypass is development-only. Production ignores bypass variables and always requires a real Supabase Auth session.
 
 ## Data Persistence and Security
 
@@ -168,7 +168,7 @@ Configured in Vercel as of verification:
 - Resend API key and sender email.
 - Roezan API key and API base URL.
 - Site URL.
-- Temporary auth bypass variables.
+- Auth bypass variables must remain disabled in production. They are accepted only for local development.
 
 ## External APIs Still Needed Before Full Production Use
 

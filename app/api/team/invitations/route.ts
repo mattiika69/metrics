@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { requireAdminContext, routeIdFromUrl } from "@/lib/api/context";
-import { sendTenantEmail } from "@/lib/email/send";
+import { isValidEmailAddress, sendTenantEmail } from "@/lib/email/send";
 import {
   escapeEmailHtml,
   productEmailSubject,
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
   const email = normalizeEmail(payload.email);
   const role = invitationRole(payload.role);
 
-  if (!email || !email.includes("@")) {
+  if (!isValidEmailAddress(email)) {
     return Response.json({ error: "A valid email is required." }, { status: 400 });
   }
 

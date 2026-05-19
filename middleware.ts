@@ -12,6 +12,10 @@ function withSecurityHeaders(response: NextResponse) {
   response.headers.set("x-download-options", "noopen");
   response.headers.set("x-permitted-cross-domain-policies", "none");
   response.headers.set(
+    "strict-transport-security",
+    "max-age=63072000; includeSubDomains; preload",
+  );
+  response.headers.set(
     "permissions-policy",
     "camera=(), microphone=(), geolocation=(), payment=()",
   );

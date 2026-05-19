@@ -10,13 +10,26 @@ type EncryptedSecretJson = {
 };
 
 function getSecretKey() {
-  const secret = process.env.INTEGRATION_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const secret = process.env.INTEGRATION_SECRET_KEY;
 
-  if (!secret) {
+  if (secret) {
+    return createHash("sha256").update(secret).digest();
+  }
+
+  const isProduction =
+    process.env.NODE_ENV === "production" ||
+    (process.env.VERCEL === "1" && process.env.VERCEL_ENV === "production");
+
+  if (isProduction) {
     throw new Error("Missing INTEGRATION_SECRET_KEY.");
   }
 
-  return createHash("sha256").update(secret).digest();
+  const developmentFallback = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!developmentFallback) {
+    throw new Error("Missing INTEGRATION_SECRET_KEY.");
+  }
+
+  return createHash("sha256").update(developmentFallback).digest();
 }
 
 export function encryptSecretJson(value: unknown) {

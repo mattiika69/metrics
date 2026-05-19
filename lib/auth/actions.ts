@@ -3,7 +3,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { redirect } from "next/navigation";
 import { clearActiveTenantId } from "@/lib/auth/active-tenant";
-import { sendTenantEmail } from "@/lib/email/send";
+import { isValidEmailAddress, sendTenantEmail } from "@/lib/email/send";
 import {
   escapeEmailHtml,
   productEmailSubject,
@@ -20,6 +20,10 @@ import { getAppBaseUrl } from "@/lib/urls/app";
 function formValue(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizeEmail(value: string) {
+  return value.trim().toLowerCase();
 }
 
 function redirectWith(path: string, key: "error" | "message", value: string): never {
@@ -341,7 +345,7 @@ async function checkAuthRateLimit(
 }
 
 export async function signUpAction(formData: FormData) {
-  const email = formValue(formData, "email");
+  const email = normalizeEmail(formValue(formData, "email"));
   const password = formValue(formData, "password");
   const confirmPassword = formValue(formData, "confirmPassword");
   const firstName = formValue(formData, "firstName");
@@ -350,13 +354,13 @@ export async function signUpAction(formData: FormData) {
   const next = safeNextPath(formValue(formData, "next"), "/get-started");
   const isInviteFlow = next.startsWith("/settings/team/accept");
 
-  if (!email || !password || (!organizationName && !isInviteFlow)) {
+  if (!isValidEmailAddress(email) || !password || (!organizationName && !isInviteFlow)) {
     redirectWith(
       withNext("/signup", next, "/get-started"),
       "error",
       isInviteFlow
-        ? "Email and password are required."
-        : "Organization, email, and password are required.",
+        ? "A valid email and password are required."
+        : "Organization, valid email, and password are required.",
     );
   }
 
@@ -422,11 +426,11 @@ export async function signUpAction(formData: FormData) {
 }
 
 export async function signInAction(formData: FormData) {
-  const email = formValue(formData, "email");
+  const email = normalizeEmail(formValue(formData, "email"));
   const password = formValue(formData, "password");
   const next = safeNextPath(formValue(formData, "next"), "/dashboard");
 
-  if (!email || !password) {
+  if (!isValidEmailAddress(email) || !password) {
     redirectWith(
       withNext("/login", next, "/dashboard"),
       "error",
@@ -492,10 +496,10 @@ export async function signOutAction(formData?: FormData) {
 }
 
 export async function forgotPasswordAction(formData: FormData) {
-  const email = formValue(formData, "email");
+  const email = normalizeEmail(formValue(formData, "email"));
 
-  if (!email) {
-    redirectWith("/forgot-password", "error", "Email is required.");
+  if (!isValidEmailAddress(email)) {
+    redirectWith("/forgot-password", "error", "Enter a valid email address.");
   }
 
   await checkAuthRateLimit("forgot_password", email, "/forgot-password");

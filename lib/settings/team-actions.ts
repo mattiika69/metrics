@@ -3,7 +3,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { sendTenantEmail } from "@/lib/email/send";
+import { isValidEmailAddress, sendTenantEmail } from "@/lib/email/send";
 import {
   escapeEmailHtml,
   productEmailSubject,
@@ -267,7 +267,7 @@ export async function inviteTeamMemberAction(formData: FormData) {
     redirectWith("/settings/team", "error", "Only admins can invite team members.");
   }
 
-  if (!email || !email.includes("@")) {
+  if (!isValidEmailAddress(email)) {
     redirectWith("/settings/team", "error", "Enter a valid email address.");
   }
 

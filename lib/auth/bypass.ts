@@ -22,13 +22,13 @@ type BypassMembership = {
 };
 
 export function isAuthBypassEnabled() {
+  if (isProductionRuntime()) {
+    return false;
+  }
+
   const bypassRequested =
     process.env.DISABLE_LOGIN_AUTH === "true" ||
     process.env.AUTH_BYPASS_ENABLED === "true";
-
-  if (isProductionRuntime() && process.env.ALLOW_PRODUCTION_AUTH_BYPASS !== "true") {
-    return false;
-  }
 
   return bypassRequested;
 }
@@ -95,6 +95,10 @@ async function findAuthUserByEmail(email: string) {
 }
 
 export async function getAuthBypassContext() {
+  if (isProductionRuntime()) {
+    throw new Error("Auth bypass is disabled in production.");
+  }
+
   const admin = createAdminClient();
   const email =
     process.env.AUTH_BYPASS_EMAIL ||
@@ -103,12 +107,6 @@ export async function getAuthBypassContext() {
   const tenantName = process.env.AUTH_BYPASS_TENANT_NAME || DEFAULT_BYPASS_TENANT_NAME;
   const configuredUserId = process.env.AUTH_BYPASS_USER_ID;
   const configuredTenantId = process.env.AUTH_BYPASS_TENANT_ID;
-
-  if (isProductionRuntime() && (!configuredUserId || !configuredTenantId)) {
-    throw new Error(
-      "Production auth bypass requires AUTH_BYPASS_USER_ID and AUTH_BYPASS_TENANT_ID.",
-    );
-  }
 
   const user = configuredUserId
     ? ({ id: configuredUserId, email } as BypassUser)
