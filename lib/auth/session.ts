@@ -1,8 +1,19 @@
 import { redirect } from "next/navigation";
+import { getActiveTenantId } from "@/lib/auth/active-tenant";
 import { getAuthBypassContext, isAuthBypassEnabled } from "@/lib/auth/bypass";
 import { createClient } from "@/lib/supabase/server";
 
 export async function requireUser() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (!error && user) {
+    return { supabase, user };
+  }
+
   if (isAuthBypassEnabled()) {
     const context = await getAuthBypassContext();
     return {
@@ -11,31 +22,31 @@ export async function requireUser() {
     };
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    redirect("/login");
-  }
-
-  return { supabase, user };
+  redirect("/login");
 }
 
 export async function requireTenant() {
-  if (isAuthBypassEnabled()) {
-    return getAuthBypassContext();
+  const { supabase, user } = await requireUser();
+  const activeTenantId = await getActiveTenantId();
+  let membership = null;
+
+  if (activeTenantId) {
+    const { data: activeMembership } = await supabase
+      .from("tenant_memberships")
+      .select("tenant_id, role, tenants(id, name)")
+      .eq("tenant_id", activeTenantId)
+      .maybeSingle();
+    membership = activeMembership;
   }
 
-  const { supabase, user } = await requireUser();
-  const { data: memberships } = await supabase
-    .from("tenant_memberships")
-    .select("tenant_id, role, tenants(id, name)")
-    .order("created_at", { ascending: true });
+  if (!membership) {
+    const { data: memberships } = await supabase
+      .from("tenant_memberships")
+      .select("tenant_id, role, tenants(id, name)")
+      .order("created_at", { ascending: true });
 
-  const membership = memberships?.[0];
+    membership = memberships?.[0] ?? null;
+  }
 
   if (!membership) {
     redirect("/get-started");

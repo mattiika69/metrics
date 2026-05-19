@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { signInAction } from "@/lib/auth/actions";
+import { isAuthBypassEnabled } from "@/lib/auth/bypass";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -13,9 +15,18 @@ function getParam(
   return Array.isArray(value) ? value[0] : value;
 }
 
+function isInviteNext(next: string | undefined) {
+  return Boolean(next?.startsWith("/settings/team/accept"));
+}
+
 export default async function LoginPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const next = getParam(params, "next");
+
+  if (isAuthBypassEnabled() && !isInviteNext(next)) {
+    redirect("/dashboard");
+  }
+
   const email = getParam(params, "email") ?? "";
   const error = getParam(params, "error");
   const message = getParam(params, "message");

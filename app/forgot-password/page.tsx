@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { forgotPasswordAction } from "@/lib/auth/actions";
+import { isAuthBypassEnabled } from "@/lib/auth/bypass";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -14,6 +16,10 @@ function getParam(
 }
 
 export default async function ForgotPasswordPage({ searchParams }: PageProps) {
+  if (isAuthBypassEnabled()) {
+    redirect("/dashboard");
+  }
+
   const params = await searchParams;
   const error = getParam(params, "error");
   const message = getParam(params, "message");

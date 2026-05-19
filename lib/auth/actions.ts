@@ -341,7 +341,11 @@ export async function signInAction(formData: FormData) {
   redirect(next);
 }
 
-export async function signOutAction() {
+export async function signOutAction(formData?: FormData) {
+  const next =
+    formData instanceof FormData
+      ? safeNextPath(formValue(formData, "next"), "/login")
+      : "/login";
   const supabase = await createClient();
   const {
     data: { user },
@@ -353,7 +357,7 @@ export async function signOutAction() {
     targetType: "auth_user",
     targetId: user?.id ?? null,
   });
-  redirectWith("/login", "message", "You have been signed out.");
+  redirectWith(next, "message", "You have been signed out.");
 }
 
 export async function forgotPasswordAction(formData: FormData) {

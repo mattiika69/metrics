@@ -150,6 +150,7 @@ export default async function AcceptTeamInvitationPage({
               You are signed in as {signedInEmail}. This invitation belongs to {tokenEmail}.
             </p>
             <form action={signOutAction} className="form-stack">
+              <input type="hidden" name="next" value={next} />
               <button type="submit">Sign out</button>
             </form>
           </div>

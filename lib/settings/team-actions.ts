@@ -10,6 +10,7 @@ import {
   productEmailSubject,
   productEmailText,
 } from "@/lib/email/templates";
+import { setActiveTenantId } from "@/lib/auth/active-tenant";
 import { requireTenant } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/security/rate-limit";
 import { logAuditEvent } from "@/lib/security/audit";
@@ -257,6 +258,7 @@ async function acceptInvitationRecord(input: {
     metadata: { role },
   });
 
+  await setActiveTenantId(invitation.tenant_id);
   revalidatePath("/settings/team");
   redirectWith("/settings/team", "message", "Invitation accepted.");
 }
@@ -633,6 +635,7 @@ export async function acceptTeamInvitationAction(formData: FormData) {
     },
   });
 
+  await setActiveTenantId(accepted.accepted_tenant_id);
   revalidatePath("/settings/team");
   redirectWith("/settings/team", "message", "Invitation accepted.");
 }

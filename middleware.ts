@@ -2,16 +2,6 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  if (
-    process.env.NODE_ENV !== "production" &&
-    (
-      process.env.DISABLE_LOGIN_AUTH === "true" ||
-      process.env.AUTH_BYPASS_ENABLED === "true"
-    )
-  ) {
-    return NextResponse.next({ request });
-  }
-
   const publishableKey =
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
