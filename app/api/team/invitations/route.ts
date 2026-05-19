@@ -131,7 +131,7 @@ export async function POST(request: Request) {
     metadata: { email, role },
   });
 
-  const inviteUrl = `${await getAppBaseUrl()}/invite/accept?token=${encodeURIComponent(rawToken)}`;
+  const inviteUrl = `${await getAppBaseUrl()}/settings/team/accept?token=${encodeURIComponent(rawToken)}`;
 
   try {
     const subject = productEmailSubject("team_invited");
