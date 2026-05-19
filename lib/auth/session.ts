@@ -35,6 +35,7 @@ export async function requireTenant() {
       .from("tenant_memberships")
       .select("tenant_id, role, tenants(id, name)")
       .eq("tenant_id", activeTenantId)
+      .eq("user_id", user.id)
       .maybeSingle();
     membership = activeMembership;
   }
@@ -43,6 +44,7 @@ export async function requireTenant() {
     const { data: memberships } = await supabase
       .from("tenant_memberships")
       .select("tenant_id, role, tenants(id, name)")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: true });
 
     membership = memberships?.[0] ?? null;

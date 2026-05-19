@@ -1,5 +1,6 @@
 "use server";
 
+import { createHash, randomBytes } from "node:crypto";
 import { redirect } from "next/navigation";
 import { sendTenantEmail } from "@/lib/email/send";
 import {
@@ -78,6 +79,10 @@ function getStripeOnboardingPriceId() {
   return process.env.STRIPE_ONBOARDING_PRICE_ID ?? process.env.STRIPE_PRICE_ID;
 }
 
+function hashInvitationToken(token: string) {
+  return createHash("sha256").update(token).digest("hex");
+}
+
 async function resolveEmailTenant(email: string) {
   const admin = createAdminClient();
   const { data: profiles } = await admin
@@ -107,6 +112,128 @@ async function resolveEmailTenant(email: string) {
   };
 }
 
+function readTenantName(
+  tenants:
+    | {
+        name?: string | null;
+      }
+    | {
+        name?: string | null;
+      }[]
+    | null,
+) {
+  const tenant = Array.isArray(tenants) ? tenants[0] : tenants;
+  return tenant?.name ?? "this workspace";
+}
+
+async function resendPendingInvitationForEmail(email: string) {
+  const admin = createAdminClient();
+  const { data: invitations, error: invitationReadError } = await admin
+    .from("tenant_invitations")
+    .select("id, tenant_id, email, role, invited_by_user_id, tenants(name)")
+    .eq("email", email)
+    .eq("status", "pending")
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  if (invitationReadError) {
+    return {
+      found: false,
+      ok: false,
+      error: invitationReadError.message,
+    };
+  }
+
+  const invitation = invitations?.[0] ?? null;
+  if (!invitation) {
+    return {
+      found: false,
+      ok: true,
+      error: null,
+    };
+  }
+
+  const token = randomBytes(32).toString("base64url");
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const tenantName = readTenantName(invitation.tenants);
+
+  const { error: updateError } = await admin
+    .from("tenant_invitations")
+    .update({
+      token_hash: hashInvitationToken(token),
+      expires_at: expiresAt,
+      email_delivery_status: "queued",
+      email_delivery_error: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", invitation.id)
+    .eq("status", "pending");
+
+  if (updateError) {
+    return {
+      found: true,
+      ok: false,
+      error: updateError.message,
+    };
+  }
+
+  const inviteUrl = `${await getAppBaseUrl()}/settings/team/accept?token=${encodeURIComponent(token)}`;
+  const safeTenantName = escapeEmailHtml(tenantName);
+  const safeInviteUrl = escapeEmailHtml(inviteUrl);
+  const subject = productEmailSubject("team_invited");
+  const text = productEmailText(
+    "team_invited",
+    `Accept the invitation here: ${inviteUrl}`,
+  );
+  const html = `
+    <p>You were invited to join <strong>${safeTenantName}</strong> in HyperOptimal Metrics.</p>
+    <p><a href="${safeInviteUrl}">Accept invitation</a></p>
+  `;
+  const result = await sendTenantEmail({
+    tenantId: invitation.tenant_id,
+    actorUserId: invitation.invited_by_user_id,
+    to: [email],
+    subject,
+    text,
+    html,
+    template: "team_invited",
+    metadata: {
+      resentFromPasswordReset: true,
+      role: invitation.role,
+    },
+  });
+
+  await admin
+    .from("tenant_invitations")
+    .update({
+      email_delivery_status: result.ok ? "sent" : "failed",
+      email_delivery_error: result.error,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", invitation.id);
+
+  await logAuditEvent({
+    tenantId: invitation.tenant_id,
+    actorUserId: invitation.invited_by_user_id,
+    eventType: result.ok
+      ? "team_invitation_email_resent"
+      : "team_invitation_email_failed",
+    targetType: "tenant_invitation",
+    targetId: invitation.id,
+    metadata: {
+      email,
+      source: "forgot_password",
+      error: result.error,
+    },
+  });
+
+  return {
+    found: true,
+    ok: result.ok,
+    error: result.error,
+  };
+}
+
 async function sendPasswordResetEmail(email: string) {
   const admin = createAdminClient();
   const origin = await getAppBaseUrl();
@@ -120,6 +247,16 @@ async function sendPasswordResetEmail(email: string) {
   });
 
   if (error) {
+    const invitationResult = await resendPendingInvitationForEmail(email);
+
+    if (invitationResult.found) {
+      return {
+        ok: invitationResult.ok,
+        skipped: false,
+        error: invitationResult.error,
+      };
+    }
+
     await logAuditEvent({
       eventType: "password_reset_requested_failed",
       targetType: "auth_user",
