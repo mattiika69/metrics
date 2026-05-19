@@ -1,6 +1,19 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
+function withSecurityHeaders(response: NextResponse) {
+  response.headers.set("x-frame-options", "DENY");
+  response.headers.set("x-content-type-options", "nosniff");
+  response.headers.set("referrer-policy", "strict-origin-when-cross-origin");
+  response.headers.set("x-dns-prefetch-control", "off");
+  response.headers.set(
+    "permissions-policy",
+    "camera=(), microphone=(), geolocation=(), payment=()",
+  );
+
+  return response;
+}
+
 export async function middleware(request: NextRequest) {
   const publishableKey =
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
@@ -10,7 +23,7 @@ export async function middleware(request: NextRequest) {
     !process.env.NEXT_PUBLIC_SUPABASE_URL ||
     !publishableKey
   ) {
-    return NextResponse.next({ request });
+    return withSecurityHeaders(NextResponse.next({ request }));
   }
 
   let response = NextResponse.next({ request });
@@ -43,7 +56,7 @@ export async function middleware(request: NextRequest) {
 
   await supabase.auth.getUser();
 
-  return response;
+  return withSecurityHeaders(response);
 }
 
 export const config = {

@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { getAuthBypassContext, isAuthBypassEnabled } from "@/lib/auth/bypass";
 import {
   exchangeSlackOAuthCode,
   slackOAuthStateCookie,
@@ -8,9 +9,51 @@ import {
 import { logAuditEvent } from "@/lib/security/audit";
 import { encryptSecretJson } from "@/lib/security/secrets";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { getAppBaseUrl } from "@/lib/urls/app";
 
 export const dynamic = "force-dynamic";
+
+function canManageSlackOAuth(role: string | null | undefined) {
+  return role === "owner" || role === "admin";
+}
+
+async function authorizeSlackOAuthTenant(
+  tenantId: string,
+  admin: ReturnType<typeof createAdminClient>,
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    const { data: membership } = await admin
+      .from("tenant_memberships")
+      .select("role")
+      .eq("tenant_id", tenantId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (canManageSlackOAuth(membership?.role)) {
+      return { userId: user.id };
+    }
+
+    return null;
+  }
+
+  if (isAuthBypassEnabled()) {
+    const context = await getAuthBypassContext();
+    if (
+      context.tenant.id === tenantId &&
+      canManageSlackOAuth(context.membership.role)
+    ) {
+      return { userId: context.user.id };
+    }
+  }
+
+  return null;
+}
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -27,6 +70,12 @@ export async function GET(request: Request) {
     redirect("/settings/slack?error=invalid_slack_oauth_state");
   }
 
+  const admin = createAdminClient();
+  const authorized = await authorizeSlackOAuthTenant(tenantId, admin);
+  if (!authorized) {
+    redirect("/settings/slack?error=slack_oauth_access_denied");
+  }
+
   const origin = await getAppBaseUrl();
   const oauth = await exchangeSlackOAuthCode({ code, origin });
   const teamId = oauth.team?.id?.trim();
@@ -36,7 +85,6 @@ export async function GET(request: Request) {
     redirect("/settings/slack?error=missing_slack_oauth_payload");
   }
 
-  const admin = createAdminClient();
   const { data: existing } = await admin
     .from("tenant_integrations")
     .select("id")
@@ -93,6 +141,7 @@ export async function GET(request: Request) {
       slack_bot_user_id: oauth.bot_user_id ?? null,
       slack_app_id: oauth.app_id ?? null,
       status: "active",
+      created_by_user_id: authorized.userId,
       settings: {
         scope: oauth.scope ?? null,
       },
@@ -106,6 +155,7 @@ export async function GET(request: Request) {
       slack_team_id: teamId,
       slack_user_id: oauth.authed_user?.id ?? null,
       slack_channel_id: null,
+      user_id: authorized.userId,
       status: "active",
       settings: {
         linkedBy: "oauth",
@@ -128,6 +178,7 @@ export async function GET(request: Request) {
 
   await logAuditEvent({
     tenantId,
+    actorUserId: authorized.userId,
     eventType: "slack_connected",
     targetType: "slack",
     targetId: teamId,

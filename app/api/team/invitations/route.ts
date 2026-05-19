@@ -7,6 +7,7 @@ import {
   productEmailText,
 } from "@/lib/email/templates";
 import { logAuditEvent } from "@/lib/security/audit";
+import { checkRateLimit } from "@/lib/security/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAppBaseUrl } from "@/lib/urls/app";
 
@@ -77,6 +78,29 @@ export async function POST(request: Request) {
 
   if (!email || !email.includes("@")) {
     return Response.json({ error: "A valid email is required." }, { status: 400 });
+  }
+
+  const limit = await checkRateLimit({
+    route: "api:team:invite",
+    key: `${context.tenant.id}:${context.user.id}`,
+    limit: 20,
+    windowSeconds: 60 * 60,
+    tenantId: context.tenant.id,
+    actorUserId: context.user.id,
+    metadata: { email, role },
+  });
+
+  if (!limit.allowed) {
+    return Response.json(
+      {
+        error: "Too many invitations. Try again later.",
+        resetAt: limit.resetAt,
+      },
+      {
+        status: 429,
+        headers: { "retry-after": String(60 * 60) },
+      },
+    );
   }
 
   const admin = createAdminClient();
