@@ -1,3 +1,5 @@
+import "server-only";
+
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type WebhookProvider = "stripe" | "slack" | "telegram";

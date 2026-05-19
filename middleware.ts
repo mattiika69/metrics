@@ -2,10 +2,15 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 function withSecurityHeaders(response: NextResponse) {
+  response.headers.set("content-security-policy", "base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'");
+  response.headers.set("cross-origin-opener-policy", "same-origin");
+  response.headers.set("cross-origin-resource-policy", "same-origin");
   response.headers.set("x-frame-options", "DENY");
   response.headers.set("x-content-type-options", "nosniff");
   response.headers.set("referrer-policy", "strict-origin-when-cross-origin");
   response.headers.set("x-dns-prefetch-control", "off");
+  response.headers.set("x-download-options", "noopen");
+  response.headers.set("x-permitted-cross-domain-policies", "none");
   response.headers.set(
     "permissions-policy",
     "camera=(), microphone=(), geolocation=(), payment=()",

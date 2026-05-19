@@ -5,5 +5,9 @@ export async function GET() {
     ok: true,
     product: "HyperOptimal Metrics",
     timestamp: new Date().toISOString(),
+  }, {
+    headers: {
+      "cache-control": "no-store",
+    },
   });
 }

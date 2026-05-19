@@ -13,11 +13,15 @@ export function createResendClient() {
 }
 
 export function getDefaultFromEmail() {
-  const fromEmail = process.env.RESEND_FROM_EMAIL;
-  const fromName = process.env.RESEND_FROM_NAME;
+  const fromEmail = process.env.RESEND_FROM_EMAIL?.trim();
+  const fromName = process.env.RESEND_FROM_NAME?.trim();
 
   if (!fromEmail) {
     throw new Error("Missing RESEND_FROM_EMAIL.");
+  }
+
+  if (fromEmail.includes("<") && fromEmail.includes(">")) {
+    return fromEmail;
   }
 
   return fromName ? `${fromName} <${fromEmail}>` : fromEmail;
