@@ -1,3 +1,4 @@
+import { timingSafeEqualString } from "@/lib/security/constant-time";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +12,11 @@ export async function POST(request: Request) {
   const authorization = request.headers.get("authorization");
   const workerSecret = request.headers.get("x-schedule-worker-secret");
 
-  if (!secret || (authorization !== `Bearer ${secret}` && workerSecret !== secret)) {
+  const authorized =
+    timingSafeEqualString(authorization, `Bearer ${secret}`) ||
+    timingSafeEqualString(workerSecret, secret);
+
+  if (!secret || !authorized) {
     return unauthorized();
   }
 

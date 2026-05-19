@@ -2,7 +2,10 @@ import { headers } from "next/headers";
 import { createChannelAgentRequest, extractAgentRequestText } from "@/lib/agent/channel";
 import { sendTelegramMessage } from "@/lib/integrations/telegram";
 import { buildChannelCommandResponse, resolveChannelCommand } from "@/lib/metrics/channel";
+import { getRequestIp } from "@/lib/request/ip";
 import { logAuditEvent } from "@/lib/security/audit";
+import { timingSafeEqualString } from "@/lib/security/constant-time";
+import { checkRateLimit } from "@/lib/security/rate-limit";
 import {
   markWebhookFailed,
   markWebhookProcessed,
@@ -153,12 +156,27 @@ export async function POST(request: Request) {
   const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
   if (!webhookSecret) return Response.json({ error: "Missing TELEGRAM_WEBHOOK_SECRET." }, { status: 500 });
 
+  const rateLimit = await checkRateLimit({
+    route: "webhook:telegram",
+    key: `telegram:${await getRequestIp()}`,
+    limit: 120,
+    windowSeconds: 60,
+    metadata: { provider: "telegram" },
+  });
+
+  if (!rateLimit.allowed) {
+    return Response.json({ error: "Too many requests." }, { status: 429 });
+  }
+
   const headerStore = await headers();
-  if (headerStore.get("x-telegram-bot-api-secret-token") !== webhookSecret) {
+  if (!timingSafeEqualString(headerStore.get("x-telegram-bot-api-secret-token"), webhookSecret)) {
     return Response.json({ error: "Invalid Telegram secret." }, { status: 401 });
   }
 
-  const payload = (await request.json()) as TelegramPayload;
+  const payload = await request.json().catch(() => null) as TelegramPayload | null;
+  if (!payload) {
+    return Response.json({ error: "Invalid Telegram payload." }, { status: 400 });
+  }
   const message = messageFromPayload(payload);
   const chatId = message?.chat?.id ? String(message.chat.id) : "";
   const text = typeof message?.text === "string" ? message.text : "";

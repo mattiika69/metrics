@@ -1,7 +1,9 @@
-import { createResendClient, getDefaultFromEmail } from "@/lib/email/resend";
-import { logAuditEvent } from "@/lib/security/audit";
+import {
+  isValidEmailAddress,
+  normalizeEmailRecipients,
+  sendTenantEmail,
+} from "@/lib/email/send";
 import { checkRateLimit } from "@/lib/security/rate-limit";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 type SendEmailPayload = {
@@ -13,17 +15,29 @@ type SendEmailPayload = {
 };
 
 export async function POST(request: Request) {
-  const payload = (await request.json()) as SendEmailPayload;
+  const payload = await request.json().catch(() => null) as SendEmailPayload | null;
+  if (!payload) {
+    return Response.json({ error: "Invalid JSON payload." }, { status: 400 });
+  }
+
   const tenantId = payload.tenantId;
-  const recipients = Array.isArray(payload.to)
+  const recipients = normalizeEmailRecipients(Array.isArray(payload.to)
     ? payload.to
     : payload.to
       ? [payload.to]
-      : [];
+      : []);
 
   if (!tenantId || recipients.length === 0 || !payload.subject) {
     return Response.json(
       { error: "tenantId, to, and subject are required." },
+      { status: 400 },
+    );
+  }
+
+  const invalidRecipient = recipients.find((recipient) => !isValidEmailAddress(recipient));
+  if (invalidRecipient) {
+    return Response.json(
+      { error: `Invalid recipient: ${invalidRecipient}` },
       { status: 400 },
     );
   }
@@ -81,66 +95,22 @@ export async function POST(request: Request) {
     );
   }
 
-  const resend = createResendClient();
-  const from = getDefaultFromEmail();
-  const email = payload.html
-    ? {
-        from,
-        to: recipients,
-        subject: payload.subject,
-        html: payload.html,
-        ...(payload.text ? { text: payload.text } : {}),
-      }
-    : {
-        from,
-        to: recipients,
-        subject: payload.subject,
-        text: payload.text as string,
-      };
-
-  const result = await resend.emails.send(email);
-
-  const admin = createAdminClient();
-  await admin.from("email_messages").insert({
-    tenant_id: tenantId,
-    created_by: user.id,
-    provider: "resend",
-    provider_message_id: result.data?.id ?? null,
-    from_email: from,
-    to_emails: recipients,
-    subject: payload.subject,
-    status: result.error ? "error" : "sent",
-    payload: {
-      error: result.error,
-    },
-  });
-
-  if (result.error) {
-    await logAuditEvent({
-      tenantId,
-      actorUserId: user.id,
-      eventType: "email_send_failed",
-      targetType: "email_message",
-      metadata: {
-        subject: payload.subject,
-        recipientCount: recipients.length,
-        error: result.error.message,
-      },
-    });
-    return Response.json({ error: result.error.message }, { status: 502 });
-  }
-
-  await logAuditEvent({
+  const result = await sendTenantEmail({
     tenantId,
     actorUserId: user.id,
-    eventType: "email_sent",
-    targetType: "email_message",
-    targetId: result.data?.id ?? null,
-    metadata: {
-      subject: payload.subject,
-      recipientCount: recipients.length,
-    },
+    to: recipients,
+    subject: payload.subject,
+    text: payload.text,
+    html: payload.html,
+    template: "api_email_send",
   });
 
-  return Response.json({ id: result.data?.id });
+  if (!result.ok) {
+    return Response.json({ error: result.error }, { status: 502 });
+  }
+
+  return Response.json({
+    id: result.providerMessageId,
+    emailMessageId: result.emailMessageId,
+  });
 }

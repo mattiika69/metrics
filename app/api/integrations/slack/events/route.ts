@@ -3,7 +3,9 @@ import { createChannelAgentRequest, extractAgentRequestText } from "@/lib/agent/
 import { verifySlackSignature } from "@/lib/integrations/slack";
 import { sendSlackMessage } from "@/lib/integrations/slack-oauth";
 import { buildChannelCommandResponse, resolveChannelCommand } from "@/lib/metrics/channel";
+import { getRequestIp } from "@/lib/request/ip";
 import { logAuditEvent } from "@/lib/security/audit";
+import { checkRateLimit } from "@/lib/security/rate-limit";
 import {
   markWebhookFailed,
   markWebhookProcessed,
@@ -14,6 +16,22 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
+type SlackEventsPayload = {
+  type?: string;
+  challenge?: string;
+  event_id?: string;
+  team_id?: string;
+  authorizations?: Array<{ team_id?: string }>;
+  event?: {
+    type?: string;
+    event_ts?: string;
+    ts?: string;
+    channel?: string;
+    user?: string;
+    text?: string;
+  };
+};
+
 function commandFromText(text: unknown) {
   if (typeof text !== "string") return null;
   return resolveChannelCommand(text);
@@ -22,6 +40,18 @@ function commandFromText(text: unknown) {
 export async function POST(request: Request) {
   const signingSecret = process.env.SLACK_SIGNING_SECRET;
   if (!signingSecret) return Response.json({ error: "Missing SLACK_SIGNING_SECRET." }, { status: 500 });
+
+  const rateLimit = await checkRateLimit({
+    route: "webhook:slack:events",
+    key: `slack:events:${await getRequestIp()}`,
+    limit: 120,
+    windowSeconds: 60,
+    metadata: { provider: "slack" },
+  });
+
+  if (!rateLimit.allowed) {
+    return Response.json({ error: "Too many requests." }, { status: 429 });
+  }
 
   const body = await request.text();
   const headerStore = await headers();
@@ -33,7 +63,12 @@ export async function POST(request: Request) {
   });
   if (!verified) return Response.json({ error: "Invalid Slack signature." }, { status: 401 });
 
-  const payload = JSON.parse(body);
+  let payload: SlackEventsPayload;
+  try {
+    payload = JSON.parse(body) as SlackEventsPayload;
+  } catch {
+    return Response.json({ error: "Invalid Slack payload." }, { status: 400 });
+  }
   if (payload.type === "url_verification") return Response.json({ challenge: payload.challenge });
 
   const externalEventId = payload.event_id ?? `${payload.team_id ?? "unknown"}:${payload.event?.event_ts ?? Date.now()}`;

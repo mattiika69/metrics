@@ -1,4 +1,5 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac } from "node:crypto";
+import { timingSafeEqualString } from "@/lib/security/constant-time";
 
 export function verifySlackSignature({
   body,
@@ -26,5 +27,5 @@ export function verifySlackSignature({
     .update(base)
     .digest("hex")}`;
 
-  return timingSafeEqual(Buffer.from(digest), Buffer.from(signature));
+  return timingSafeEqualString(signature, digest);
 }

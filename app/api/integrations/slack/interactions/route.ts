@@ -1,12 +1,26 @@
 import { headers } from "next/headers";
 import { verifySlackSignature } from "@/lib/integrations/slack";
+import { getRequestIp } from "@/lib/request/ip";
 import { logAuditEvent } from "@/lib/security/audit";
+import { checkRateLimit } from "@/lib/security/rate-limit";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   const signingSecret = process.env.SLACK_SIGNING_SECRET;
   if (!signingSecret) return Response.json({ error: "Missing SLACK_SIGNING_SECRET." }, { status: 500 });
+
+  const rateLimit = await checkRateLimit({
+    route: "webhook:slack:interactions",
+    key: `slack:interactions:${await getRequestIp()}`,
+    limit: 120,
+    windowSeconds: 60,
+    metadata: { provider: "slack" },
+  });
+
+  if (!rateLimit.allowed) {
+    return Response.json({ error: "Too many requests." }, { status: 429 });
+  }
 
   const body = await request.text();
   const headerStore = await headers();

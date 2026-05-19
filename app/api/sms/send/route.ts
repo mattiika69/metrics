@@ -15,7 +15,10 @@ type SendSmsPayload = {
 };
 
 export async function POST(request: Request) {
-  const payload = (await request.json()) as SendSmsPayload;
+  const payload = await request.json().catch(() => null) as SendSmsPayload | null;
+  if (!payload) {
+    return Response.json({ error: "Invalid JSON payload." }, { status: 400 });
+  }
 
   if (!payload.tenantId || !payload.phone || !payload.message) {
     return Response.json(

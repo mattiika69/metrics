@@ -1,5 +1,6 @@
 import { syncCoreIntegration } from "@/lib/integrations/core-sync";
 import { logAuditEvent } from "@/lib/security/audit";
+import { timingSafeEqualString } from "@/lib/security/constant-time";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +15,10 @@ function isAuthorized(request: Request) {
 
   const authorization = request.headers.get("authorization");
   const workerSecret = request.headers.get("x-schedule-worker-secret");
-  return authorization === `Bearer ${secret}` || workerSecret === secret;
+  return (
+    timingSafeEqualString(authorization, `Bearer ${secret}`) ||
+    timingSafeEqualString(workerSecret, secret)
+  );
 }
 
 export async function GET(request: Request) {
