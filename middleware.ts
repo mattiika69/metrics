@@ -1,5 +1,42 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { authRedirectParam } from "@/lib/auth/redirects";
+
+const PROTECTED_PAGE_PREFIXES = [
+  "/account",
+  "/admin",
+  "/benchmarks",
+  "/billing",
+  "/constraints",
+  "/dashboard",
+  "/finance",
+  "/forecasting",
+  "/get-started",
+  "/help",
+  "/inputs",
+  "/integrations",
+  "/marketing",
+  "/metrics",
+  "/retention",
+  "/sales",
+  "/settings",
+];
+
+const PUBLIC_PAGE_PREFIXES = [
+  "/auth",
+  "/forgot-password",
+  "/invite/accept",
+  "/login",
+  "/opt-in",
+  "/opt-in-thank-you",
+  "/privacy",
+  "/dq",
+  "/reset-password",
+  "/settings/team/accept",
+  "/signup",
+  "/thank-you",
+  "/terms",
+];
 
 function withSecurityHeaders(response: NextResponse) {
   response.headers.set("content-security-policy", "base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'");
@@ -21,6 +58,52 @@ function withSecurityHeaders(response: NextResponse) {
   );
 
   return response;
+}
+
+function isProductionRuntime() {
+  return (
+    process.env.NODE_ENV === "production" ||
+    (process.env.VERCEL === "1" && process.env.VERCEL_ENV === "production")
+  );
+}
+
+function isAuthBypassEnabledForMiddleware() {
+  if (isProductionRuntime()) return false;
+
+  return (
+    process.env.DISABLE_LOGIN_AUTH === "true" ||
+    process.env.AUTH_BYPASS_ENABLED === "true"
+  );
+}
+
+function isPageRequest(pathname: string) {
+  return !pathname.startsWith("/api/");
+}
+
+function pathMatchesPrefix(pathname: string, prefix: string) {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
+function isPublicPagePath(pathname: string) {
+  return PUBLIC_PAGE_PREFIXES.some((prefix) => pathMatchesPrefix(pathname, prefix));
+}
+
+function isProtectedPagePath(pathname: string) {
+  if (isPublicPagePath(pathname)) return false;
+
+  return PROTECTED_PAGE_PREFIXES.some((prefix) =>
+    pathMatchesPrefix(pathname, prefix),
+  );
+}
+
+function redirectToLogin(request: NextRequest) {
+  const loginUrl = new URL("/login", request.url);
+  loginUrl.searchParams.set(
+    authRedirectParam,
+    `${request.nextUrl.pathname}${request.nextUrl.search}`,
+  );
+
+  return withSecurityHeaders(NextResponse.redirect(loginUrl));
 }
 
 export async function middleware(request: NextRequest) {
@@ -63,7 +146,18 @@ export async function middleware(request: NextRequest) {
     },
   );
 
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (
+    !user &&
+    !isAuthBypassEnabledForMiddleware() &&
+    isPageRequest(request.nextUrl.pathname) &&
+    isProtectedPagePath(request.nextUrl.pathname)
+  ) {
+    return redirectToLogin(request);
+  }
 
   return withSecurityHeaders(response);
 }

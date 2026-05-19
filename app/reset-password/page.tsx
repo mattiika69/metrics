@@ -1,4 +1,6 @@
-import { redirect } from "next/navigation";
+import Link from "next/link";
+import { PasswordField } from "@/components/auth/password-field";
+import { AuthSubmitButton } from "@/components/auth/submit-button";
 import { updatePasswordAction } from "@/lib/auth/actions";
 import { createClient } from "@/lib/supabase/server";
 
@@ -21,8 +23,21 @@ export default async function ResetPasswordPage({ searchParams }: PageProps) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect(
-      "/forgot-password?error=Reset%20link%20expired.%20Request%20a%20new%20one.",
+    return (
+      <main className="auth-shell">
+        <section className="auth-panel">
+          <div className="auth-heading">
+            <h1>HyperOptimal</h1>
+            <p>Reset your password</p>
+          </div>
+          <p className="notice error">
+            Use the link from your reset email to set a new password.
+          </p>
+          <Link href="/forgot-password" className="auth-link-button">
+            Request a new link
+          </Link>
+        </section>
+      </main>
     );
   }
 
@@ -33,23 +48,28 @@ export default async function ResetPasswordPage({ searchParams }: PageProps) {
   return (
     <main className="auth-shell">
       <section className="auth-panel">
-        <p className="eyebrow">HyperOptimal Metrics</p>
-        <h1>Choose a new password</h1>
-        <p className="lede">Use a strong password for your account.</p>
+        <div className="auth-heading">
+          <h1>HyperOptimal</h1>
+          <p>Set your new password</p>
+        </div>
         {message ? <p className="notice">{message}</p> : null}
         {error ? <p className="notice error">{error}</p> : null}
-        <form action={updatePasswordAction} className="form-stack">
-          <label>
-            New password
-            <input
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              minLength={8}
-              required
-            />
-          </label>
-          <button type="submit">Update password</button>
+        <form action={updatePasswordAction} className="auth-form">
+          <PasswordField
+            name="password"
+            label="New Password"
+            autoComplete="new-password"
+            minLength={8}
+            helper="Use 8+ characters with upper/lowercase, a number, and a symbol."
+          />
+          <PasswordField
+            name="confirmPassword"
+            label="Confirm New Password"
+            autoComplete="new-password"
+          />
+          <AuthSubmitButton pendingText="Updating...">
+            Update password
+          </AuthSubmitButton>
         </form>
       </section>
     </main>

@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { PasswordField } from "@/components/auth/password-field";
+import { AuthSubmitButton } from "@/components/auth/submit-button";
 import { signInAction } from "@/lib/auth/actions";
 import { isAuthBypassEnabled } from "@/lib/auth/bypass";
+import { authRedirectParam, readAuthRedirectParam } from "@/lib/auth/redirects";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -21,7 +24,7 @@ function isInviteNext(next: string | undefined) {
 
 export default async function LoginPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const next = getParam(params, "next");
+  const next = readAuthRedirectParam(params, "/dashboard");
 
   if (isAuthBypassEnabled() && !isInviteNext(next)) {
     redirect("/dashboard");
@@ -31,7 +34,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
   const error = getParam(params, "error");
   const message = getParam(params, "message");
   const signupParams = new URLSearchParams();
-  if (next) signupParams.set("next", next);
+  if (next !== "/dashboard") signupParams.set(authRedirectParam, next);
   if (email) signupParams.set("email", email);
   const signupQuery = signupParams.toString();
   const signupHref = signupQuery ? `/signup?${signupQuery}` : "/signup";
@@ -46,7 +49,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
         {message ? <p className="notice">{message}</p> : null}
         {error ? <p className="notice error">{error}</p> : null}
         <form action={signInAction} className="auth-form">
-          {next ? <input type="hidden" name="next" value={next} /> : null}
+          <input type="hidden" name={authRedirectParam} value={next} />
           <label className="auth-field">
             Email
             <input
@@ -57,27 +60,13 @@ export default async function LoginPage({ searchParams }: PageProps) {
               required
             />
           </label>
-          <label className="auth-field">
-            <span className="auth-label-row">
-              Password
-              <Link href="/forgot-password">Forgot password?</Link>
-            </span>
-            <span className="auth-password-wrap">
-              <input
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-              />
-              <span className="auth-eye" aria-hidden="true">
-                <svg viewBox="0 0 24 24" focusable="false">
-                  <path d="M2.4 12s3.4-5.7 9.6-5.7 9.6 5.7 9.6 5.7-3.4 5.7-9.6 5.7S2.4 12 2.4 12Z" />
-                  <circle cx="12" cy="12" r="2.8" />
-                </svg>
-              </span>
-            </span>
-          </label>
-          <button type="submit">Sign in</button>
+          <PasswordField
+            name="password"
+            label="Password"
+            autoComplete="current-password"
+            action={<Link href="/forgot-password">Forgot password?</Link>}
+          />
+          <AuthSubmitButton pendingText="Signing in...">Sign in</AuthSubmitButton>
         </form>
         <p className="auth-switch">
           Don&apos;t have an account? <Link href={signupHref}>Sign up</Link>

@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import Link from "next/link";
 import { signOutAction } from "@/lib/auth/actions";
+import { authRedirectParam } from "@/lib/auth/redirects";
 import {
   acceptTeamInvitationAction,
   acceptTeamInvitationByEmailAction,
@@ -55,7 +56,7 @@ function isExpired(invitation: Pick<PendingInvitation, "expires_at">) {
 
 function authHref(path: "/login" | "/signup", next: string, email: string) {
   const params = new URLSearchParams();
-  params.set("next", next);
+  params.set(authRedirectParam, next);
   if (email) params.set("email", email);
   return `${path}?${params.toString()}`;
 }
@@ -211,10 +212,16 @@ export default async function AcceptTeamInvitationPage({
         ) : null}
         {!token && !user ? (
           <div className="button-row">
-            <Link href="/login?next=%2Fsettings%2Fteam%2Faccept" className="button-primary">
+            <Link
+              href={`/login?${authRedirectParam}=%2Fsettings%2Fteam%2Faccept`}
+              className="button-primary"
+            >
               Log in
             </Link>
-            <Link href="/signup?next=%2Fsettings%2Fteam%2Faccept" className="button-secondary">
+            <Link
+              href={`/signup?${authRedirectParam}=%2Fsettings%2Fteam%2Faccept`}
+              className="button-secondary"
+            >
               Create account
             </Link>
           </div>

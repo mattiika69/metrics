@@ -3,6 +3,11 @@
 import { createHash, randomBytes } from "node:crypto";
 import { redirect } from "next/navigation";
 import { clearActiveTenantId } from "@/lib/auth/active-tenant";
+import {
+  appendAuthRedirect,
+  readAuthRedirectFormValue,
+  sanitizeAuthRedirect,
+} from "@/lib/auth/redirects";
 import { isValidEmailAddress, sendTenantEmail } from "@/lib/email/send";
 import {
   escapeEmailHtml,
@@ -32,21 +37,33 @@ function redirectWith(path: string, key: "error" | "message", value: string): ne
 }
 
 function withNext(path: string, next: string, fallback: string) {
-  if (next === fallback) {
-    return path;
-  }
-
-  const separator = path.includes("?") ? "&" : "?";
-  return `${path}${separator}next=${encodeURIComponent(next)}`;
+  return appendAuthRedirect(path, next, fallback);
 }
 
 function safeNextPath(value: string, fallback: string) {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) {
-    return fallback;
-  }
-
-  return value;
+  return sanitizeAuthRedirect(value, fallback);
 }
+
+const passwordPolicyMessage =
+  "Password must include: 8+ length, uppercase letter, lowercase letter, number, and symbol.";
+
+function validatePasswordPolicy(password: string) {
+  return (
+    password.length >= 8 &&
+    /[A-Z]/.test(password) &&
+    /[a-z]/.test(password) &&
+    /\d/.test(password) &&
+    /[^A-Za-z0-9]/.test(password)
+  );
+}
+
+function isExistingAccountError(message: string) {
+  const normalized = message.toLowerCase();
+  return normalized.includes("already") && normalized.includes("registered");
+}
+
+const loginMismatchMessage =
+  "Email or password did not match. Try again or reset your password.";
 
 function getMembershipTenant(
   membership:
@@ -322,13 +339,15 @@ async function checkAuthRateLimit(
   action: string,
   email: string | null,
   redirectPath: string,
+  limit = 5,
+  windowSeconds = 600,
 ) {
   const ip = await getRequestIp();
   const result = await checkRateLimit({
     route: `auth:${action}`,
     key: `${ip}:${email ?? "unknown"}`,
-    limit: 5,
-    windowSeconds: 600,
+    limit,
+    windowSeconds,
     metadata: {
       action,
       email: email ?? null,
@@ -339,7 +358,11 @@ async function checkAuthRateLimit(
     redirectWith(
       redirectPath,
       "error",
-      "Too many attempts. Try again later.",
+      action === "forgot_password"
+        ? "Too many password reset requests. Please wait and try again."
+        : action === "login"
+          ? "Too many login attempts. Please wait and try again."
+          : "Too many attempts. Please wait and try again.",
     );
   }
 }
@@ -351,7 +374,7 @@ export async function signUpAction(formData: FormData) {
   const firstName = formValue(formData, "firstName");
   const lastName = formValue(formData, "lastName");
   const organizationName = formValue(formData, "organizationName");
-  const next = safeNextPath(formValue(formData, "next"), "/get-started");
+  const next = readAuthRedirectFormValue(formData, "/get-started");
   const isInviteFlow = next.startsWith("/settings/team/accept");
 
   if (!isValidEmailAddress(email) || !password || (!organizationName && !isInviteFlow)) {
@@ -359,8 +382,16 @@ export async function signUpAction(formData: FormData) {
       withNext("/signup", next, "/get-started"),
       "error",
       isInviteFlow
-        ? "A valid email and password are required."
+        ? "Please enter a valid email address."
         : "Organization, valid email, and password are required.",
+    );
+  }
+
+  if (!validatePasswordPolicy(password)) {
+    redirectWith(
+      withNext("/signup", next, "/get-started"),
+      "error",
+      passwordPolicyMessage,
     );
   }
 
@@ -380,12 +411,14 @@ export async function signUpAction(formData: FormData) {
     email,
     password,
     options: {
-      emailRedirectTo: `${await getAppBaseUrl()}/auth/callback?next=${encodeURIComponent(next)}`,
+      emailRedirectTo: `${await getAppBaseUrl()}/auth/callback?redirect=${encodeURIComponent(next)}`,
       data: {
         first_name: firstName || null,
         last_name: lastName || null,
         full_name: fullName || null,
         organization_name: organizationName || null,
+        onboarding_organization_name: organizationName || null,
+        onboarding_bootstrap_status: isInviteFlow ? "invite" : "pending",
       },
     },
   });
@@ -399,7 +432,20 @@ export async function signUpAction(formData: FormData) {
         error: error.message,
       },
     });
-    redirectWith(withNext("/signup", next, "/get-started"), "error", error.message);
+    if (isInviteFlow && isExistingAccountError(error.message)) {
+      redirectWith(
+        withNext("/login", next, "/dashboard"),
+        "message",
+        "That account already exists. Log in to accept the invitation.",
+      );
+    }
+    redirectWith(
+      withNext("/signup", next, "/get-started"),
+      "error",
+      isExistingAccountError(error.message)
+        ? "An account with this email already exists. Please sign in instead."
+        : error.message,
+    );
   }
 
   await logAuditEvent({
@@ -418,27 +464,32 @@ export async function signUpAction(formData: FormData) {
     redirect(next);
   }
 
-  redirectWith(
-    withNext("/login", next, "/dashboard"),
-    "message",
-    "Account created. Check your email if confirmation is required, then log in.",
-  );
+  const signupSuccessParams = new URLSearchParams({
+    success: "1",
+    email,
+  });
+  if (next !== "/get-started") {
+    signupSuccessParams.set("redirect", next);
+  }
+  redirect(`/signup?${signupSuccessParams.toString()}`);
 }
 
 export async function signInAction(formData: FormData) {
   const email = normalizeEmail(formValue(formData, "email"));
   const password = formValue(formData, "password");
-  const next = safeNextPath(formValue(formData, "next"), "/dashboard");
+  const next = readAuthRedirectFormValue(formData, "/dashboard");
 
   if (!isValidEmailAddress(email) || !password) {
     redirectWith(
       withNext("/login", next, "/dashboard"),
       "error",
-      "Email and password are required.",
+      isValidEmailAddress(email)
+        ? loginMismatchMessage
+        : "Please enter a valid email address.",
     );
   }
 
-  await checkAuthRateLimit("login", email, withNext("/login", next, "/dashboard"));
+  await checkAuthRateLimit("login", email, withNext("/login", next, "/dashboard"), 10, 60);
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -455,10 +506,13 @@ export async function signInAction(formData: FormData) {
         error: error.message,
       },
     });
+    const normalizedError = error.message.toLowerCase();
     redirectWith(
       withNext("/login", next, "/dashboard"),
       "error",
-      "Email or password was not accepted. Try again or reset your password.",
+      normalizedError.includes("email") && normalizedError.includes("confirm")
+        ? "Please verify your email before signing in."
+        : loginMismatchMessage,
     );
   }
 
@@ -499,10 +553,10 @@ export async function forgotPasswordAction(formData: FormData) {
   const email = normalizeEmail(formValue(formData, "email"));
 
   if (!isValidEmailAddress(email)) {
-    redirectWith("/forgot-password", "error", "Enter a valid email address.");
+    redirectWith("/forgot-password", "error", "Please enter a valid email address.");
   }
 
-  await checkAuthRateLimit("forgot_password", email, "/forgot-password");
+  await checkAuthRateLimit("forgot_password", email, "/forgot-password", 3, 60);
 
   const result = await sendPasswordResetEmail(email);
 
@@ -530,18 +584,27 @@ export async function forgotPasswordAction(formData: FormData) {
     },
   });
 
-  redirectWith(
-    "/forgot-password",
-    "message",
-    "If that email exists, a reset link has been sent.",
+  redirect(
+    `/forgot-password?message=${encodeURIComponent(
+      `If an account exists for ${email}, we've sent a password reset link. Click the link to continue.`,
+    )}&email=${encodeURIComponent(email)}`,
   );
 }
 
 export async function updatePasswordAction(formData: FormData) {
   const password = formValue(formData, "password");
+  const confirmPassword = formValue(formData, "confirmPassword");
 
   if (!password) {
     redirectWith("/reset-password", "error", "New password is required.");
+  }
+
+  if (!validatePasswordPolicy(password)) {
+    redirectWith("/reset-password", "error", passwordPolicyMessage);
+  }
+
+  if (confirmPassword && password !== confirmPassword) {
+    redirectWith("/reset-password", "error", "Passwords must match.");
   }
 
   await checkAuthRateLimit("reset_password", null, "/reset-password");
@@ -581,7 +644,13 @@ export async function updatePasswordAction(formData: FormData) {
     targetId: user?.id ?? null,
   });
 
-  redirectWith("/dashboard", "message", "Password updated.");
+  await supabase.auth.signOut();
+  await clearActiveTenantId();
+  redirectWith(
+    "/login",
+    "message",
+    "Password updated! Your password has been successfully reset. Sign in to continue.",
+  );
 }
 
 export async function createTenantAction(formData: FormData) {

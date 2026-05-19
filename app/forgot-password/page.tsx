@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AuthSubmitButton } from "@/components/auth/submit-button";
 import { forgotPasswordAction } from "@/lib/auth/actions";
 
 type PageProps = {
@@ -17,6 +18,27 @@ export default async function ForgotPasswordPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const error = getParam(params, "error");
   const message = getParam(params, "message");
+  const email = getParam(params, "email") ?? "";
+
+  if (message) {
+    return (
+      <main className="auth-shell">
+        <section className="auth-panel">
+          <div className="auth-success-icon" aria-hidden="true">✉</div>
+          <div className="auth-heading">
+            <h1>Check your email</h1>
+            <p>
+              If an account exists for {email || "that email"}, we&apos;ve sent a
+              password reset link. Click the link to continue.
+            </p>
+          </div>
+          <Link href="/login" className="auth-link-button">
+            Back to Sign In
+          </Link>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="auth-shell">
@@ -28,7 +50,6 @@ export default async function ForgotPasswordPage({ searchParams }: PageProps) {
         <p className="auth-copy">
           Enter your email address and we&apos;ll send you a link to reset your password.
         </p>
-        {message ? <p className="notice">{message}</p> : null}
         {error ? <p className="notice error">{error}</p> : null}
         <form action={forgotPasswordAction} className="auth-form">
           <label className="auth-field">
@@ -41,7 +62,9 @@ export default async function ForgotPasswordPage({ searchParams }: PageProps) {
               required
             />
           </label>
-          <button type="submit">Send reset link</button>
+          <AuthSubmitButton pendingText="Sending...">
+            Send reset link
+          </AuthSubmitButton>
         </form>
         <p className="auth-switch">
           Remember your password? <Link href="/login">Sign in</Link>

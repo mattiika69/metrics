@@ -3,6 +3,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { authRedirectParam } from "@/lib/auth/redirects";
 import { isValidEmailAddress, sendTenantEmail } from "@/lib/email/send";
 import {
   escapeEmailHtml,
@@ -29,15 +30,6 @@ type TeamMembershipRow = {
   tenant_id: string;
   user_id: string;
   role: TeamRole;
-};
-
-type InvitationRow = {
-  id: string;
-  tenant_id: string;
-  email: string;
-  role: "admin" | "member";
-  status: string;
-  expires_at: string;
 };
 
 function formValue(formData: FormData, key: string) {
@@ -180,82 +172,6 @@ async function getExistingMemberByEmail(
 
   if (membershipError) throw new Error(membershipError.message);
   return (memberships?.[0] ?? null) as TeamMembershipRow | null;
-}
-
-async function acceptInvitationRecord(input: {
-  invitation: InvitationRow;
-  userId: string;
-  email: string;
-}) {
-  const admin = createAdminClient();
-  const invitation = input.invitation;
-
-  if (invitation.status !== "pending") {
-    redirectWith("/settings/team/accept", "error", "Invitation is no longer pending.");
-  }
-
-  if (invitation.email !== input.email) {
-    redirectWith("/settings/team/accept", "error", "Log in with the invited email address.");
-  }
-
-  if (new Date(invitation.expires_at).getTime() < Date.now()) {
-    await admin
-      .from("tenant_invitations")
-      .update({
-        status: "expired",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", invitation.id);
-    redirectWith("/settings/team/accept", "error", "Invitation has expired.");
-  }
-
-  const existingMembership = await getTargetMembership(
-    admin,
-    invitation.tenant_id,
-    input.userId,
-  );
-  const role = existingMembership?.role === "owner" ? "owner" : invitation.role;
-  const { error: membershipError } = await admin.from("tenant_memberships").upsert(
-    {
-      tenant_id: invitation.tenant_id,
-      user_id: input.userId,
-      role,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "tenant_id,user_id" },
-  );
-
-  if (membershipError) {
-    redirectWith("/settings/team/accept", "error", membershipError.message);
-  }
-
-  const { error: invitationError } = await admin
-    .from("tenant_invitations")
-    .update({
-      status: "accepted",
-      accepted_by_user_id: input.userId,
-      accepted_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", invitation.id)
-    .eq("status", "pending");
-
-  if (invitationError) {
-    redirectWith("/settings/team/accept", "error", invitationError.message);
-  }
-
-  await logAuditEvent({
-    tenantId: invitation.tenant_id,
-    actorUserId: input.userId,
-    eventType: "team_invitation_accepted",
-    targetType: "tenant_invitation",
-    targetId: invitation.id,
-    metadata: { role },
-  });
-
-  await setActiveTenantId(invitation.tenant_id);
-  revalidatePath("/settings/team");
-  redirectWith("/settings/team", "message", "Invitation accepted.");
 }
 
 export async function inviteTeamMemberAction(formData: FormData) {
@@ -601,7 +517,9 @@ export async function acceptTeamInvitationAction(formData: FormData) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect(`/login?next=${encodeURIComponent(`/settings/team/accept?token=${token}`)}`);
+    redirect(
+      `/login?${authRedirectParam}=${encodeURIComponent(`/settings/team/accept?token=${token}`)}`,
+    );
   }
 
   if (!hasVerifiedEmail(user)) {
@@ -651,7 +569,9 @@ export async function acceptTeamInvitationByEmailAction(formData: FormData) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect(`/login?next=${encodeURIComponent("/settings/team/accept")}`);
+    redirect(
+      `/login?${authRedirectParam}=${encodeURIComponent("/settings/team/accept")}`,
+    );
   }
 
   if (!hasVerifiedEmail(user)) {
@@ -671,36 +591,42 @@ export async function acceptTeamInvitationByEmailAction(formData: FormData) {
     );
   }
 
-  const admin = createAdminClient();
-  let query = admin
-    .from("tenant_invitations")
-    .select("id, tenant_id, email, role, status, expires_at")
-    .eq("email", email)
-    .eq("status", "pending")
-    .order("created_at", { ascending: false })
-    .limit(1);
-
-  if (invitationId) {
-    query = query.eq("id", invitationId);
-  }
-
-  const { data, error } = await query;
-  if (error) {
-    redirectWith("/settings/team/accept", "error", error.message);
-  }
-
-  const invitation = (data?.[0] ?? null) as InvitationRow | null;
-  if (!invitation) {
+  if (!invitationId) {
     redirectWith(
       "/settings/team/accept",
       "error",
-      "No pending invitation was found for this email address.",
+      "Choose an invitation to accept.",
     );
   }
 
-  await acceptInvitationRecord({
-    invitation,
-    userId: user.id,
-    email,
+  const { data, error } = await supabase
+    .rpc("accept_tenant_invitation_by_id", {
+      p_invitation_id: invitationId,
+    })
+    .single();
+
+  if (error || !data) {
+    redirectWith(
+      "/settings/team/accept",
+      "error",
+      error?.message ?? "Unable to accept invitation.",
+    );
+  }
+
+  const accepted = data as AcceptedInvitation;
+  await logAuditEvent({
+    tenantId: accepted.accepted_tenant_id,
+    actorUserId: user.id,
+    eventType: "team_invitation_accepted",
+    targetType: "tenant_invitation",
+    targetId: accepted.invitation_id,
+    metadata: {
+      role: accepted.accepted_role,
+      source: "email_match",
+    },
   });
+
+  await setActiveTenantId(accepted.accepted_tenant_id);
+  revalidatePath("/settings/team");
+  redirectWith("/settings/team", "message", "Invitation accepted.");
 }
