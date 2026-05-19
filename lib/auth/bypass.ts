@@ -20,17 +20,19 @@ type BypassMembership = {
 };
 
 export function isAuthBypassEnabled() {
+  const bypassRequested =
+    process.env.DISABLE_LOGIN_AUTH === "true" ||
+    process.env.AUTH_BYPASS_ENABLED === "true";
+
   if (
-    process.env.NODE_ENV === "production" &&
+    (process.env.NODE_ENV === "production" ||
+      (process.env.VERCEL === "1" && process.env.VERCEL_ENV === "production")) &&
     process.env.ALLOW_PRODUCTION_AUTH_BYPASS !== "true"
   ) {
     return false;
   }
 
-  return (
-    process.env.DISABLE_LOGIN_AUTH === "true" ||
-    process.env.AUTH_BYPASS_ENABLED === "true"
-  );
+  return bypassRequested;
 }
 
 async function findAuthUserByEmail(email: string) {
@@ -90,10 +92,10 @@ async function findAuthUserByEmail(email: string) {
 export async function getAuthBypassContext() {
   const admin = createAdminClient();
   const email =
-    process.env.AUTH_BYPASS_EMAIL ??
-    process.env.AUTH_BYPASS_USER_EMAIL ??
+    process.env.AUTH_BYPASS_EMAIL ||
+    process.env.AUTH_BYPASS_USER_EMAIL ||
     DEFAULT_BYPASS_EMAIL;
-  const tenantName = process.env.AUTH_BYPASS_TENANT_NAME ?? DEFAULT_BYPASS_TENANT_NAME;
+  const tenantName = process.env.AUTH_BYPASS_TENANT_NAME || DEFAULT_BYPASS_TENANT_NAME;
   const configuredUserId = process.env.AUTH_BYPASS_USER_ID;
   const configuredTenantId = process.env.AUTH_BYPASS_TENANT_ID;
   const user = configuredUserId
