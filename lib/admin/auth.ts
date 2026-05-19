@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 
+const DEFAULT_ADMIN_EMAILS = ["matt@1000xleads.com"];
+
 export type AdminProfile = {
   user_id: string;
   email: string;
@@ -19,6 +21,39 @@ export type AdminContext = {
   };
   profile: AdminProfile;
 };
+
+function normalizeEmail(email: string | null | undefined) {
+  return email?.trim().toLowerCase() ?? "";
+}
+
+function allowedAdminEmails() {
+  const configured = process.env.ADMIN_EMAILS;
+  const source = configured
+    ? configured.split(",")
+    : DEFAULT_ADMIN_EMAILS;
+
+  return new Set(
+    source
+      .map((email) => normalizeEmail(email))
+      .filter(Boolean),
+  );
+}
+
+function isAllowedGlobalAdmin({
+  user,
+  profile,
+}: {
+  user: { id: string; email?: string | null };
+  profile: AdminProfile;
+}) {
+  if (!profile.is_admin || profile.user_id !== user.id) return false;
+
+  const allowed = allowedAdminEmails();
+  const userEmail = normalizeEmail(user.email);
+  const profileEmail = normalizeEmail(profile.email);
+
+  return allowed.has(userEmail) || allowed.has(profileEmail);
+}
 
 async function getAuthenticatedUser() {
   const supabase = await createClient();
@@ -40,12 +75,15 @@ async function loadAdminContext(user: { id: string; email?: string | null }) {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (error || !profile?.is_admin) return null;
+    if (error || !profile) return null;
+
+    const typedProfile = profile as AdminProfile;
+    if (!isAllowedGlobalAdmin({ user, profile: typedProfile })) return null;
 
     return {
       admin,
       user,
-      profile: profile as AdminProfile,
+      profile: typedProfile,
     };
   } catch {
     return null;

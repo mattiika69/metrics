@@ -1,3 +1,5 @@
+import "server-only";
+
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const DEFAULT_BYPASS_EMAIL = "matt@1000xleads.com";
@@ -24,15 +26,18 @@ export function isAuthBypassEnabled() {
     process.env.DISABLE_LOGIN_AUTH === "true" ||
     process.env.AUTH_BYPASS_ENABLED === "true";
 
-  if (
-    (process.env.NODE_ENV === "production" ||
-      (process.env.VERCEL === "1" && process.env.VERCEL_ENV === "production")) &&
-    process.env.ALLOW_PRODUCTION_AUTH_BYPASS !== "true"
-  ) {
+  if (isProductionRuntime() && process.env.ALLOW_PRODUCTION_AUTH_BYPASS !== "true") {
     return false;
   }
 
   return bypassRequested;
+}
+
+function isProductionRuntime() {
+  return (
+    process.env.NODE_ENV === "production" ||
+    (process.env.VERCEL === "1" && process.env.VERCEL_ENV === "production")
+  );
 }
 
 async function findAuthUserByEmail(email: string) {
@@ -98,6 +103,13 @@ export async function getAuthBypassContext() {
   const tenantName = process.env.AUTH_BYPASS_TENANT_NAME || DEFAULT_BYPASS_TENANT_NAME;
   const configuredUserId = process.env.AUTH_BYPASS_USER_ID;
   const configuredTenantId = process.env.AUTH_BYPASS_TENANT_ID;
+
+  if (isProductionRuntime() && (!configuredUserId || !configuredTenantId)) {
+    throw new Error(
+      "Production auth bypass requires AUTH_BYPASS_USER_ID and AUTH_BYPASS_TENANT_ID.",
+    );
+  }
+
   const user = configuredUserId
     ? ({ id: configuredUserId, email } as BypassUser)
     : ((await findAuthUserByEmail(email)) as BypassUser);
