@@ -1,7 +1,6 @@
 "use server";
 
 import { createHash, randomBytes } from "node:crypto";
-import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { sendTenantEmail } from "@/lib/email/send";
@@ -16,6 +15,7 @@ import { checkRateLimit } from "@/lib/security/rate-limit";
 import { logAuditEvent } from "@/lib/security/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { getAppBaseUrl } from "@/lib/urls/app";
 
 type AcceptedInvitation = {
   accepted_tenant_id: string;
@@ -69,15 +69,6 @@ function membershipRole(value: string): TeamRole | null {
 
 function hashInvitationToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
-}
-
-async function getOrigin() {
-  return (
-    (await headers()).get("origin") ??
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    process.env.NEXT_PUBLIC_APP_URL ??
-    "http://localhost:3000"
-  );
 }
 
 async function sendInvitationEmail(input: {
@@ -351,7 +342,7 @@ export async function inviteTeamMemberAction(formData: FormData) {
     redirectWith("/settings/team", "error", message);
   }
 
-  const inviteUrl = `${await getOrigin()}/settings/team/accept?token=${encodeURIComponent(token)}`;
+  const inviteUrl = `${await getAppBaseUrl()}/settings/team/accept?token=${encodeURIComponent(token)}`;
 
   await logAuditEvent({
     tenantId: tenant.id,

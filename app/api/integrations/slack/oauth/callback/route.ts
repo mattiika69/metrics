@@ -1,4 +1,4 @@
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   exchangeSlackOAuthCode,
@@ -8,6 +8,7 @@ import {
 import { logAuditEvent } from "@/lib/security/audit";
 import { encryptSecretJson } from "@/lib/security/secrets";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getAppBaseUrl } from "@/lib/urls/app";
 
 export const dynamic = "force-dynamic";
 
@@ -26,8 +27,7 @@ export async function GET(request: Request) {
     redirect("/settings/slack?error=invalid_slack_oauth_state");
   }
 
-  const headerStore = await headers();
-  const origin = headerStore.get("origin") ?? process.env.NEXT_PUBLIC_APP_URL ?? url.origin;
+  const origin = await getAppBaseUrl();
   const oauth = await exchangeSlackOAuthCode({ code, origin });
   const teamId = oauth.team?.id?.trim();
   const botToken = oauth.access_token?.trim();

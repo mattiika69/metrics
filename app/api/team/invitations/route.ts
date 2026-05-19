@@ -1,5 +1,4 @@
 import { createHash, randomBytes } from "node:crypto";
-import { headers } from "next/headers";
 import { requireAdminContext, routeIdFromUrl } from "@/lib/api/context";
 import { sendTenantEmail } from "@/lib/email/send";
 import {
@@ -9,6 +8,7 @@ import {
 } from "@/lib/email/templates";
 import { logAuditEvent } from "@/lib/security/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getAppBaseUrl } from "@/lib/urls/app";
 
 export const dynamic = "force-dynamic";
 
@@ -48,15 +48,6 @@ async function getExistingMemberByEmail(
 
   if (membershipError) throw new Error(membershipError.message);
   return memberships?.[0] ?? null;
-}
-
-async function getOrigin() {
-  return (
-    (await headers()).get("origin") ??
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    process.env.NEXT_PUBLIC_APP_URL ??
-    "http://localhost:3000"
-  );
 }
 
 export async function GET() {
@@ -140,7 +131,7 @@ export async function POST(request: Request) {
     metadata: { email, role },
   });
 
-  const inviteUrl = `${await getOrigin()}/invite/accept?token=${encodeURIComponent(rawToken)}`;
+  const inviteUrl = `${await getAppBaseUrl()}/invite/accept?token=${encodeURIComponent(rawToken)}`;
 
   try {
     const subject = productEmailSubject("team_invited");

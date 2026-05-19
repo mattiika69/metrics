@@ -1,6 +1,5 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { sendTenantEmail } from "@/lib/email/send";
 import {
@@ -14,6 +13,7 @@ import { checkRateLimit } from "@/lib/security/rate-limit";
 import { createStripeClient } from "@/lib/stripe/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { getAppBaseUrl } from "@/lib/urls/app";
 
 function formValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -78,14 +78,6 @@ function getStripeOnboardingPriceId() {
   return process.env.STRIPE_ONBOARDING_PRICE_ID ?? process.env.STRIPE_PRICE_ID;
 }
 
-async function getOrigin() {
-  return (
-    (await headers()).get("origin") ??
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    "http://localhost:3000"
-  );
-}
-
 async function resolveEmailTenant(email: string) {
   const admin = createAdminClient();
   const { data: profiles } = await admin
@@ -117,8 +109,8 @@ async function resolveEmailTenant(email: string) {
 
 async function sendPasswordResetEmail(email: string) {
   const admin = createAdminClient();
-  const origin = await getOrigin();
-  const redirectTo = `${origin}/auth/callback?next=/reset-password`;
+  const origin = await getAppBaseUrl();
+  const redirectTo = `${origin}/auth/hash-callback`;
   const { data, error } = await admin.auth.admin.generateLink({
     type: "recovery",
     email,
@@ -246,7 +238,7 @@ export async function signUpAction(formData: FormData) {
     email,
     password,
     options: {
-      emailRedirectTo: `${await getOrigin()}/auth/callback?next=${encodeURIComponent(next)}`,
+      emailRedirectTo: `${await getAppBaseUrl()}/auth/callback?next=${encodeURIComponent(next)}`,
       data: {
         first_name: firstName || null,
         last_name: lastName || null,
@@ -415,6 +407,15 @@ export async function updatePasswordAction(formData: FormData) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirectWith(
+      "/forgot-password",
+      "error",
+      "Reset link expired. Request a new one.",
+    );
+  }
+
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
@@ -579,7 +580,7 @@ export async function startStripeCheckoutAction() {
 
   const admin = createAdminClient();
   const stripe = createStripeClient();
-  const origin = await getOrigin();
+  const origin = await getAppBaseUrl();
   const { data: existingCustomer } = await admin
     .from("billing_customers")
     .select("stripe_customer_id")

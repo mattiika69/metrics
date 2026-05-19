@@ -1,4 +1,4 @@
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { requireApiTenant } from "@/lib/auth/api";
 import {
@@ -7,6 +7,7 @@ import {
   slackOAuthStateCookie,
   slackOAuthTenantCookie,
 } from "@/lib/integrations/slack-oauth";
+import { getAppBaseUrl } from "@/lib/urls/app";
 
 export const dynamic = "force-dynamic";
 
@@ -15,8 +16,7 @@ export async function GET() {
   if ("error" in context) return context.error;
 
   const state = createSlackOAuthState();
-  const headerStore = await headers();
-  const origin = headerStore.get("origin") ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const origin = await getAppBaseUrl();
   const cookieStore = await cookies();
   cookieStore.set(slackOAuthStateCookie, state, {
     httpOnly: true,

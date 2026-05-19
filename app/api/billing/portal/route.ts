@@ -1,18 +1,9 @@
-import { headers } from "next/headers";
 import { requireAdminContext } from "@/lib/api/context";
 import { logAuditEvent } from "@/lib/security/audit";
 import { createStripeClient } from "@/lib/stripe/server";
+import { getAppBaseUrl } from "@/lib/urls/app";
 
 export const dynamic = "force-dynamic";
-
-async function getOrigin() {
-  return (
-    (await headers()).get("origin") ??
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    process.env.NEXT_PUBLIC_APP_URL ??
-    "http://localhost:3000"
-  );
-}
 
 export async function POST() {
   const result = await requireAdminContext();
@@ -36,7 +27,7 @@ export async function POST() {
   const stripe = createStripeClient();
   const session = await stripe.billingPortal.sessions.create({
     customer: customer.stripe_customer_id,
-    return_url: `${await getOrigin()}/settings/billing`,
+    return_url: `${await getAppBaseUrl()}/settings/billing`,
   });
 
   await logAuditEvent({

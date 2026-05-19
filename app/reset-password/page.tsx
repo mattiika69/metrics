@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { updatePasswordAction } from "@/lib/auth/actions";
-import { isAuthBypassEnabled } from "@/lib/auth/bypass";
-import { requireUser } from "@/lib/auth/session";
+import { createClient } from "@/lib/supabase/server";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -16,11 +15,17 @@ function getParam(
 }
 
 export default async function ResetPasswordPage({ searchParams }: PageProps) {
-  if (isAuthBypassEnabled()) {
-    redirect("/dashboard");
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect(
+      "/forgot-password?error=Reset%20link%20expired.%20Request%20a%20new%20one.",
+    );
   }
 
-  await requireUser();
   const params = await searchParams;
   const error = getParam(params, "error");
   const message = getParam(params, "message");

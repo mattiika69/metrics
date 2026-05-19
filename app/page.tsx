@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { isAuthBypassEnabled } from "@/lib/auth/bypass";
 import { createClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   if (isAuthBypassEnabled()) {
     redirect("/dashboard");
