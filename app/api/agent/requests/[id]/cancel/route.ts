@@ -13,13 +13,18 @@ export async function POST(_request: Request, { params }: RouteContext) {
 
   const { context } = result;
   const { id } = await params;
-  const { error } = await context.supabase
+  const { data: cancelledRequest, error } = await context.supabase
     .from("agent_requests")
     .update({ status: "cancelled", updated_at: new Date().toISOString() })
     .eq("tenant_id", context.tenant.id)
-    .eq("id", id);
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
 
   if (error) return Response.json({ error: error.message }, { status: 400 });
+  if (!cancelledRequest) {
+    return Response.json({ error: "Agent request not found." }, { status: 404 });
+  }
 
   await logAuditEvent({
     tenantId: context.tenant.id,
