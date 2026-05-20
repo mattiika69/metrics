@@ -103,22 +103,6 @@ type SalesEventRow = {
   raw_data: unknown;
 };
 
-const weeklyRowsDescending = [
-  "May 10 - May 15, 2026",
-  "May 3 - May 9, 2026",
-  "Apr 26 - May 2, 2026",
-  "Apr 19 - Apr 25, 2026",
-  "Apr 12 - Apr 18, 2026",
-];
-
-const weeklyRowsAscending = [
-  "Apr 16 - Apr 18, 2026",
-  "Apr 19 - Apr 25, 2026",
-  "Apr 26 - May 2, 2026",
-  "May 3 - May 9, 2026",
-  "May 10 - May 15, 2026",
-];
-
 const pageTabs: Partial<Record<MetricTabKey, PageTab[]>> = {
   financial: [
     { key: "overview", label: "Overview", href: "/finance" },
@@ -368,10 +352,12 @@ function DataTable({
   columns,
   rows,
   note,
+  emptyMessage = "No synced period data yet.",
 }: {
   columns: TableColumn[];
   rows: TableRow[];
   note?: React.ReactNode;
+  emptyMessage?: string;
 }) {
   return (
     <>
@@ -393,14 +379,20 @@ function DataTable({
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
-                <tr key={row.label} className={row.total ? "total" : ""}>
-                  <td>{row.label}</td>
-                  {row.cells.map((cell, index) => (
-                    <td key={`${row.label}-${columns[index]?.label ?? index}`}>{cell}</td>
-                  ))}
+              {rows.length === 0 ? (
+                <tr>
+                  <td className="source-empty-cell" colSpan={columns.length + 1}>{emptyMessage}</td>
                 </tr>
-              ))}
+              ) : (
+                rows.map((row) => (
+                  <tr key={row.label} className={row.total ? "total" : ""}>
+                    <td>{row.label}</td>
+                    {row.cells.map((cell, index) => (
+                      <td key={`${row.label}-${columns[index]?.label ?? index}`}>{cell}</td>
+                    ))}
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -413,6 +405,7 @@ function DataTable({
 function buildFinancialTable(
   payload: Awaited<ReturnType<typeof loadMetricSnapshotPayload>>,
 ) {
+  const hasSnapshot = Boolean(payload.calculatedAt);
   const revenue = metricNumber(payload, "revenue") ?? metricNumber(payload, "cash_in") ?? 0;
   const cashOut = metricNumber(payload, "cash_out") ?? metricNumber(payload, "expenses") ?? 0;
   const netCashFlow = metricNumber(payload, "net_cash_flow") ?? revenue - cashOut;
@@ -422,10 +415,6 @@ function buildFinancialTable(
   const variableCosts = metricNumber(payload, "variable_costs");
   const cac = metricNumber(payload, "cac");
   const fulfillment = metricNumber(payload, "fulfillment_costs");
-  const empty = weeklyRowsDescending.map((label) => ({
-    label,
-    cells: ["$0", "$0", "$0", "-", "$0", "-", "$0", "-", "-", "-", "-"],
-  }));
 
   return {
     columns: [
@@ -441,9 +430,8 @@ function buildFinancialTable(
       "CAC %",
       "Fulfillment %",
     ].map((label) => ({ label })),
-    rows: [
-      ...empty,
-      {
+    rows: hasSnapshot
+      ? [{
         label: "Total",
         total: true,
         cells: [
@@ -459,12 +447,13 @@ function buildFinancialTable(
           cac ? percent((cac / Math.max(revenue, 1)) * 100) : "-",
           fulfillment ? percent((fulfillment / Math.max(revenue, 1)) * 100) : "-",
         ],
-      },
-    ],
+      }]
+      : [],
   };
 }
 
 function buildSalesTable(payload: Awaited<ReturnType<typeof loadMetricSnapshotPayload>>) {
+  const hasSnapshot = Boolean(payload.calculatedAt);
   const booked = metricNumber(payload, "calls_booked") ?? 0;
   const shown = metricNumber(payload, "calls_shown") ?? 0;
   const qualified = metricNumber(payload, "qualified_calls") ?? 0;
@@ -487,12 +476,8 @@ function buildSalesTable(payload: Awaited<ReturnType<typeof loadMetricSnapshotPa
       "Rev/Call",
       "Rev/Qual",
     ].map((label) => ({ label })),
-    rows: [
-      ...weeklyRowsAscending.map((label) => ({
-        label,
-        cells: ["0", "0", "0", "0", "0", "$0", "—", "—", "—", "—", "—", "—"],
-      })),
-      {
+    rows: hasSnapshot
+      ? [{
         label: "Total",
         total: true,
         cells: [
@@ -509,12 +494,13 @@ function buildSalesTable(payload: Awaited<ReturnType<typeof loadMetricSnapshotPa
           ratioMoney(revenue, booked),
           ratioMoney(revenue, qualified),
         ],
-      },
-    ],
+      }]
+      : [],
   };
 }
 
 function buildChurnTable(payload: Awaited<ReturnType<typeof loadMetricSnapshotPayload>>) {
+  const hasSnapshot = Boolean(payload.calculatedAt);
   const revenue = metricNumber(payload, "revenue") ?? 0;
   const active = metricNumber(payload, "active_clients") ?? 0;
   const newClients = metricNumber(payload, "new_clients") ?? 0;
@@ -523,21 +509,18 @@ function buildChurnTable(payload: Awaited<ReturnType<typeof loadMetricSnapshotPa
 
   return {
     columns: ["Revenue", "Active", "New", "Cancel", "Churn %", "Churn Revenue"].map((label) => ({ label })),
-    rows: [
-      ...weeklyRowsAscending.map((label) => ({
-        label,
-        cells: ["$0", numberValue(active), "0", "0", "0.00%", "$0"],
-      })),
-      {
+    rows: hasSnapshot
+      ? [{
         label: "Total",
         total: true,
         cells: [money(revenue), numberValue(active), numberValue(newClients), numberValue(churned), percent(churn, 2), "$0"],
-      },
-    ],
+      }]
+      : [],
   };
 }
 
 function buildCostPerCallTable(payload: Awaited<ReturnType<typeof loadMetricSnapshotPayload>>) {
+  const hasSnapshot = Boolean(payload.calculatedAt);
   const booked = metricNumber(payload, "calls_booked") ?? 0;
   const shown = metricNumber(payload, "calls_shown") ?? 0;
   const qualified = metricNumber(payload, "qualified_calls") ?? 0;
@@ -559,12 +542,8 @@ function buildCostPerCallTable(payload: Awaited<ReturnType<typeof loadMetricSnap
       "Cost/Offer",
       "Cost/Close",
     ].map((label) => ({ label })),
-    rows: [
-      ...weeklyRowsAscending.map((label) => ({
-        label,
-        cells: ["0", "0", "0", "0", "0", "$0", "-", "-", "-", "-", "-"],
-      })),
-      {
+    rows: hasSnapshot
+      ? [{
         label: "Total",
         total: true,
         cells: [
@@ -580,21 +559,17 @@ function buildCostPerCallTable(payload: Awaited<ReturnType<typeof loadMetricSnap
           ratioMoney(costs, offers),
           ratioMoney(costs, closed),
         ],
-      },
-    ],
+      }]
+      : [],
   };
 }
 
-function buildInputsTable() {
+function buildInputsTable(payload: Awaited<ReturnType<typeof loadMetricSnapshotPayload>>) {
+  const hasSnapshot = Boolean(payload.calculatedAt);
+
   return {
     columns: ["Paid Ads", "Cold Email", "Newsletter"].map((label) => ({ label })),
-    rows: [
-      ...weeklyRowsDescending.map((label) => ({
-        label,
-        cells: ["0", "0", label === "Apr 15 - Apr 18, 2026" ? "3" : "0"],
-      })),
-      { label: "Total", total: true, cells: ["0", "0", "0"] },
-    ],
+    rows: hasSnapshot ? [{ label: "Total", total: true, cells: ["—", "—", "—"] }] : [],
   };
 }
 
@@ -651,7 +626,7 @@ function getTable(kind: TablePageKind, payload: Awaited<ReturnType<typeof loadMe
   if (kind === "sales") return buildSalesTable(payload);
   if (kind === "churn-ltv") return buildChurnTable(payload);
   if (kind === "cost-per-call") return buildCostPerCallTable(payload);
-  return buildInputsTable();
+  return buildInputsTable(payload);
 }
 
 export async function ScalingMetricsTablePage({ kind }: { kind: TablePageKind }) {
@@ -725,17 +700,6 @@ const inputChannelConfigs: Record<InputsChannelPageKind, {
 export async function ScalingInputsChannelPage({ kind }: { kind: InputsChannelPageKind }) {
   const { tenant } = await requireTenant();
   const config = inputChannelConfigs[kind];
-  const rows = [
-    ...weeklyRowsDescending.map((label) => ({
-      label,
-      cells: config.columns.map((column) => column.label === "Spend" || column.label === "Revenue" || column.label === "CAC" ? "$0" : "0"),
-    })),
-    {
-      label: "Total",
-      total: true,
-      cells: config.columns.map((column) => column.label === "Spend" || column.label === "Revenue" || column.label === "CAC" ? "$0" : "0"),
-    },
-  ];
 
   return (
     <AppShell active="metrics-inputs" tenantName={tenant.name}>
@@ -743,7 +707,7 @@ export async function ScalingInputsChannelPage({ kind }: { kind: InputsChannelPa
         <Header title={config.title} />
         <PageTabs tabs={pageTabs.inputs} activeKey={kind} />
         <PeriodToolbar includeSource />
-        <DataTable columns={config.columns} rows={rows} />
+        <DataTable columns={config.columns} rows={[]} emptyMessage={`No synced ${config.title.toLowerCase()} data yet.`} />
       </section>
     </AppShell>
   );
