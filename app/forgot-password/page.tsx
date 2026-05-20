@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AuthSubmitButton } from "@/components/auth/submit-button";
 import { forgotPasswordAction } from "@/lib/auth/actions";
+import { authRedirectParam, appendAuthRedirect, readAuthRedirectParam } from "@/lib/auth/redirects";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -19,6 +20,12 @@ export default async function ForgotPasswordPage({ searchParams }: PageProps) {
   const error = getParam(params, "error");
   const message = getParam(params, "message");
   const email = getParam(params, "email") ?? "";
+  const next = readAuthRedirectParam(params, "/dashboard");
+  const signInHref = (() => {
+    const base = appendAuthRedirect("/login", next, "/dashboard");
+    const separator = base.includes("?") ? "&" : "?";
+    return email ? `${base}${separator}email=${encodeURIComponent(email)}` : base;
+  })();
 
   if (message) {
     return (
@@ -32,7 +39,7 @@ export default async function ForgotPasswordPage({ searchParams }: PageProps) {
               password reset link. Click the link to continue.
             </p>
           </div>
-          <Link href="/login" className="auth-link-button">
+          <Link href={signInHref} className="auth-link-button">
             Back to Sign In
           </Link>
         </section>
@@ -52,12 +59,14 @@ export default async function ForgotPasswordPage({ searchParams }: PageProps) {
         </p>
         {error ? <p className="notice error">{error}</p> : null}
         <form action={forgotPasswordAction} className="auth-form">
+          <input type="hidden" name={authRedirectParam} value={next} />
           <label className="auth-field">
             Email
             <input
               name="email"
               type="email"
               autoComplete="email"
+              defaultValue={email}
               placeholder="you@example.com"
               required
             />
@@ -67,7 +76,7 @@ export default async function ForgotPasswordPage({ searchParams }: PageProps) {
           </AuthSubmitButton>
         </form>
         <p className="auth-switch">
-          Remember your password? <Link href="/login">Sign in</Link>
+          Remember your password? <Link href={signInHref}>Sign in</Link>
         </p>
       </section>
     </main>

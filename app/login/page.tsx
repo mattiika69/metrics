@@ -38,6 +38,11 @@ export default async function LoginPage({ searchParams }: PageProps) {
   if (email) signupParams.set("email", email);
   const signupQuery = signupParams.toString();
   const signupHref = signupQuery ? `/signup?${signupQuery}` : "/signup";
+  const forgotParams = new URLSearchParams();
+  if (next !== "/dashboard") forgotParams.set(authRedirectParam, next);
+  if (email) forgotParams.set("email", email);
+  const forgotQuery = forgotParams.toString();
+  const forgotHref = forgotQuery ? `/forgot-password?${forgotQuery}` : "/forgot-password";
 
   return (
     <main className="auth-shell">
@@ -64,7 +69,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
             name="password"
             label="Password"
             autoComplete="current-password"
-            action={<Link href="/forgot-password">Forgot password?</Link>}
+            action={<Link href={forgotHref}>Forgot password?</Link>}
           />
           <AuthSubmitButton pendingText="Signing in...">Sign in</AuthSubmitButton>
         </form>

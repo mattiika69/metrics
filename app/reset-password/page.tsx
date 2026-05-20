@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PasswordField } from "@/components/auth/password-field";
 import { AuthSubmitButton } from "@/components/auth/submit-button";
 import { updatePasswordAction } from "@/lib/auth/actions";
+import { authRedirectParam, appendAuthRedirect, readAuthRedirectParam } from "@/lib/auth/redirects";
 import { createClient } from "@/lib/supabase/server";
 
 type PageProps = {
@@ -16,11 +17,24 @@ function getParam(
   return Array.isArray(value) ? value[0] : value;
 }
 
+async function getResetUser() {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    return user;
+  } catch {
+    return null;
+  }
+}
+
 export default async function ResetPasswordPage({ searchParams }: PageProps) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const params = await searchParams;
+  const next = readAuthRedirectParam(params, "/dashboard");
+  const forgotPasswordHref = appendAuthRedirect("/forgot-password", next, "/dashboard");
+  const user = await getResetUser();
 
   if (!user) {
     return (
@@ -33,7 +47,7 @@ export default async function ResetPasswordPage({ searchParams }: PageProps) {
           <p className="notice error">
             Use the link from your reset email to set a new password.
           </p>
-          <Link href="/forgot-password" className="auth-link-button">
+          <Link href={forgotPasswordHref} className="auth-link-button">
             Request a new link
           </Link>
         </section>
@@ -41,7 +55,6 @@ export default async function ResetPasswordPage({ searchParams }: PageProps) {
     );
   }
 
-  const params = await searchParams;
   const error = getParam(params, "error");
   const message = getParam(params, "message");
 
@@ -55,6 +68,7 @@ export default async function ResetPasswordPage({ searchParams }: PageProps) {
         {message ? <p className="notice">{message}</p> : null}
         {error ? <p className="notice error">{error}</p> : null}
         <form action={updatePasswordAction} className="auth-form">
+          <input type="hidden" name={authRedirectParam} value={next} />
           <PasswordField
             name="password"
             label="New Password"

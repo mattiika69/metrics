@@ -40,6 +40,11 @@ function withNext(path: string, next: string, fallback: string) {
   return appendAuthRedirect(path, next, fallback);
 }
 
+function withQueryParam(path: string, key: string, value: string) {
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}${key}=${encodeURIComponent(value)}`;
+}
+
 function safeNextPath(value: string, fallback: string) {
   return sanitizeAuthRedirect(value, fallback);
 }
@@ -256,10 +261,10 @@ async function resendPendingInvitationForEmail(email: string) {
   };
 }
 
-async function sendPasswordResetEmail(email: string) {
+async function sendPasswordResetEmail(email: string, next: string) {
   const admin = createAdminClient();
   const origin = await getAppBaseUrl();
-  const redirectTo = `${origin}/auth/hash-callback`;
+  const redirectTo = withNext(`${origin}/auth/hash-callback`, next, "/dashboard");
   const { data, error } = await admin.auth.admin.generateLink({
     type: "recovery",
     email,
@@ -551,14 +556,16 @@ export async function signOutAction(formData?: FormData) {
 
 export async function forgotPasswordAction(formData: FormData) {
   const email = normalizeEmail(formValue(formData, "email"));
+  const next = readAuthRedirectFormValue(formData, "/dashboard");
+  const forgotPasswordPath = withNext("/forgot-password", next, "/dashboard");
 
   if (!isValidEmailAddress(email)) {
-    redirectWith("/forgot-password", "error", "Please enter a valid email address.");
+    redirectWith(forgotPasswordPath, "error", "Please enter a valid email address.");
   }
 
-  await checkAuthRateLimit("forgot_password", email, "/forgot-password", 3, 60);
+  await checkAuthRateLimit("forgot_password", email, forgotPasswordPath, 3, 60);
 
-  const result = await sendPasswordResetEmail(email);
+  const result = await sendPasswordResetEmail(email, next);
 
   if (!result.ok) {
     await logAuditEvent({
@@ -570,7 +577,7 @@ export async function forgotPasswordAction(formData: FormData) {
       },
     });
     redirectWith(
-      "/forgot-password",
+      forgotPasswordPath,
       "error",
       "Password reset email could not be sent. Try again in a few minutes.",
     );
@@ -584,30 +591,33 @@ export async function forgotPasswordAction(formData: FormData) {
     },
   });
 
-  redirect(
-    `/forgot-password?message=${encodeURIComponent(
-      `If an account exists for ${email}, we've sent a password reset link. Click the link to continue.`,
-    )}&email=${encodeURIComponent(email)}`,
+  const messagePath = withQueryParam(
+    forgotPasswordPath,
+    "message",
+    `If an account exists for ${email}, we've sent a password reset link. Click the link to continue.`,
   );
+  redirect(withQueryParam(messagePath, "email", email));
 }
 
 export async function updatePasswordAction(formData: FormData) {
   const password = formValue(formData, "password");
   const confirmPassword = formValue(formData, "confirmPassword");
+  const next = readAuthRedirectFormValue(formData, "/dashboard");
+  const resetPasswordPath = withNext("/reset-password", next, "/dashboard");
 
   if (!password) {
-    redirectWith("/reset-password", "error", "New password is required.");
+    redirectWith(resetPasswordPath, "error", "New password is required.");
   }
 
   if (!validatePasswordPolicy(password)) {
-    redirectWith("/reset-password", "error", passwordPolicyMessage);
+    redirectWith(resetPasswordPath, "error", passwordPolicyMessage);
   }
 
   if (confirmPassword && password !== confirmPassword) {
-    redirectWith("/reset-password", "error", "Passwords must match.");
+    redirectWith(resetPasswordPath, "error", "Passwords must match.");
   }
 
-  await checkAuthRateLimit("reset_password", null, "/reset-password");
+  await checkAuthRateLimit("reset_password", null, resetPasswordPath);
 
   const supabase = await createClient();
   const {
@@ -616,7 +626,7 @@ export async function updatePasswordAction(formData: FormData) {
 
   if (!user) {
     redirectWith(
-      "/forgot-password",
+      withNext("/forgot-password", next, "/dashboard"),
       "error",
       "Reset link expired. Request a new one.",
     );
@@ -634,7 +644,7 @@ export async function updatePasswordAction(formData: FormData) {
         error: error.message,
       },
     });
-    redirectWith("/reset-password", "error", error.message);
+    redirectWith(resetPasswordPath, "error", error.message);
   }
 
   await logAuditEvent({
@@ -647,7 +657,7 @@ export async function updatePasswordAction(formData: FormData) {
   await supabase.auth.signOut();
   await clearActiveTenantId();
   redirectWith(
-    "/login",
+    withNext("/login", next, "/dashboard"),
     "message",
     "Password updated! Your password has been successfully reset. Sign in to continue.",
   );
