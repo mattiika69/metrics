@@ -14,6 +14,10 @@ type SendEmailPayload = {
   html?: string;
 };
 
+function canSendTenantEmail(role: string | null | undefined) {
+  return role === "owner" || role === "admin";
+}
+
 export async function POST(request: Request) {
   const payload = await request.json().catch(() => null) as SendEmailPayload | null;
   if (!payload) {
@@ -58,12 +62,29 @@ export async function POST(request: Request) {
     return Response.json({ error: "Authentication required." }, { status: 401 });
   }
 
-  const { data: isMember } = await supabase.rpc("is_tenant_member", {
-    target_tenant_id: tenantId,
-  });
+  const { data: membership, error: membershipError } = await supabase
+    .from("tenant_memberships")
+    .select("role")
+    .eq("tenant_id", tenantId)
+    .eq("user_id", user.id)
+    .maybeSingle();
 
-  if (!isMember) {
+  if (membershipError) {
+    return Response.json(
+      { error: "Unable to verify tenant access." },
+      { status: 400 },
+    );
+  }
+
+  if (!membership) {
     return Response.json({ error: "Tenant access denied." }, { status: 403 });
+  }
+
+  if (!canSendTenantEmail(membership.role)) {
+    return Response.json(
+      { error: "Only workspace admins can send email." },
+      { status: 403 },
+    );
   }
 
   const rateLimit = await checkRateLimit({
