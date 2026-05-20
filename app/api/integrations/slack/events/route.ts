@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { createChannelAgentRequest, extractAgentRequestText } from "@/lib/agent/channel";
 import { verifySlackSignature } from "@/lib/integrations/slack";
 import { sendSlackMessage } from "@/lib/integrations/slack-oauth";
+import { decodeMetricIntegrationSecret } from "@/lib/integrations/secret-store";
 import { buildChannelCommandResponse, resolveChannelCommand } from "@/lib/metrics/channel";
 import { getRequestIp } from "@/lib/request/ip";
 import { logAuditEvent } from "@/lib/security/audit";
@@ -168,7 +169,8 @@ export async function POST(request: Request) {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      const botToken = secret?.secret_values?.botToken;
+      const secretValues = decodeMetricIntegrationSecret(secret?.secret_values);
+      const botToken = secretValues?.botToken;
       if (typeof botToken === "string") {
         await sendSlackMessage({ botToken, channel, text: responseText });
       }

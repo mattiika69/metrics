@@ -6,6 +6,7 @@ import {
   slackOAuthStateCookie,
   slackOAuthTenantCookie,
 } from "@/lib/integrations/slack-oauth";
+import { storeMetricIntegrationSecret } from "@/lib/integrations/secret-store";
 import { logAuditEvent } from "@/lib/security/audit";
 import { encryptSecretJson } from "@/lib/security/secrets";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -126,11 +127,12 @@ export async function GET(request: Request) {
     redirect(`/settings/slack?error=${encodeURIComponent(error.message)}`);
   }
 
-  await admin.from("metric_integration_secrets").insert({
-    tenant_id: tenantId,
-    tenant_integration_id: integration.id,
+  await storeMetricIntegrationSecret({
+    admin,
+    tenantId,
+    tenantIntegrationId: integration.id,
     provider: "slack",
-    secret_values: { botToken },
+    values: { botToken },
   });
   await admin.from("slack_installations").upsert(
     {
