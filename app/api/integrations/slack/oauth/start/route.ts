@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { requireApiTenant } from "@/lib/auth/api";
+import { requireAdminContext } from "@/lib/api/context";
 import {
   buildSlackAuthorizeUrl,
   createSlackOAuthState,
@@ -12,8 +12,10 @@ import { getAppBaseUrl } from "@/lib/urls/app";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const context = await requireApiTenant();
-  if ("error" in context) return context.error;
+  const result = await requireAdminContext();
+  if ("error" in result) return result.error;
+
+  const { context } = result;
 
   const state = createSlackOAuthState();
   const origin = await getAppBaseUrl();
