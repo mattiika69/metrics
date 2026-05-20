@@ -60,7 +60,7 @@ export async function POST(request: Request) {
   const admin = createAdminClient();
   const { data: integration } = await admin
     .from("tenant_integrations")
-    .select("id, tenant_id")
+    .select("id, tenant_id, external_channel_id")
     .eq("provider", "slack")
     .eq("external_team_id", teamId)
     .neq("status", "disabled")
@@ -70,6 +70,42 @@ export async function POST(request: Request) {
     return Response.json({
       response_type: "ephemeral",
       text: "Slack is not connected to HyperOptimal Metrics yet.",
+    });
+  }
+
+  let approvedChannel = integration.external_channel_id;
+  if (!approvedChannel && channelId) {
+    const { data: channelRow, error: channelError } = await admin
+      .from("tenant_integrations")
+      .update({ external_channel_id: channelId, updated_at: new Date().toISOString() })
+      .eq("id", integration.id)
+      .is("external_channel_id", null)
+      .select("external_channel_id")
+      .maybeSingle();
+
+    if (!channelError && channelRow?.external_channel_id === channelId) {
+      approvedChannel = channelRow.external_channel_id;
+      await logAuditEvent({
+        tenantId: integration.tenant_id,
+        eventType: "slack_channel_connected",
+        targetType: "slack",
+        targetId: channelId,
+        metadata: { teamId, userId },
+      });
+    } else {
+      const { data: latestIntegration } = await admin
+        .from("tenant_integrations")
+        .select("external_channel_id")
+        .eq("id", integration.id)
+        .maybeSingle();
+      approvedChannel = latestIntegration?.external_channel_id ?? null;
+    }
+  }
+
+  if (approvedChannel && channelId && approvedChannel !== channelId) {
+    return Response.json({
+      response_type: "ephemeral",
+      text: "This Slack channel is not connected to HyperOptimal Metrics.",
     });
   }
 

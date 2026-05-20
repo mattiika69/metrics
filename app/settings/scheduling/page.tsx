@@ -36,6 +36,13 @@ function runDate(value: string | null | undefined, fallback: string) {
   return value?.slice(0, 10) ?? fallback;
 }
 
+function deliveryTargetLabel(provider: string | null, displayName: string | null) {
+  if (displayName) return displayName;
+  if (provider === "telegram") return "Connected Telegram chat";
+  if (provider === "slack") return "Connected Slack channel";
+  return "Connected destination";
+}
+
 export default async function SchedulingSettingsPage({ searchParams }: PageProps) {
   const { supabase, tenant, membership } = await requireTenant();
   const params = await searchParams;
@@ -188,7 +195,7 @@ export default async function SchedulingSettingsPage({ searchParams }: PageProps
                   <option value="">Choose when connected</option>
                   {slackChannels.map((channel) => (
                     <option value={channel.external_channel_id ?? ""} key={channel.external_channel_id}>
-                      {channel.display_name ?? channel.external_channel_id}
+                      {deliveryTargetLabel(channel.provider, channel.display_name)}
                     </option>
                   ))}
                 </select>
@@ -199,7 +206,7 @@ export default async function SchedulingSettingsPage({ searchParams }: PageProps
                   <option value="">Choose when connected</option>
                   {telegramChats.map((channel) => (
                     <option value={channel.external_channel_id ?? ""} key={channel.external_channel_id}>
-                      {channel.display_name ?? channel.external_channel_id}
+                      {deliveryTargetLabel(channel.provider, channel.display_name)}
                     </option>
                   ))}
                 </select>

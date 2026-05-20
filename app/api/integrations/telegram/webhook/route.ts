@@ -7,7 +7,7 @@ import {
   isAgentStatusRequest,
   resolveAgentRequestText,
 } from "@/lib/agent/channel";
-import { sendTelegramMessage } from "@/lib/integrations/telegram";
+import { hashTelegramLinkCode, sendTelegramMessage } from "@/lib/integrations/telegram";
 import { buildChannelCommandResponse, resolveChannelCommand } from "@/lib/metrics/channel";
 import { getRequestIp } from "@/lib/request/ip";
 import { logAuditEvent } from "@/lib/security/audit";
@@ -93,8 +93,8 @@ async function consumeLinkCode({
   const admin = createAdminClient();
   const { data: link } = await admin
     .from("telegram_link_codes")
-    .select("id, tenant_id, expires_at, consumed_at")
-    .eq("code", code)
+    .select("id, tenant_id, created_by, expires_at, consumed_at")
+    .eq("code", hashTelegramLinkCode(code))
     .maybeSingle();
 
   if (!link || link.consumed_at || new Date(link.expires_at).getTime() < Date.now()) {
@@ -127,7 +127,7 @@ async function consumeLinkCode({
     external_channel_id: chatId,
     external_user_id: fromUserId,
     display_name: chatTitle ?? "Telegram",
-    settings: { ...baseSettings, linkedBy: "code" },
+    settings: { ...baseSettings, linkedBy: "code", linkedByUserId: link.created_by },
     updated_at: new Date().toISOString(),
   };
 
@@ -148,7 +148,9 @@ async function consumeLinkCode({
       telegram_chat_id: chatId,
       telegram_user_id: fromUserId,
       display_name: chatTitle ?? "Telegram",
+      user_id: link.created_by,
       status: "active",
+      settings: { linkedBy: "code" },
       updated_at: new Date().toISOString(),
     },
     { onConflict: "tenant_id,telegram_chat_id" },
@@ -156,6 +158,7 @@ async function consumeLinkCode({
 
   await logAuditEvent({
     tenantId: link.tenant_id,
+    actorUserId: link.created_by,
     eventType: "telegram_connected",
     targetType: "telegram",
     targetId: chatId,
@@ -235,7 +238,7 @@ export async function POST(request: Request) {
         provider: "telegram",
         target_id: chatId,
         body: result.message,
-        payload: { linkCode },
+        payload: { linked: true },
         status: "sent",
       });
     }

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getAuthBypassContext, isAuthBypassEnabled } from "@/lib/auth/bypass";
 import {
   exchangeSlackOAuthCode,
+  hashSlackOAuthState,
   slackOAuthStateCookie,
   slackOAuthTenantCookie,
 } from "@/lib/integrations/slack-oauth";
@@ -72,8 +73,27 @@ export async function GET(request: Request) {
   }
 
   const admin = createAdminClient();
+  const now = new Date().toISOString();
+  const { data: oauthState } = await admin
+    .from("integration_oauth_states")
+    .update({ consumed_at: now })
+    .eq("tenant_id", tenantId)
+    .eq("provider", "slack")
+    .eq("state_hash", hashSlackOAuthState(state))
+    .is("consumed_at", null)
+    .gt("expires_at", now)
+    .select("id, created_by")
+    .maybeSingle();
+
+  if (!oauthState) {
+    redirect("/settings/slack?error=invalid_slack_oauth_state");
+  }
+
   const authorized = await authorizeSlackOAuthTenant(tenantId, admin);
   if (!authorized) {
+    redirect("/settings/slack?error=slack_oauth_access_denied");
+  }
+  if (oauthState.created_by && oauthState.created_by !== authorized.userId) {
     redirect("/settings/slack?error=slack_oauth_access_denied");
   }
 

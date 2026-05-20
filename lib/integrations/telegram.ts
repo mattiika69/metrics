@@ -1,9 +1,13 @@
 import "server-only";
 
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 
 export function createTelegramLinkCode() {
   return randomBytes(4).toString("hex").toUpperCase();
+}
+
+export function hashTelegramLinkCode(code: string) {
+  return createHash("sha256").update(code.trim().toUpperCase()).digest("hex");
 }
 
 function telegramApiUrl(method: string) {

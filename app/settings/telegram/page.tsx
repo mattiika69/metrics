@@ -94,8 +94,8 @@ export default async function TelegramSettingsPage({ searchParams }: PageProps) 
               <strong>{connection?.display_name ?? "None"}</strong>
             </div>
             <div>
-              <span>Chat ID</span>
-              <strong>{connection?.external_channel_id ?? "None"}</strong>
+              <span>Access</span>
+              <strong>{connection?.external_channel_id ? "Linked to this workspace" : "Not linked yet"}</strong>
             </div>
             <div>
               <span>Updated</span>
@@ -116,7 +116,9 @@ export default async function TelegramSettingsPage({ searchParams }: PageProps) 
               {expires ? ` | expires ${new Date(expires).toLocaleString()}` : null}
             </p>
           ) : null}
-          <p className="muted">Generate a code, then send /link CODE to the Telegram bot.</p>
+          <p className="muted">
+            Generate a short-lived code, then send /link CODE to the Telegram bot from the chat you want to connect.
+          </p>
           <form action={createTelegramLinkCodeAction} className="card-action">
             <button type="submit">Generate link code</button>
           </form>

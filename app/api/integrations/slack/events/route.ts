@@ -133,7 +133,36 @@ export async function POST(request: Request) {
   }
 
   const incomingChannel = payload.event?.channel ?? null;
-  if (integration.external_channel_id && incomingChannel && integration.external_channel_id !== incomingChannel) {
+  let approvedChannel = integration.external_channel_id;
+  if (!approvedChannel && incomingChannel) {
+    const { data: channelRow, error: channelError } = await admin
+      .from("tenant_integrations")
+      .update({ external_channel_id: incomingChannel, updated_at: new Date().toISOString() })
+      .eq("id", integration.id)
+      .is("external_channel_id", null)
+      .select("external_channel_id")
+      .maybeSingle();
+
+    if (!channelError && channelRow?.external_channel_id === incomingChannel) {
+      approvedChannel = channelRow.external_channel_id;
+      await logAuditEvent({
+        tenantId: integration.tenant_id,
+        eventType: "slack_channel_connected",
+        targetType: "slack",
+        targetId: incomingChannel,
+        metadata: { teamId },
+      });
+    } else {
+      const { data: latestIntegration } = await admin
+        .from("tenant_integrations")
+        .select("external_channel_id")
+        .eq("id", integration.id)
+        .maybeSingle();
+      approvedChannel = latestIntegration?.external_channel_id ?? null;
+    }
+  }
+
+  if (approvedChannel && incomingChannel && approvedChannel !== incomingChannel) {
     await markWebhookUnmapped(webhook.id);
     return Response.json({ received: true, mapped: false, reason: "channel_not_connected" });
   }

@@ -127,7 +127,11 @@ export default async function IntegrationDetailPage({ params, searchParams }: Pa
                 ? `Connected on ${formatDate(connectionRecord?.updated_at)}`
                 : definition.comingSoon
                   ? "This connection will be available soon."
-                  : "Add the connection details to start syncing data."}
+                  : definition.id === "slack"
+                    ? "Connect through Slack to approve this workspace."
+                    : definition.id === "telegram"
+                      ? "Generate a code and send it to the Telegram bot from the chat you want to connect."
+                      : "Add the connection details to start syncing data."}
             </span>
           </div>
           {lastSyncAt ? <span>Last refreshed {formatDateTime(lastSyncAt)}</span> : null}
@@ -149,7 +153,7 @@ export default async function IntegrationDetailPage({ params, searchParams }: Pa
               </div>
             ) : definition.id === "telegram" ? (
               <div className="integration-action-stack">
-                <p>Generate a link code, then send it to the Telegram bot to connect your chat.</p>
+                <p>Generate a link code, then send /link CODE to the Telegram bot from the chat you want to connect.</p>
                 {code ? (
                   <p className="integration-code">
                     <span>Link code</span>

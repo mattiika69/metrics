@@ -1,6 +1,6 @@
 import "server-only";
 
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 
 export const slackOAuthStateCookie = "hom_slack_oauth_state";
 export const slackOAuthTenantCookie = "hom_slack_oauth_tenant";
@@ -10,6 +10,10 @@ const tokenUrl = "https://slack.com/api/oauth.v2.access";
 
 export function createSlackOAuthState() {
   return randomBytes(24).toString("hex");
+}
+
+export function hashSlackOAuthState(state: string) {
+  return createHash("sha256").update(state).digest("hex");
 }
 
 export function getSlackRedirectUri(origin: string) {

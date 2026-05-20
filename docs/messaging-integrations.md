@@ -4,8 +4,10 @@ HyperOptimal Metrics must support web, Slack, and Telegram workflows from the st
 
 ## Environment Variables
 
-- `SLACK_BOT_TOKEN`: server-only Slack bot token.
+- `SLACK_CLIENT_ID`: server-only Slack OAuth client ID.
+- `SLACK_CLIENT_SECRET`: server-only Slack OAuth client secret.
 - `SLACK_SIGNING_SECRET`: server-only Slack request signing secret.
+- `SLACK_BOT_TOKEN`: optional server-only fallback token for legacy/manual Slack installs. OAuth-connected tenants store their bot token server-side after connection.
 - `SLACK_APP_TOKEN`: server-only Slack app-level token for socket mode if needed later.
 - `TELEGRAM_BOT_TOKEN`: server-only Telegram bot token.
 - `TELEGRAM_WEBHOOK_SECRET`: server-only webhook secret token sent by Telegram.
@@ -24,6 +26,14 @@ HyperOptimal Metrics must support web, Slack, and Telegram workflows from the st
 - `agent_requests`, `agent_actions`: shared Slack/Telegram/web app agent requests and actions.
 - `metric_learnings`: shared AI Agent memory and saved learnings.
 - `integration_workflow_schedules`, `integration_workflow_runs`, `integration_workflow_run_events`: scheduled Slack/Telegram workflow records.
+
+## Connection Flows
+
+Slack is connected from the web app. A signed-in owner/admin opens Settings > Slack, clicks Connect Slack, completes Slack OAuth, and the callback maps the Slack workspace to the current tenant. The first Slack channel that uses the bot becomes the approved channel for that tenant.
+
+Telegram is connected from the web app. A signed-in owner/admin opens Settings > Telegram, generates a one-time code, and sends `/link CODE` to the Telegram bot from the chat or group to connect. The webhook verifies the code server-side and maps that chat to the current tenant.
+
+Users should never paste provider tokens, Slack team IDs, Slack channel IDs, Telegram chat IDs, or bot setup details into the product UI.
 
 ## Shared Agent Layer
 

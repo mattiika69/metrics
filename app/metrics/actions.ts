@@ -9,7 +9,7 @@ import {
   storeMetricIntegrationSecret,
 } from "@/lib/integrations/secret-store";
 import { sendTelegramMessage } from "@/lib/integrations/telegram";
-import { createTelegramLinkCode } from "@/lib/integrations/telegram";
+import { createTelegramLinkCode, hashTelegramLinkCode } from "@/lib/integrations/telegram";
 import { calculateForecast, normalizeForecastAssumptions } from "@/lib/metrics/forecasting";
 import { generateAndStoreRecommendation } from "@/lib/metrics/recommendations";
 import { getMetricDefinition } from "@/lib/metrics/definitions";
@@ -562,14 +562,39 @@ export async function createTelegramLinkCodeAction() {
     redirect("/settings/telegram?message=Only admins can create Telegram link codes");
   }
 
-  const code = createTelegramLinkCode();
-  const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+  let code = createTelegramLinkCode();
+  let codeHash = hashTelegramLinkCode(code);
+  let expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
   const admin = createAdminClient();
-  await admin.from("telegram_link_codes").insert({
+  let insert = await admin.from("telegram_link_codes").insert({
     tenant_id: tenant.id,
     created_by: user.id,
-    code,
+    code: codeHash,
     expires_at: expiresAt,
+  });
+
+  if (insert.error?.code === "23505") {
+    code = createTelegramLinkCode();
+    codeHash = hashTelegramLinkCode(code);
+    expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+    insert = await admin.from("telegram_link_codes").insert({
+      tenant_id: tenant.id,
+      created_by: user.id,
+      code: codeHash,
+      expires_at: expiresAt,
+    });
+  }
+
+  if (insert.error) {
+    redirectWith("/settings/telegram", "error", "Could not create a Telegram link code. Try again.");
+  }
+
+  await logAuditEvent({
+    tenantId: tenant.id,
+    actorUserId: user.id,
+    eventType: "telegram_link_code_created",
+    targetType: "telegram",
+    metadata: { expiresAt },
   });
   redirect(`/settings/telegram?code=${code}&expires=${encodeURIComponent(expiresAt)}`);
 }

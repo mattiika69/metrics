@@ -21,7 +21,7 @@ export default async function SlackSettingsPage({ searchParams }: PageProps) {
   const error = param(params, "error");
   const { data: connection } = await supabase
     .from("tenant_integrations")
-    .select("id, status, display_name, external_team_id, external_channel_id, settings, updated_at")
+    .select("id, status, display_name, external_channel_id, settings, updated_at")
     .eq("tenant_id", tenant.id)
     .eq("provider", "slack")
     .neq("status", "disabled")
@@ -47,16 +47,12 @@ export default async function SlackSettingsPage({ searchParams }: PageProps) {
           </div>
           <div className="settings-list">
             <div>
-              <span>Slack team</span>
+              <span>Workspace</span>
               <strong>{connection?.display_name ?? "None"}</strong>
             </div>
             <div>
-              <span>Team ID</span>
-              <strong>{connection?.external_team_id ?? "None"}</strong>
-            </div>
-            <div>
-              <span>Default channel</span>
-              <strong>{connection?.external_channel_id ?? "None"}</strong>
+              <span>Approved channel</span>
+              <strong>{connection?.external_channel_id ? "Connected" : "Not selected yet"}</strong>
             </div>
             <div>
               <span>Updated</span>
@@ -74,6 +70,9 @@ export default async function SlackSettingsPage({ searchParams }: PageProps) {
           <p className="muted">
             Use /help, /status, /metrics, /constraints, /forecast, /inputs, /sales, /retention, and /finance.
             You can also ask natural questions or say “remember...” to save useful context.
+          </p>
+          <p className="muted">
+            Connect Slack from this app. The first Slack channel that uses the bot becomes the approved channel for this workspace.
           </p>
           <Link href="/api/integrations/slack/oauth/start" className="button-primary card-action">
             Connect Slack

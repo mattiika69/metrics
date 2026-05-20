@@ -1,5 +1,5 @@
 import { requireApiTenant } from "@/lib/auth/api";
-import { createTelegramLinkCode } from "@/lib/integrations/telegram";
+import { createTelegramLinkCode, hashTelegramLinkCode } from "@/lib/integrations/telegram";
 import { logAuditEvent } from "@/lib/security/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -18,21 +18,23 @@ export async function POST() {
 
   const admin = createAdminClient();
   let code = createTelegramLinkCode();
+  let codeHash = hashTelegramLinkCode(code);
   let expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
   let insert = await admin.from("telegram_link_codes").insert({
     tenant_id: context.tenant.id,
     created_by: context.user.id,
-    code,
+    code: codeHash,
     expires_at: expiresAt,
   });
 
   if (insert.error?.code === "23505") {
     code = createTelegramLinkCode();
+    codeHash = hashTelegramLinkCode(code);
     expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
     insert = await admin.from("telegram_link_codes").insert({
       tenant_id: context.tenant.id,
       created_by: context.user.id,
-      code,
+      code: codeHash,
       expires_at: expiresAt,
     });
   }

@@ -4,6 +4,8 @@ HyperOptimal Metrics uses one tenant-scoped Telegram bot for this app. Telegram 
 
 ## Setup
 
+These are deployer steps only. App users should not paste Telegram tokens, chat IDs, or webhook details into HyperOptimal Metrics.
+
 1. Create a bot with `@BotFather`.
 2. Copy the bot token into Vercel as `TELEGRAM_BOT_TOKEN`.
 3. Generate a secret token and add it to Vercel as `TELEGRAM_WEBHOOK_SECRET`.
@@ -14,14 +16,17 @@ HyperOptimal Metrics uses one tenant-scoped Telegram bot for this app. Telegram 
    ```
 
    Include the `secret_token` parameter with the same value as `TELEGRAM_WEBHOOK_SECRET`.
-5. Add the bot to the private group or chat that should operate this app.
-6. In HyperOptimal Metrics, open Settings > Telegram and generate a link code.
-7. Send `/link CODE` in the Telegram group/chat.
-8. Verify a `tenant_integrations` row exists with:
-   - `provider = telegram`
-   - `external_channel_id = Telegram chat ID`
-   - `tenant_id = the intended workspace`
-   - `status = active`
+
+## User Connection Flow
+
+1. The user signs in to HyperOptimal Metrics.
+2. The user opens Settings > Telegram.
+3. The user generates a link code.
+4. The user sends `/link CODE` to the bot from the private group or chat they want to connect.
+5. The app verifies the code server-side, links that chat to the user's workspace, and marks the code as used.
+6. Settings > Telegram should show the chat as connected.
+
+Link codes are stored hashed, expire quickly, and can be used once. Chat IDs are learned from Telegram webhook updates after the signed-in user generates a code.
 
 ## Required Environment Variables
 
