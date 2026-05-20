@@ -1,5 +1,12 @@
 import { headers } from "next/headers";
-import { createChannelAgentRequest, extractAgentRequestText } from "@/lib/agent/channel";
+import {
+  buildAgentHelpResponse,
+  buildAgentStatusResponse,
+  createChannelAgentRequest,
+  extractAgentRequestText,
+  isAgentHelpRequest,
+  isAgentStatusRequest,
+} from "@/lib/agent/channel";
 import { verifySlackSignature } from "@/lib/integrations/slack";
 import { buildChannelCommandResponse, resolveChannelCommand } from "@/lib/metrics/channel";
 import { getRequestIp } from "@/lib/request/ip";
@@ -43,6 +50,7 @@ export async function POST(request: Request) {
   const teamId = params.get("team_id");
   const channelId = params.get("channel_id");
   const userId = params.get("user_id");
+  const userName = params.get("user_name");
   const commandName = params.get("command");
   const commandText = params.get("text");
   const command = parseCommand(params.get("command"), params.get("text"));
@@ -93,16 +101,28 @@ export async function POST(request: Request) {
     commandName,
     text: commandText,
   });
-  const text = agentRequestText !== null
-    ? (await createChannelAgentRequest({
+  let text: string;
+  if (isAgentHelpRequest(commandText ?? commandName)) {
+    text = buildAgentHelpResponse();
+  } else if (isAgentStatusRequest(commandText ?? commandName)) {
+    text = await buildAgentStatusResponse({
+      tenantId: integration.tenant_id,
+      provider: "slack",
+      channelId,
+    });
+  } else if (agentRequestText !== null) {
+    text = (await createChannelAgentRequest({
       tenantId: integration.tenant_id,
       provider: "slack",
       channelId,
       externalUserId: userId,
+      externalUserName: userName,
       requestText: agentRequestText,
       metadata: { teamId, command: commandName },
-    })).message
-    : await buildChannelCommandResponse(integration.tenant_id, command);
+    })).message;
+  } else {
+    text = await buildChannelCommandResponse(integration.tenant_id, command);
+  }
 
   await admin.from("integration_messages").insert({
     tenant_id: integration.tenant_id,

@@ -21,7 +21,29 @@ HyperOptimal Metrics must support web, Slack, and Telegram workflows from the st
 - `integration_messages`: tenant-scoped message records for read/write/save workflows.
 - `slack_installations`, `slack_links`, `telegram_links`: provider-specific tenant links.
 - `integration_inbound_events`, `integration_outbound_messages`, `integration_processed_events`: canonical event and message records.
+- `agent_requests`, `agent_actions`: shared Slack/Telegram/web app agent requests and actions.
+- `metric_learnings`: shared AI Agent memory and saved learnings.
 - `integration_workflow_schedules`, `integration_workflow_runs`, `integration_workflow_run_events`: scheduled Slack/Telegram workflow records.
+
+## Shared Agent Layer
+
+Slack and Telegram must use the same conversational agent and tool layer. Provider adapters are responsible only for:
+
+- verifying provider signatures or webhook secrets;
+- resolving the tenant from the Slack team/channel or Telegram chat;
+- persisting inbound and outbound messages;
+- passing normalized text into the shared agent layer;
+- delivering the response back to the provider.
+
+New agent capabilities must be added to the shared agent layer first. Do not duplicate business logic in Slack-only or Telegram-only handlers.
+
+Current shared capabilities:
+
+- `/help` and `/status`;
+- metric, constraint, forecast, input, marketing, sales, retention, and finance reads;
+- natural language questions routed through Claude when configured;
+- explicit “remember/save” learnings saved to `metric_learnings`;
+- high-risk or destructive requests saved for confirmation instead of being executed.
 
 ## Rules
 
@@ -32,3 +54,5 @@ HyperOptimal Metrics must support web, Slack, and Telegram workflows from the st
 - Store raw payloads only server-side and keep all tables protected by RLS.
 - Use service-role writes only in trusted webhook handlers.
 - If a Slack or Telegram workflow needs AI, use Claude through Anthropic. Do not introduce OpenAI keys, SDKs, or GPT model names.
+- Load AI Context Document, Training records when present, saved AI Agent learnings, and recent channel conversation before agent writes.
+- If a channel/chat is not mapped to a tenant, acknowledge safely and do not process private app data.

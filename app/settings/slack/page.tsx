@@ -67,11 +67,14 @@ export default async function SlackSettingsPage({ searchParams }: PageProps) {
         <article className="settings-panel">
           <div className="panel-heading">
             <div>
-              <p className="step-label">Commands</p>
+              <p className="step-label">Agent</p>
               <h2>Available in Slack</h2>
             </div>
           </div>
-          <p className="muted">Use /metrics, /constraints, /forecast, /inputs, /sales, /retention, /finance, and /agent.</p>
+          <p className="muted">
+            Use /help, /status, /metrics, /constraints, /forecast, /inputs, /sales, /retention, and /finance.
+            You can also ask natural questions or say “remember...” to save useful context.
+          </p>
           <Link href="/api/integrations/slack/oauth/start" className="button-primary card-action">
             Connect Slack
           </Link>

@@ -1,5 +1,12 @@
 import { headers } from "next/headers";
-import { createChannelAgentRequest, extractAgentRequestText } from "@/lib/agent/channel";
+import {
+  buildAgentHelpResponse,
+  buildAgentStatusResponse,
+  createChannelAgentRequest,
+  isAgentHelpRequest,
+  isAgentStatusRequest,
+  resolveAgentRequestText,
+} from "@/lib/agent/channel";
 import { sendTelegramMessage } from "@/lib/integrations/telegram";
 import { buildChannelCommandResponse, resolveChannelCommand } from "@/lib/metrics/channel";
 import { getRequestIp } from "@/lib/request/ip";
@@ -33,6 +40,9 @@ type TelegramMessage = {
   };
   from?: {
     id?: number | string;
+    username?: string;
+    first_name?: string;
+    last_name?: string;
   };
 };
 
@@ -59,6 +69,14 @@ function objectSettings(value: unknown) {
   return value && typeof value === "object" && !Array.isArray(value)
     ? value as Record<string, unknown>
     : {};
+}
+
+function telegramUserName(message: TelegramMessage | null) {
+  const from = message?.from;
+  if (!from) return null;
+  if (from.username) return `@${from.username}`;
+  const name = [from.first_name, from.last_name].filter(Boolean).join(" ").trim();
+  return name || null;
 }
 
 async function consumeLinkCode({
@@ -275,15 +293,26 @@ export async function POST(request: Request) {
       payload,
     });
 
-    const agentRequestText = extractAgentRequestText({ text });
     const command = commandFromText(text);
+    const agentRequestText = command && command !== "start" && command !== "link"
+      ? null
+      : resolveAgentRequestText({ text, allowNaturalLanguage: true });
     let responseText: string | null = null;
-    if (agentRequestText !== null) {
+    if (isAgentHelpRequest(text)) {
+      responseText = buildAgentHelpResponse();
+    } else if (isAgentStatusRequest(text)) {
+      responseText = await buildAgentStatusResponse({
+        tenantId: integration.tenant_id,
+        provider: "telegram",
+        channelId: chatId,
+      });
+    } else if (agentRequestText !== null) {
       responseText = (await createChannelAgentRequest({
         tenantId: integration.tenant_id,
         provider: "telegram",
         channelId: chatId,
         externalUserId: message?.from?.id ? String(message.from.id) : null,
+        externalUserName: telegramUserName(message),
         requestText: agentRequestText,
         metadata: { messageId: message?.message_id ?? null },
       })).message;

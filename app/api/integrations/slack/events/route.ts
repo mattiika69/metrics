@@ -1,5 +1,12 @@
 import { headers } from "next/headers";
-import { createChannelAgentRequest, extractAgentRequestText } from "@/lib/agent/channel";
+import {
+  buildAgentHelpResponse,
+  buildAgentStatusResponse,
+  createChannelAgentRequest,
+  isAgentHelpRequest,
+  isAgentStatusRequest,
+  resolveAgentRequestText,
+} from "@/lib/agent/channel";
 import { verifySlackSignature } from "@/lib/integrations/slack";
 import { sendSlackMessage } from "@/lib/integrations/slack-oauth";
 import { decodeMetricIntegrationSecret } from "@/lib/integrations/secret-store";
@@ -29,7 +36,10 @@ type SlackEventsPayload = {
     ts?: string;
     channel?: string;
     user?: string;
+    username?: string;
     text?: string;
+    subtype?: string;
+    bot_id?: string;
   };
 };
 
@@ -104,9 +114,14 @@ export async function POST(request: Request) {
     return Response.json({ received: true, mapped: false });
   }
 
+  if (payload.event?.bot_id || payload.event?.subtype === "bot_message") {
+    await markWebhookProcessed(webhook.id);
+    return Response.json({ received: true, ignored: true });
+  }
+
   const { data: integration } = await admin
     .from("tenant_integrations")
-    .select("id, tenant_id")
+    .select("id, tenant_id, external_channel_id")
     .eq("provider", "slack")
     .eq("external_team_id", teamId)
     .neq("status", "disabled")
@@ -115,6 +130,12 @@ export async function POST(request: Request) {
   if (!integration) {
     await markWebhookUnmapped(webhook.id);
     return Response.json({ received: true, mapped: false });
+  }
+
+  const incomingChannel = payload.event?.channel ?? null;
+  if (integration.external_channel_id && incomingChannel && integration.external_channel_id !== incomingChannel) {
+    await markWebhookUnmapped(webhook.id);
+    return Response.json({ received: true, mapped: false, reason: "channel_not_connected" });
   }
 
   try {
@@ -145,21 +166,35 @@ export async function POST(request: Request) {
     });
 
     const eventText = payload.event?.text;
-    const agentRequestText = extractAgentRequestText({ text: eventText });
     const command = commandFromText(eventText);
     const channel = payload.event?.channel;
+    const agentRequestText = command
+      ? null
+      : resolveAgentRequestText({ text: eventText, allowNaturalLanguage: true });
 
-    if ((agentRequestText !== null || command) && channel) {
-      const responseText = agentRequestText !== null
-        ? (await createChannelAgentRequest({
+    if ((agentRequestText !== null || command || isAgentHelpRequest(eventText) || isAgentStatusRequest(eventText)) && channel) {
+      let responseText: string;
+      if (isAgentHelpRequest(eventText)) {
+        responseText = buildAgentHelpResponse();
+      } else if (isAgentStatusRequest(eventText)) {
+        responseText = await buildAgentStatusResponse({
+          tenantId: integration.tenant_id,
+          provider: "slack",
+          channelId: channel,
+        });
+      } else if (agentRequestText !== null) {
+        responseText = (await createChannelAgentRequest({
           tenantId: integration.tenant_id,
           provider: "slack",
           channelId: channel,
           externalUserId: payload.event?.user ?? null,
+          externalUserName: payload.event?.username ?? null,
           requestText: agentRequestText,
           metadata: { teamId, eventType },
-        })).message
-        : await buildChannelCommandResponse(integration.tenant_id, command!);
+        })).message;
+      } else {
+        responseText = await buildChannelCommandResponse(integration.tenant_id, command!);
+      }
       const { data: secret } = await admin
         .from("metric_integration_secrets")
         .select("secret_values")

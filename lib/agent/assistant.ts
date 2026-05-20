@@ -47,7 +47,7 @@ async function loadAgentContext({
   provider: AgentSurface;
   channelId?: string | null;
 }) {
-  const [contextDoc, learnings, messages] = await Promise.all([
+  const [contextDoc, learnings, training, messages] = await Promise.all([
     supabase
       .from("ai_context_docs")
       .select("content")
@@ -60,6 +60,14 @@ async function loadAgentContext({
       .is("archived_at", null)
       .order("updated_at", { ascending: false })
       .limit(8),
+    supabase
+      .from("metric_learnings")
+      .select("title, source, body, updated_at")
+      .eq("tenant_id", tenantId)
+      .is("archived_at", null)
+      .or("source.ilike.%training%,title.ilike.%training%")
+      .order("updated_at", { ascending: false })
+      .limit(6),
     channelId
       ? supabase
         .from("integration_messages")
@@ -72,10 +80,24 @@ async function loadAgentContext({
       : Promise.resolve({ data: [] }),
   ]);
 
+  if (contextDoc.error) throw new Error(`AI context could not be loaded: ${contextDoc.error.message}`);
+  if (learnings.error) throw new Error(`AI learnings could not be loaded: ${learnings.error.message}`);
+  if (training.error) throw new Error(`Training context could not be loaded: ${training.error.message}`);
+  if ("error" in messages && messages.error) {
+    throw new Error(`Conversation context could not be loaded: ${messages.error.message}`);
+  }
+
+  const missingSources: string[] = [];
+  const aiContext = typeof contextDoc.data?.content === "string" ? contextDoc.data.content.trim() : "";
+  if (!aiContext) missingSources.push("AI Context Document");
+  if (!training.data?.length) missingSources.push("Training");
+
   return {
-    aiContext: typeof contextDoc.data?.content === "string" ? contextDoc.data.content.trim() : "",
+    aiContext,
     learnings: learnings.data ?? [],
+    training: training.data ?? [],
     messages: (messages.data ?? []).reverse(),
+    missingSources,
   };
 }
 
@@ -143,6 +165,7 @@ export async function runAgentReply({
 }: AgentReplyInput) {
   const trimmed = requestText.trim();
   const learningBody = extractLearningBody(trimmed);
+  const context = await loadAgentContext({ supabase, tenantId, provider, channelId });
   let savedLearning: { id: string; title: string } | null = null;
 
   if (learningBody) {
@@ -156,7 +179,6 @@ export async function runAgentReply({
     });
   }
 
-  const context = await loadAgentContext({ supabase, tenantId, provider, channelId });
   let responseText = fallbackReply({ requestText: trimmed, savedTitle: savedLearning?.title });
   let model = "deterministic-fallback";
 
@@ -168,7 +190,9 @@ export async function runAgentReply({
         system: [
           "You are the HyperOptimal Metrics AI Agent.",
           "You operate inside the web app, Slack, and Telegram with the same behavior.",
-          "Use the AI Context Document and saved learnings as source material.",
+          "Before acting, use the AI Context Document, Training, AI Agent memory, and recent conversation as source material.",
+          "Only claim a write happened when a tool already saved it. If no save happened, do not imply persistent changes were made.",
+          "For unsupported creates, updates, deletes, or high-risk changes, ask a clarifying question or say confirmation is required.",
           "If something was saved, confirm it clearly and briefly.",
           "Be concise, practical, and conversational. Do not invent data.",
         ].join(" "),
@@ -180,6 +204,14 @@ export async function runAgentReply({
               "",
               "AI Context Document:",
               context.aiContext || "No AI Context Document saved.",
+              "",
+              "Training:",
+              context.training.length
+                ? context.training.map((learning) => `- ${learning.title}: ${learning.body}`).join("\n")
+                : "No Training records saved.",
+              "",
+              "Missing context sources:",
+              context.missingSources.length ? context.missingSources.join(", ") : "None",
               "",
               "Saved learnings:",
               context.learnings.length
