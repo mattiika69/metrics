@@ -1,12 +1,14 @@
-import { requireApiTenant } from "@/lib/auth/api";
+import { requireAdminContext } from "@/lib/api/context";
 import { sendTelegramMessage } from "@/lib/integrations/telegram";
 import { logAuditEvent } from "@/lib/security/audit";
 
 export const dynamic = "force-dynamic";
 
 export async function POST() {
-  const context = await requireApiTenant();
-  if ("error" in context) return context.error;
+  const authResult = await requireAdminContext();
+  if ("error" in authResult) return authResult.error;
+
+  const { context } = authResult;
 
   const { data: connection } = await context.supabase
     .from("tenant_integrations")
