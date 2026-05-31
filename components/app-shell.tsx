@@ -54,6 +54,8 @@ const primaryItems: SidebarItem[] = [
       { id: "metrics-constraints-link", label: "Constraints", href: "/constraints", activeRoutes: ["constraints"] },
       { id: "metrics-reverse-link", label: "Reverse Engineering", href: "/metrics/reverse-engineering", activeRoutes: ["metrics-reverse-engineering"] },
       { id: "metrics-forecast-link", label: "Forecasting", href: "/forecasting", activeRoutes: ["forecasting"] },
+      { id: "metrics-raw-data-link", label: "Raw Data", href: "/metrics/raw-data", activeRoutes: ["metrics-raw-data"] },
+      { id: "metrics-principles-link", label: "Principles", href: "/metrics/principles", activeRoutes: ["metrics-principles"] },
     ],
   },
   {
@@ -108,6 +110,28 @@ const primaryItems: SidebarItem[] = [
     id: "settings",
     label: "Settings",
     href: "/settings/account",
+    section: "settings",
+    children: [
+      { id: "settings-account", label: "Account", href: "/settings/account", activeRoutes: ["settings-account"] },
+      { id: "settings-team", label: "Team", href: "/settings/team", activeRoutes: ["settings-team"] },
+      { id: "settings-billing", label: "Billing", href: "/settings/billing", activeRoutes: ["settings-billing"] },
+      { id: "settings-integrations", label: "Integrations", href: "/settings/integrations", activeRoutes: ["settings-integrations"] },
+      { id: "settings-scheduling", label: "Scheduling", href: "/settings/scheduling", activeRoutes: ["settings-scheduling"] },
+      { id: "settings-slack", label: "Slack", href: "/settings/slack", activeRoutes: ["settings-slack"] },
+      { id: "settings-telegram", label: "Telegram", href: "/settings/telegram", activeRoutes: ["settings-telegram"] },
+      { id: "settings-agent", label: "AI Agent", href: "/settings/agent", activeRoutes: ["settings-agent"] },
+    ],
+  },
+  {
+    id: "account",
+    label: "Account",
+    href: "/account",
+    section: "settings",
+  },
+  {
+    id: "help",
+    label: "Help",
+    href: "/help",
     section: "settings",
   },
 ];

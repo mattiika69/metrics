@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { saveSidebarOrderAction } from "@/lib/navigation/sidebar-actions";
 import type { ActiveRoute } from "@/components/app-shell";
@@ -44,6 +44,7 @@ export function SidebarNav({
   logoutAction?: () => void | Promise<void>;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [orderedItems, setOrderedItems] = useState(items);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -69,7 +70,10 @@ export function SidebarNav({
   }
 
   function isChildActive(child: SidebarChildItem) {
-    if (child.href && pathname === child.href) return true;
+    if (child.href) {
+      const [hrefPathname, hrefSearch = ""] = child.href.split("?");
+      if (pathname === hrefPathname && hrefSearch === searchParams.toString()) return true;
+    }
     return child.activeRoutes?.includes(active) ?? false;
   }
 

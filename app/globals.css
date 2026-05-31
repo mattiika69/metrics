@@ -9573,3 +9573,30 @@ body:has(.app-shell) .team-row-actions select {
     width: 100%;
   }
 }
+
+/* Sidebar page tab normalization */
+.app-shell .sidebar-parent-row,
+.app-shell .sidebar-menu-row,
+body:has(.app-shell) .sidebar-parent-row,
+body:has(.app-shell) .sidebar-menu-row {
+  min-height: 32px !important;
+}
+
+.app-shell .sidebar-parent-trigger,
+.app-shell .sidebar-sub-link,
+.app-shell .sidebar-action-link,
+body:has(.app-shell) .sidebar-parent-trigger,
+body:has(.app-shell) .sidebar-sub-link,
+body:has(.app-shell) .sidebar-action-link {
+  min-height: 32px !important;
+  height: 32px !important;
+  border-radius: 6px !important;
+  padding: 0 10px !important;
+}
+
+.app-shell .sidebar-parent-trigger span,
+body:has(.app-shell) .sidebar-parent-trigger span {
+  font-size: 12.5px !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}

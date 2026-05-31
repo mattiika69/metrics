@@ -10,6 +10,8 @@ const allowedSidebarItemIds = [
   "metrics-sales",
   "metrics-inputs",
   "settings",
+  "account",
+  "help",
 ];
 
 function sanitizeOrder(input: unknown) {
