@@ -17,13 +17,13 @@ test.describe("billing", () => {
     });
   });
 
-  test("legacy checkout route redirects to billing settings", async ({ request }) => {
+  test("legacy checkout route is protected and preserves the redirect", async ({ request }) => {
     const response = await request.get("/billing/checkout", {
       maxRedirects: 0,
     });
 
     expect([307, 308]).toContain(response.status());
-    expect(response.headers().location).toContain("/settings/billing");
+    expect(response.headers().location).toContain("/login?redirect=%2Fbilling%2Fcheckout");
   });
 
   test("billing portal action rejects anonymous callers", async ({ request }) => {
