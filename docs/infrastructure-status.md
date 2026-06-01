@@ -164,19 +164,19 @@ The app shell is implemented to match the Scaling Metrics design system.
 
 Configured in Vercel as of verification:
 
-- Supabase URL, anon key, and service-role key.
+- Supabase URL, publishable/anon key, and service-role key.
+- Stripe live secret key, publishable key, webhook secret, and price ID.
 - Resend API key and sender email.
 - Roezan API key and API base URL.
+- Telegram bot and webhook credentials.
+- Encrypted integration secret.
+- Scheduled workflow and cron secrets.
 - Site URL.
+- App URL alias for OAuth callbacks.
 - Auth bypass variables must remain disabled in production. They are accepted only for local development.
 
 ## External APIs Still Needed Before Full Production Use
 
-- Supabase publishable alias if not already set: `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
-- Stripe live or test keys: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_ONBOARDING_PRICE_ID`.
-- Slack OAuth and event verification: `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, `SLACK_SIGNING_SECRET`.
-- Telegram bot and webhook verification: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `TELEGRAM_BOT_USERNAME`.
+- Slack OAuth and event verification: `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, `SLACK_SIGNING_SECRET`, `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`.
 - Claude API: `ANTHROPIC_API_KEY`, `CLAUDE_MODEL`.
-- Encrypted integration secrets: `INTEGRATION_SECRET_KEY`.
-- Scheduled workflow worker: `SCHEDULE_WORKER_SECRET`.
-- App URL alias for OAuth callbacks if different from site URL: `NEXT_PUBLIC_APP_URL`.
+- Supabase auth SMTP password for local config pushes: `SUPABASE_AUTH_EMAIL_SMTP_PASS`.
