@@ -21,6 +21,8 @@ import { createStripeClient } from "@/lib/stripe/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getAppBaseUrl } from "@/lib/urls/app";
+import { getOptionalServerEnv } from "@/lib/env/server";
+import { getStripeBasicPriceId } from "@/lib/billing/prices";
 
 function formValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -103,7 +105,11 @@ function getMembershipTenant(
 }
 
 function getStripeOnboardingPriceId() {
-  return process.env.STRIPE_ONBOARDING_PRICE_ID ?? process.env.STRIPE_PRICE_ID;
+  try {
+    return getStripeBasicPriceId();
+  } catch {
+    return null;
+  }
 }
 
 function hashInvitationToken(token: string) {
@@ -782,7 +788,7 @@ export async function startStripeCheckoutAction() {
 
   const onboardingPriceId = getStripeOnboardingPriceId();
 
-  if (!process.env.STRIPE_SECRET_KEY || !onboardingPriceId) {
+  if (!getOptionalServerEnv("STRIPE_SECRET_KEY") || !onboardingPriceId) {
     await logAuditEvent({
       tenantId: tenant.id,
       actorUserId: user.id,

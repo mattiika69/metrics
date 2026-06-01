@@ -1,6 +1,7 @@
 import "server-only";
 
 import { headers } from "next/headers";
+import { getRequiredPublicEnv } from "@/lib/env/public";
 
 const PRODUCTION_APP_URL = "https://app.scalingmetrics.com";
 
@@ -47,8 +48,11 @@ export async function getAppBaseUrl() {
   const requestOrigin = headerStore.get("origin") ?? headerStore.get("x-forwarded-host");
   const isProduction =
     process.env.VERCEL_ENV === "production" || process.env.NODE_ENV === "production";
+  const appUrl = isProduction
+    ? getRequiredPublicEnv("NEXT_PUBLIC_APP_URL")
+    : process.env.NEXT_PUBLIC_APP_URL;
   const configuredUrls = [
-    process.env.NEXT_PUBLIC_APP_URL,
+    appUrl,
     process.env.NEXT_PUBLIC_SITE_URL,
     process.env.VERCEL_PROJECT_PRODUCTION_URL,
     process.env.VERCEL_URL,

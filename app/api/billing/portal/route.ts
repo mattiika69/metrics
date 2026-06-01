@@ -2,6 +2,7 @@ import { requireAdminContext } from "@/lib/api/context";
 import { logAuditEvent } from "@/lib/security/audit";
 import { createStripeClient } from "@/lib/stripe/server";
 import { getAppBaseUrl } from "@/lib/urls/app";
+import { EnvConfigurationError } from "@/lib/env/public";
 
 export const dynamic = "force-dynamic";
 
@@ -20,11 +21,15 @@ export async function POST() {
     return Response.json({ error: "Billing has not been started." }, { status: 404 });
   }
 
-  if (!process.env.STRIPE_SECRET_KEY) {
-    return Response.json({ error: "Billing portal is not available." }, { status: 503 });
+  let stripe;
+  try {
+    stripe = createStripeClient();
+  } catch (error) {
+    if (error instanceof EnvConfigurationError) {
+      return Response.json({ error: error.message }, { status: 503 });
+    }
+    throw error;
   }
-
-  const stripe = createStripeClient();
   const session = await stripe.billingPortal.sessions.create({
     customer: customer.stripe_customer_id,
     return_url: `${await getAppBaseUrl()}/settings/billing`,

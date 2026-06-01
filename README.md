@@ -5,6 +5,7 @@ Next.js application wired for Vercel deployment and Supabase.
 ## Infrastructure Status
 
 Current infrastructure rules, connection confirmations, security posture, API inventory, and remaining required external API keys are documented in [docs/infrastructure-status.md](docs/infrastructure-status.md).
+Environment setup and provider-specific variables are documented in [docs/environment-setup.md](docs/environment-setup.md).
 
 The shared SaaS standard is [docs/hyperoptimal-saas-standard.md](docs/hyperoptimal-saas-standard.md). The project-specific architecture reference is [ARCHITECTURE.md](ARCHITECTURE.md).
 

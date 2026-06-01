@@ -1,5 +1,6 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
 import { createResendClient, getDefaultFromEmail } from "@/lib/email/resend";
 import { logAuditEvent } from "@/lib/security/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -15,6 +16,7 @@ type SendTenantEmailInput = {
   text?: string;
   html?: string;
   template?: string;
+  idempotencyKey?: string | null;
   metadata?: Record<string, unknown>;
 };
 
@@ -45,17 +47,46 @@ function serializeError(error: unknown) {
   return "Email could not be sent.";
 }
 
+export function normalizeEmailIdempotencyKey(value: string | null | undefined) {
+  const normalized = value?.trim();
+  if (!normalized) return null;
+  return normalized.slice(0, 200);
+}
+
+function defaultEmailIdempotencyKey(input: SendTenantEmailInput, recipients: string[]) {
+  const hourBucket = new Date().toISOString().slice(0, 13);
+  const hash = createHash("sha256")
+    .update(JSON.stringify({
+      tenantId: input.tenantId,
+      actorUserId: input.actorUserId,
+      recipients,
+      subject: input.subject,
+      text: input.text ?? null,
+      html: input.html ?? null,
+      template: input.template ?? null,
+      hourBucket,
+    }))
+    .digest("hex");
+
+  return `email:${hash}`;
+}
+
 function configuredFromEmail() {
   try {
     return getDefaultFromEmail();
   } catch {
-    return process.env.RESEND_FROM_EMAIL ?? FALLBACK_FROM_EMAIL;
+    return process.env.EMAIL_FROM ?? process.env.RESEND_FROM_EMAIL ?? FALLBACK_FROM_EMAIL;
   }
 }
 
-function emailPayload(input: SendTenantEmailInput, extra?: Record<string, unknown>) {
+function emailPayload(
+  input: SendTenantEmailInput,
+  idempotencyKey: string,
+  extra?: Record<string, unknown>,
+) {
   return {
     template: input.template ?? null,
+    idempotencyKey,
     recipientCount: input.to.length,
     ...(input.metadata ?? {}),
     ...(extra ?? {}),
@@ -64,6 +95,9 @@ function emailPayload(input: SendTenantEmailInput, extra?: Record<string, unknow
 
 export async function sendTenantEmail(input: SendTenantEmailInput): Promise<SendTenantEmailResult> {
   const recipients = normalizeEmailRecipients(input.to);
+  const idempotencyKey =
+    normalizeEmailIdempotencyKey(input.idempotencyKey) ??
+    defaultEmailIdempotencyKey(input, recipients);
   const invalidRecipient = recipients.find((recipient) => !isValidEmailAddress(recipient));
 
   if (recipients.length === 0) {
@@ -106,12 +140,34 @@ export async function sendTenantEmail(input: SendTenantEmailInput): Promise<Send
       to_emails: recipients,
       subject: input.subject,
       status: "queued",
-      payload: emailPayload(input),
+      idempotency_key: idempotencyKey,
+      payload: emailPayload(input, idempotencyKey),
     })
     .select("id")
     .single();
 
   if (insertError || !emailMessage) {
+    if (insertError?.code === "23505") {
+      let query = admin
+        .from("email_messages")
+        .select("id, provider_message_id, status")
+        .eq("idempotency_key", idempotencyKey);
+      query = input.tenantId
+        ? query.eq("tenant_id", input.tenantId)
+        : query.is("tenant_id", null);
+      const { data: existingMessage } = await query.maybeSingle();
+
+      if (existingMessage) {
+        const failed = existingMessage.status === "error";
+        return {
+          ok: !failed,
+          emailMessageId: existingMessage.id,
+          providerMessageId: existingMessage.provider_message_id,
+          error: failed ? "Duplicate email send failed previously." : null,
+        };
+      }
+    }
+
     return {
       ok: false,
       emailMessageId: null,
@@ -131,7 +187,10 @@ export async function sendTenantEmail(input: SendTenantEmailInput): Promise<Send
       .from("email_messages")
       .update({
         status: "error",
-        payload: emailPayload(input, { error: message, failureStage: "configuration" }),
+        payload: emailPayload(input, idempotencyKey, {
+          error: message,
+          failureStage: "configuration",
+        }),
       })
       .eq("id", emailMessage.id);
     await logAuditEvent({
@@ -181,7 +240,7 @@ export async function sendTenantEmail(input: SendTenantEmailInput): Promise<Send
         .update({
           status: "error",
           provider_message_id: providerMessageId,
-          payload: emailPayload(input, { error: message, failureStage: "provider" }),
+          payload: emailPayload(input, idempotencyKey, { error: message, failureStage: "provider" }),
         })
         .eq("id", emailMessage.id);
       await logAuditEvent({
@@ -209,7 +268,7 @@ export async function sendTenantEmail(input: SendTenantEmailInput): Promise<Send
       .update({
         status: "sent",
         provider_message_id: providerMessageId,
-        payload: emailPayload(input),
+        payload: emailPayload(input, idempotencyKey),
       })
       .eq("id", emailMessage.id);
     await logAuditEvent({
@@ -235,7 +294,7 @@ export async function sendTenantEmail(input: SendTenantEmailInput): Promise<Send
       .from("email_messages")
       .update({
         status: "error",
-        payload: emailPayload(input, { error: message, failureStage: "send" }),
+        payload: emailPayload(input, idempotencyKey, { error: message, failureStage: "send" }),
       })
       .eq("id", emailMessage.id);
     await logAuditEvent({

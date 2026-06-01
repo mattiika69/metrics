@@ -5,14 +5,16 @@ HyperOptimal Metrics uses Resend for transactional and workflow email.
 ## Environment Variables
 
 - `RESEND_API_KEY`: server-only Resend API key.
-- `RESEND_FROM_EMAIL`: verified sender address, for example `HyperOptimal Metrics <noreply@example.com>`.
+- `EMAIL_FROM`: verified sender address, for example `HyperOptimal Metrics <noreply@example.com>`.
+- `RESEND_FROM_EMAIL`: legacy sender alias used by existing deployments.
 
 ## Rules
 
 - Email sends must be tenant-scoped.
 - The sending user must be authenticated and a member of the tenant.
-- Sent email records are stored in `email_messages`.
+- Sent email records are stored in `email_messages` with an idempotency key.
 - `RESEND_API_KEY` must never be exposed to browser code.
+- Sender domains must be verified in Resend before production use.
 - Future tenant-specific domains or sender identities must be stored server-side and protected by tenant RLS.
 
 ## Configured Email Types

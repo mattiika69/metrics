@@ -1,24 +1,18 @@
 import "server-only";
 
 import { Resend } from "resend";
+import {
+  getRequiredOneOfServerEnv,
+  getRequiredServerEnv,
+} from "@/lib/env/server";
 
 export function createResendClient() {
-  const apiKey = process.env.RESEND_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("Missing RESEND_API_KEY.");
-  }
-
-  return new Resend(apiKey);
+  return new Resend(getRequiredServerEnv("RESEND_API_KEY"));
 }
 
 export function getDefaultFromEmail() {
-  const fromEmail = process.env.RESEND_FROM_EMAIL?.trim();
+  const fromEmail = getRequiredOneOfServerEnv(["EMAIL_FROM", "RESEND_FROM_EMAIL"]);
   const fromName = process.env.RESEND_FROM_NAME?.trim();
-
-  if (!fromEmail) {
-    throw new Error("Missing RESEND_FROM_EMAIL.");
-  }
 
   if (fromEmail.includes("<") && fromEmail.includes(">")) {
     return fromEmail;

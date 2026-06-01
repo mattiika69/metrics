@@ -8,6 +8,8 @@ import {
   recordWebhookEvent,
 } from "@/lib/security/webhooks";
 import Stripe from "stripe";
+import { EnvConfigurationError } from "@/lib/env/public";
+import { getRequiredServerEnv } from "@/lib/env/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createStripeClient } from "@/lib/stripe/server";
 
@@ -26,16 +28,17 @@ export async function POST(request: Request) {
     return Response.json({ error: "Too many requests." }, { status: 429 });
   }
 
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-  if (!webhookSecret) {
-    return Response.json(
-      { error: "Missing STRIPE_WEBHOOK_SECRET." },
-      { status: 500 },
-    );
+  let webhookSecret;
+  let stripe;
+  try {
+    webhookSecret = getRequiredServerEnv("STRIPE_WEBHOOK_SECRET");
+    stripe = createStripeClient();
+  } catch (error) {
+    if (error instanceof EnvConfigurationError) {
+      return Response.json({ error: error.message }, { status: 500 });
+    }
+    throw error;
   }
-
-  const stripe = createStripeClient();
   const signature = (await headers()).get("stripe-signature");
 
   if (!signature) {

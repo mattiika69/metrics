@@ -12,6 +12,7 @@ type SendEmailPayload = {
   subject?: string;
   text?: string;
   html?: string;
+  idempotencyKey?: string;
 };
 
 function canSendTenantEmail(role: string | null | undefined) {
@@ -124,6 +125,10 @@ export async function POST(request: Request) {
     text: payload.text,
     html: payload.html,
     template: "api_email_send",
+    idempotencyKey:
+      request.headers.get("idempotency-key") ??
+      payload.idempotencyKey ??
+      null,
   });
 
   if (!result.ok) {

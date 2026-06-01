@@ -7,10 +7,14 @@ Billing is tenant-scoped. A Stripe customer represents a tenant workspace, and s
 - `STRIPE_SECRET_KEY`: server-only Stripe API key.
 - `STRIPE_WEBHOOK_SECRET`: server-only webhook signing secret.
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`: browser-safe publishable key.
-- `STRIPE_ONBOARDING_PRICE_ID`: default subscription price used by checkout flows.
+- `STRIPE_PRICE_BASIC`: default subscription price used by checkout flows.
+- `STRIPE_PRICE_PRO`: Pro subscription price. Add this manually when the Pro plan is defined in Stripe.
+- `STRIPE_PRICE_BUSINESS`: Business subscription price. Add this manually when the Business plan is defined in Stripe.
+- `STRIPE_ONBOARDING_PRICE_ID`: legacy default subscription price alias.
+- `STRIPE_PRICE_ID`: legacy default subscription price alias.
 - `SUPABASE_SERVICE_ROLE_KEY`: server-only key used by trusted webhook/admin paths.
 
-The default paid plan is `$97/mo`.
+The default paid plan is `$97/mo`. The app prefers `STRIPE_PRICE_BASIC` and falls back to the legacy aliases for existing deployments.
 
 ## Data Model
 
@@ -27,6 +31,8 @@ Both tables have RLS enabled. Authenticated tenant members may read billing stat
 - Create Stripe customers for tenants, not individual users.
 - Gate paid features by tenant subscription status.
 - Treat Stripe webhooks as the source of truth for subscription state.
+- Use Stripe Customer Portal for upgrades, downgrades, cancellations, invoices, and payment method changes.
+- Sync seat quantity only from trusted server-side code or verified Stripe webhooks.
 - Never expose Stripe secret keys or Supabase service-role credentials to the browser.
 
 ## Onboarding Handoff
