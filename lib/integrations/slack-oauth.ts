@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createHash, randomBytes } from "node:crypto";
+import { getRequiredServerEnv } from "@/lib/env/server";
 
 export const slackOAuthStateCookie = "hom_slack_oauth_state";
 export const slackOAuthTenantCookie = "hom_slack_oauth_tenant";
@@ -27,8 +28,7 @@ export function buildSlackAuthorizeUrl({
   origin: string;
   state: string;
 }) {
-  const clientId = process.env.SLACK_CLIENT_ID;
-  if (!clientId) throw new Error("Missing SLACK_CLIENT_ID.");
+  const clientId = getRequiredServerEnv("SLACK_CLIENT_ID");
 
   const url = new URL(authorizeUrl);
   url.searchParams.set("client_id", clientId);
@@ -45,9 +45,8 @@ export async function exchangeSlackOAuthCode({
   code: string;
   origin: string;
 }) {
-  const clientId = process.env.SLACK_CLIENT_ID;
-  const clientSecret = process.env.SLACK_CLIENT_SECRET;
-  if (!clientId || !clientSecret) throw new Error("Missing Slack OAuth environment variables.");
+  const clientId = getRequiredServerEnv("SLACK_CLIENT_ID");
+  const clientSecret = getRequiredServerEnv("SLACK_CLIENT_SECRET");
 
   const body = new URLSearchParams({
     client_id: clientId,

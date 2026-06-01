@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { EnvConfigurationError } from "@/lib/env/public";
 import { requireAdminContext } from "@/lib/api/context";
 import {
   buildSlackAuthorizeUrl,
@@ -58,5 +59,15 @@ export async function GET() {
     path: "/",
   });
 
-  redirect(buildSlackAuthorizeUrl({ origin, state }));
+  let authorizeUrl: string;
+  try {
+    authorizeUrl = buildSlackAuthorizeUrl({ origin, state });
+  } catch (error) {
+    if (error instanceof EnvConfigurationError) {
+      redirect(`/settings/slack?error=${encodeURIComponent(error.message)}`);
+    }
+    throw error;
+  }
+
+  redirect(authorizeUrl);
 }

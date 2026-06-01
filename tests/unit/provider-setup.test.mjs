@@ -17,6 +17,10 @@ test("env example lists required provider variables without fake secrets", () =>
     "STRIPE_PRICE_BASIC",
     "STRIPE_PRICE_PRO",
     "STRIPE_PRICE_BUSINESS",
+    "SLACK_APP_ID",
+    "SLACK_CLIENT_ID",
+    "SLACK_CLIENT_SECRET",
+    "SLACK_SIGNING_SECRET",
     "RESEND_API_KEY",
     "EMAIL_FROM",
   ];
@@ -29,6 +33,8 @@ test("env example lists required provider variables without fake secrets", () =>
     "SUPABASE_SERVICE_ROLE_KEY",
     "STRIPE_SECRET_KEY",
     "STRIPE_WEBHOOK_SECRET",
+    "SLACK_CLIENT_SECRET",
+    "SLACK_SIGNING_SECRET",
     "RESEND_API_KEY",
   ]) {
     assert.doesNotMatch(envExample, new RegExp(`^NEXT_PUBLIC_${serverOnly}=`, "m"));
@@ -54,8 +60,30 @@ test("runtime env validation names missing variables without logging values", ()
   assert.match(serverEnv, /SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(serverEnv, /STRIPE_SECRET_KEY/);
   assert.match(serverEnv, /STRIPE_WEBHOOK_SECRET/);
+  assert.match(serverEnv, /SLACK_APP_ID/);
+  assert.match(serverEnv, /SLACK_CLIENT_ID/);
+  assert.match(serverEnv, /SLACK_CLIENT_SECRET/);
+  assert.match(serverEnv, /SLACK_SIGNING_SECRET/);
   assert.match(serverEnv, /RESEND_API_KEY/);
   assert.doesNotMatch(`${publicEnv}\n${serverEnv}`, /console\.(log|error|warn)/);
+});
+
+test("Slack OAuth and webhook handlers validate server-only environment", () => {
+  const oauth = read("lib/integrations/slack-oauth.ts");
+  const callback = read("app/api/integrations/slack/oauth/callback/route.ts");
+  const events = read("app/api/integrations/slack/events/route.ts");
+  const commands = read("app/api/integrations/slack/commands/route.ts");
+  const interactions = read("app/api/integrations/slack/interactions/route.ts");
+
+  assert.match(oauth, /getRequiredServerEnv\("SLACK_CLIENT_ID"\)/);
+  assert.match(oauth, /getRequiredServerEnv\("SLACK_CLIENT_SECRET"\)/);
+  assert.match(callback, /getOptionalServerEnv\("SLACK_APP_ID"\)/);
+  assert.match(callback, /slack_app_mismatch/);
+  for (const route of [events, commands, interactions]) {
+    assert.match(route, /getRequiredServerEnv\("SLACK_SIGNING_SECRET"\)/);
+    assert.match(route, /verifySlackSignature/);
+    assert.match(route, /await request\.text\(\)/);
+  }
 });
 
 test("checkout uses server-created subscription sessions with tenant metadata", () => {

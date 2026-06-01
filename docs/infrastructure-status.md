@@ -173,6 +173,7 @@ Configured in Vercel as of verification:
 - Stripe Dashboard webhook endpoint `we_1TdcgP53gChGC5HSwinO6OFl` is enabled and points to `https://metrics-ten-lovat.vercel.app/api/stripe/webhook` until Vercel domain ownership for `app.scalingmetrics.com` is available under the deployment account.
 - Resend API key and sender email.
 - Roezan API key and API base URL.
+- Slack app ID, OAuth client ID, OAuth client secret, and signing secret.
 - Telegram bot and webhook credentials.
 - Encrypted integration secret.
 - Scheduled workflow and cron secrets.
@@ -182,7 +183,7 @@ Configured in Vercel as of verification:
 
 ## External APIs Still Needed Before Full Production Use
 
-- Slack OAuth and event verification: `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, `SLACK_SIGNING_SECRET`, `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`.
+- Optional Slack fallbacks: `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`. OAuth-connected tenants store bot tokens server-side after connection.
 - Claude API: `ANTHROPIC_API_KEY`, `CLAUDE_MODEL`.
 - Stripe tier prices: `STRIPE_PRICE_PRO`, `STRIPE_PRICE_BUSINESS`.
 - Supabase auth SMTP password for local config pushes: `SUPABASE_AUTH_EMAIL_SMTP_PASS`.

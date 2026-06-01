@@ -7,6 +7,7 @@ HyperOptimal Metrics must support web, Slack, and Telegram workflows from the st
 - `SLACK_CLIENT_ID`: server-only Slack OAuth client ID.
 - `SLACK_CLIENT_SECRET`: server-only Slack OAuth client secret.
 - `SLACK_SIGNING_SECRET`: server-only Slack request signing secret.
+- `SLACK_APP_ID`: server-only Slack app ID used to validate OAuth callbacks when Slack returns the app ID.
 - `SLACK_BOT_TOKEN`: optional server-only fallback token for legacy/manual Slack installs. OAuth-connected tenants store their bot token server-side after connection.
 - `SLACK_APP_TOKEN`: server-only Slack app-level token for socket mode if needed later.
 - `TELEGRAM_BOT_TOKEN`: server-only Telegram bot token.

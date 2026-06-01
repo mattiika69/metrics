@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getAuthBypassContext, isAuthBypassEnabled } from "@/lib/auth/bypass";
+import { getOptionalServerEnv } from "@/lib/env/server";
 import {
   exchangeSlackOAuthCode,
   hashSlackOAuthState,
@@ -98,7 +99,17 @@ export async function GET(request: Request) {
   }
 
   const origin = await getAppBaseUrl();
-  const oauth = await exchangeSlackOAuthCode({ code, origin });
+  let oauth: Awaited<ReturnType<typeof exchangeSlackOAuthCode>>;
+  try {
+    oauth = await exchangeSlackOAuthCode({ code, origin });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Slack OAuth exchange failed.";
+    redirect(`/settings/slack?error=${encodeURIComponent(message)}`);
+  }
+  const expectedAppId = getOptionalServerEnv("SLACK_APP_ID");
+  if (expectedAppId && oauth.app_id && oauth.app_id !== expectedAppId) {
+    redirect("/settings/slack?error=slack_app_mismatch");
+  }
   const teamId = oauth.team?.id?.trim();
   const botToken = oauth.access_token?.trim();
 
