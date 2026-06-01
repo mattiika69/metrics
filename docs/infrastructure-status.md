@@ -40,6 +40,7 @@ Do not save product state only to local files, browser storage, memory, or build
 
 Stripe billing is implemented as a tenant-scoped foundation.
 
+- Default paid plan: `$97/mo`.
 - Data model: `billing_customers`, `billing_subscriptions`, `billing_subscription_items`, `billing_events`, `billing_usage_records`.
 - Checkout flow: `startStripeCheckoutAction()`.
 - Webhook route: `POST /api/stripe/webhook`.
@@ -167,8 +168,8 @@ The app shell is implemented to match the Scaling Metrics design system.
 Configured in Vercel as of verification:
 
 - Supabase URL, publishable/anon key, and service-role key.
-- Stripe publishable key, webhook secret, and price ID. The deployed webhook runtime loads `STRIPE_WEBHOOK_SECRET`; a request without a Stripe signature returns `400 Missing Stripe signature`.
-- Stripe live secret key is present as a Vercel production variable, but the available key was rejected by Stripe API during verification and must be replaced or refreshed before live checkout and webhook dashboard management are considered complete.
+- Stripe live secret key, publishable key, webhook secret, and price ID. Stripe API access was verified against account `acct_1SvoHh53gChGC5HS`; default price `price_1Tddwo53gChGC5HSQ4IbYksj` is active at `$97/mo`; the deployed webhook runtime loads `STRIPE_WEBHOOK_SECRET`; a request without a Stripe signature returns `400 Missing Stripe signature`.
+- Stripe Dashboard webhook endpoint `we_1TdcgP53gChGC5HSwinO6OFl` is enabled and points to `https://metrics-ten-lovat.vercel.app/api/stripe/webhook` until Vercel domain ownership for `app.scalingmetrics.com` is available under the deployment account.
 - Resend API key and sender email.
 - Roezan API key and API base URL.
 - Telegram bot and webhook credentials.
@@ -180,7 +181,6 @@ Configured in Vercel as of verification:
 
 ## External APIs Still Needed Before Full Production Use
 
-- Stripe API access: replace/refresh `STRIPE_SECRET_KEY` with a Stripe-accepted live key, then verify or create the Stripe Dashboard webhook endpoint for `POST /api/stripe/webhook`.
 - Slack OAuth and event verification: `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, `SLACK_SIGNING_SECRET`, `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`.
 - Claude API: `ANTHROPIC_API_KEY`, `CLAUDE_MODEL`.
 - Supabase auth SMTP password for local config pushes: `SUPABASE_AUTH_EMAIL_SMTP_PASS`.

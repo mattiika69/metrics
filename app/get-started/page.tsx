@@ -10,6 +10,7 @@ import {
 import { saveBusinessProfileAction, saveMetricSelectionsAction } from "@/app/metrics/actions";
 import { isAuthBypassEnabled } from "@/lib/auth/bypass";
 import { requireUser } from "@/lib/auth/session";
+import { defaultBillingPlan } from "@/lib/billing/default-plan";
 import { metricDefinitions } from "@/lib/metrics/definitions";
 import { getMetricViewDefinition } from "@/lib/metrics/views";
 
@@ -151,7 +152,7 @@ export default async function GetStartedPage({ searchParams }: PageProps) {
             </>
           ) : (
             <>
-              <p>Set up billing.</p>
+              <p>{defaultBillingPlan.displayPrice}</p>
               <form action={startStripeCheckoutAction} className="card-action">
                 <button type="submit">Continue to billing</button>
               </form>

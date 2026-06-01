@@ -2,6 +2,7 @@ import { AppShell } from "@/components/app-shell";
 import { SettingsHeader, SettingsTabs } from "@/components/settings/settings-tabs";
 import { startStripeCheckoutAction } from "@/lib/auth/actions";
 import { requireTenant } from "@/lib/auth/session";
+import { defaultBillingPlan } from "@/lib/billing/default-plan";
 
 export const dynamic = "force-dynamic";
 
@@ -69,6 +70,10 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
               <span>Cancellation scheduled</span>
               <strong>{subscription?.cancel_at_period_end ? "Yes" : "No"}</strong>
             </div>
+            <div>
+              <span>Default plan</span>
+              <strong>{defaultBillingPlan.displayPrice}</strong>
+            </div>
           </div>
         </article>
         <article className="settings-panel">
@@ -78,7 +83,7 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
               <h2>Checkout</h2>
             </div>
           </div>
-          <p className="muted">Start or update billing.</p>
+          <p className="muted">{defaultBillingPlan.displayPrice}</p>
           <form action={startStripeCheckoutAction} className="card-action">
             <button type="submit">Continue to billing</button>
           </form>

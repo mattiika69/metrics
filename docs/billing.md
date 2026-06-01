@@ -10,6 +10,8 @@ Billing is tenant-scoped. A Stripe customer represents a tenant workspace, and s
 - `STRIPE_ONBOARDING_PRICE_ID`: default subscription price used by checkout flows.
 - `SUPABASE_SERVICE_ROLE_KEY`: server-only key used by trusted webhook/admin paths.
 
+The default paid plan is `$97/mo`.
+
 ## Data Model
 
 - `billing_customers`: maps a tenant to a Stripe customer.
