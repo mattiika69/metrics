@@ -49,10 +49,11 @@ Stripe billing is implemented as a tenant-scoped foundation.
 
 Required before live billing:
 
-- `STRIPE_SECRET_KEY`
+- Valid Stripe-accepted `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
 - `STRIPE_ONBOARDING_PRICE_ID`
+- Stripe Dashboard webhook endpoint pointed at a reachable production URL.
 
 ## Team Members
 
@@ -83,6 +84,7 @@ Scheduling is tenant-scoped and RLS-protected.
 - Data model: `integration_workflow_schedules`, `integration_workflow_runs`, `integration_workflow_run_events`.
 - Page: `/settings/scheduling`.
 - APIs: `GET/POST /api/integrations/schedules`, `PATCH/DELETE /api/integrations/schedules/:id`, `POST /api/integrations/schedules/:id/run`, `GET /api/integrations/schedule-runs`, `POST /api/workflows/scheduled`.
+- Vercel cron is configured for a daily run at `0 0 * * *` against `/api/integrations/sync-hourly` so production deploys on the current Vercel plan.
 
 ## Page Shell and Design System
 
@@ -165,7 +167,8 @@ The app shell is implemented to match the Scaling Metrics design system.
 Configured in Vercel as of verification:
 
 - Supabase URL, publishable/anon key, and service-role key.
-- Stripe live secret key, publishable key, webhook secret, and price ID.
+- Stripe publishable key, webhook secret, and price ID. The deployed webhook runtime loads `STRIPE_WEBHOOK_SECRET`; a request without a Stripe signature returns `400 Missing Stripe signature`.
+- Stripe live secret key is present as a Vercel production variable, but the available key was rejected by Stripe API during verification and must be replaced or refreshed before live checkout and webhook dashboard management are considered complete.
 - Resend API key and sender email.
 - Roezan API key and API base URL.
 - Telegram bot and webhook credentials.
@@ -177,6 +180,7 @@ Configured in Vercel as of verification:
 
 ## External APIs Still Needed Before Full Production Use
 
+- Stripe API access: replace/refresh `STRIPE_SECRET_KEY` with a Stripe-accepted live key, then verify or create the Stripe Dashboard webhook endpoint for `POST /api/stripe/webhook`.
 - Slack OAuth and event verification: `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, `SLACK_SIGNING_SECRET`, `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`.
 - Claude API: `ANTHROPIC_API_KEY`, `CLAUDE_MODEL`.
 - Supabase auth SMTP password for local config pushes: `SUPABASE_AUTH_EMAIL_SMTP_PASS`.
