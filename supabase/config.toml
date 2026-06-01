@@ -18,11 +18,11 @@ port = 54323
 
 [auth]
 enabled = true
-site_url = "https://metrics-ten-lovat.vercel.app"
+site_url = "https://app.scalingmetrics.com"
 additional_redirect_urls = [
   "http://localhost:3000/**",
   "https://localhost:3000/**",
-  "https://metrics-ten-lovat.vercel.app/**"
+  "https://app.scalingmetrics.com/**"
 ]
 jwt_expiry = 3600
 enable_signup = true

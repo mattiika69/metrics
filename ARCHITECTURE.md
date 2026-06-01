@@ -1,6 +1,6 @@
 # HyperOptimal Metrics Architecture
 
-Last updated: May 15, 2026.
+Last updated: June 1, 2026.
 
 This repo follows the shared HyperOptimal SaaS standard in `docs/hyperoptimal-saas-standard.md`. That standard is authoritative for future work. This file is the project-local architecture reference for HyperOptimal Metrics.
 
@@ -19,6 +19,7 @@ Every create, edit, delete, import, generation, send, receive, sync, schedule, b
 - Commit author: `mattiika69 <matt@1000xleads.com>`.
 - Vercel project: `metrics`.
 - Production branch: `main`.
+- Production app URL: `https://app.scalingmetrics.com`.
 - Supabase project ref: `fuxwmwdtuppcmrsjcgzt`.
 - Product name: `HyperOptimal Metrics`.
 

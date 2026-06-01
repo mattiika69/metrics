@@ -2,7 +2,7 @@ import "server-only";
 
 import { headers } from "next/headers";
 
-const PRODUCTION_APP_URL = "https://metrics-ten-lovat.vercel.app";
+const PRODUCTION_APP_URL = "https://app.scalingmetrics.com";
 
 function cleanBaseUrl(value: string | undefined | null) {
   if (!value) return null;

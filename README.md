@@ -19,6 +19,6 @@ The product source of truth is Supabase. Do not build durable product workflows 
 
 ## Deployment
 
-The Vercel project is configured for Next.js. Set the same Supabase environment variables in Vercel for Production, Preview, and Development.
+The Vercel project is configured for Next.js. The canonical production app domain is `https://app.scalingmetrics.com`. Set the same Supabase environment variables in Vercel for Production, Preview, and Development.
 
 AI-assisted workflows use the Claude API through Anthropic, not OpenAI. Set `ANTHROPIC_API_KEY` and `CLAUDE_MODEL` as server-only Vercel environment variables before enabling AI responses.

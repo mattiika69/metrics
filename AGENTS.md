@@ -64,6 +64,7 @@ The authoritative cross-app standard is `docs/hyperoptimal-saas-standard.md`.
 
 - Use `HyperOptimal Metrics` as the product/display name in UI, documentation, emails, messages, and integration-facing copy.
 - Keep technical slugs such as repository names, package names, database refs, and deployment URLs stable unless the user explicitly asks to rename them.
+- Use `https://app.scalingmetrics.com` as the canonical production app domain in UI, documentation, environment configuration, auth redirects, integrations, and deployment-facing copy.
 
 ## Product Form Factor
 

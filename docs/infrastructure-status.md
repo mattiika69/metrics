@@ -1,6 +1,6 @@
 # HyperOptimal Metrics Infrastructure Status
 
-Verified on 2026-05-15.
+Verified on 2026-06-01.
 
 ## Source of Truth Rule
 
@@ -12,7 +12,7 @@ Do not save product state only to local files, browser storage, memory, or build
 
 - GitHub: connected to `mattiika69/metrics`, default branch `main`.
 - Supabase: linked to project `fuxwmwdtuppcmrsjcgzt` named `Metrics`; schema changes are tracked in `supabase/migrations`.
-- Vercel: connected to project `metrics`; production deploys originate from GitHub `main`, primary alias `https://metrics-ten-lovat.vercel.app`.
+- Vercel: connected to project `metrics`; production deploys originate from GitHub `main`. Canonical production app domain is `https://app.scalingmetrics.com`; Vercel domain attachment is pending domain access under the `mattiika69` Vercel account.
 - Architecture standard: [docs/hyperoptimal-saas-standard.md](hyperoptimal-saas-standard.md), referenced by [ARCHITECTURE.md](../ARCHITECTURE.md) and [AGENTS.md](../AGENTS.md).
 
 ## Auth, Multi-Tenancy, and RLS
