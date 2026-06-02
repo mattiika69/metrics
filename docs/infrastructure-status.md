@@ -183,7 +183,7 @@ Configured in Vercel as of verification:
 
 ## External APIs Still Needed Before Full Production Use
 
-- Optional Slack fallbacks: `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`. OAuth-connected tenants store bot tokens server-side after connection.
+- Optional Slack app-level token: `SLACK_APP_TOKEN` if socket mode is enabled later. OAuth-connected tenants store bot tokens server-side after connection, so no global Slack bot token is required.
 - Claude API: `ANTHROPIC_API_KEY`, `CLAUDE_MODEL`.
 - Stripe tier prices: `STRIPE_PRICE_PRO`, `STRIPE_PRICE_BUSINESS`.
 - Supabase auth SMTP password for local config pushes: `SUPABASE_AUTH_EMAIL_SMTP_PASS`.

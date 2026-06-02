@@ -23,7 +23,6 @@ Server-only variables:
 - `SLACK_CLIENT_ID`
 - `SLACK_CLIENT_SECRET`
 - `SLACK_SIGNING_SECRET`
-- `SLACK_BOT_TOKEN`
 - `TELEGRAM_BOT_TOKEN`
 - `TELEGRAM_BOT_USERNAME`
 - `TELEGRAM_WEBHOOK_SECRET`
@@ -37,7 +36,6 @@ Compatibility aliases currently supported:
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - `STRIPE_ONBOARDING_PRICE_ID`
 - `STRIPE_PRICE_ID`
-- `SLACK_BOT_TOKEN`
 - `SLACK_APP_TOKEN`
 - `CLAUDE_MODEL`
 - `ANTHROPIC_MODEL`
@@ -57,7 +55,6 @@ Configured in Vercel Production:
 
 Still manual:
 
-- `SLACK_BOT_TOKEN` if a global fallback bot token is required outside tenant OAuth installs.
 - `STRIPE_PRICE_PRO`
 - `STRIPE_PRICE_BUSINESS`
 - `VERCEL_OIDC_TOKEN` or `ANTHROPIC_API_KEY`
@@ -72,7 +69,7 @@ Do not prefix server-only variables with `NEXT_PUBLIC_`.
 - Stripe Customer Portal is used for billing management.
 - Supabase service-role access is limited to trusted server-side webhook/admin code.
 - Slack OAuth starts server-side, Slack callbacks verify the expected app ID when Slack returns one, and Slack events, slash commands, and interactions verify signed raw request bodies before processing.
-- Slack tenant bot tokens are captured through OAuth and stored server-side per tenant; `SLACK_BOT_TOKEN` is only a legacy/manual fallback.
+- Slack tenant bot tokens are captured through OAuth and stored server-side per tenant. A global Slack bot token is not required.
 - Telegram webhooks verify `x-telegram-bot-api-secret-token`, dedupe updates, and require explicit account linking before tenant data can be changed.
 - Product email sends are logged in Supabase with idempotency keys before provider delivery.
 - Resend sender domains must be verified before production sends.
