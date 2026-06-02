@@ -30,9 +30,9 @@ HyperOptimal Metrics must support web, Slack, and Telegram workflows from the st
 
 ## Connection Flows
 
-Slack is connected from the web app. A signed-in owner/admin opens Settings > Slack, clicks Connect Slack, completes Slack OAuth, and the callback maps the Slack workspace to the current tenant. The first Slack channel that uses the bot becomes the approved channel for that tenant.
+Slack is connected from the web app. A signed-in owner/admin opens Settings > Slack, clicks Connect Slack, completes Slack OAuth, and the callback maps the Slack workspace to the current tenant. To use a private channel, invite the bot to that channel, then mention it or run `/agent` once. The first approved Slack channel is stored in `tenant_integrations`, and every linked channel is recorded in `integration_channel_links`.
 
-Telegram is connected from the web app. A signed-in owner/admin opens Settings > Telegram, generates a one-time code, and sends `/link CODE` to the Telegram bot from the chat or group to connect. The webhook verifies the code server-side and maps that chat to the current tenant.
+Telegram is connected from the web app. A signed-in owner/admin opens Settings > Telegram, generates a one-time code, adds the bot to the target group or opens the private chat, and sends `/link CODE` in that chat. The webhook verifies the code server-side, maps that chat to the current tenant, and records it in `integration_channel_links`.
 
 Users should never paste provider tokens, Slack team IDs, Slack channel IDs, Telegram chat IDs, or bot setup details into the product UI.
 

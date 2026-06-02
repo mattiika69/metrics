@@ -21,6 +21,12 @@ test("env example lists required provider variables without fake secrets", () =>
     "SLACK_CLIENT_ID",
     "SLACK_CLIENT_SECRET",
     "SLACK_SIGNING_SECRET",
+    "SLACK_BOT_TOKEN",
+    "TELEGRAM_BOT_TOKEN",
+    "TELEGRAM_BOT_USERNAME",
+    "TELEGRAM_WEBHOOK_SECRET",
+    "AI_MODEL",
+    "VERCEL_OIDC_TOKEN",
     "RESEND_API_KEY",
     "EMAIL_FROM",
   ];
@@ -35,6 +41,9 @@ test("env example lists required provider variables without fake secrets", () =>
     "STRIPE_WEBHOOK_SECRET",
     "SLACK_CLIENT_SECRET",
     "SLACK_SIGNING_SECRET",
+    "SLACK_BOT_TOKEN",
+    "TELEGRAM_BOT_TOKEN",
+    "TELEGRAM_WEBHOOK_SECRET",
     "RESEND_API_KEY",
   ]) {
     assert.doesNotMatch(envExample, new RegExp(`^NEXT_PUBLIC_${serverOnly}=`, "m"));
@@ -64,6 +73,9 @@ test("runtime env validation names missing variables without logging values", ()
   assert.match(serverEnv, /SLACK_CLIENT_ID/);
   assert.match(serverEnv, /SLACK_CLIENT_SECRET/);
   assert.match(serverEnv, /SLACK_SIGNING_SECRET/);
+  assert.match(serverEnv, /TELEGRAM_BOT_TOKEN/);
+  assert.match(serverEnv, /TELEGRAM_WEBHOOK_SECRET/);
+  assert.match(serverEnv, /AI_MODEL/);
   assert.match(serverEnv, /RESEND_API_KEY/);
   assert.doesNotMatch(`${publicEnv}\n${serverEnv}`, /console\.(log|error|warn)/);
 });

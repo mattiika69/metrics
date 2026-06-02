@@ -23,6 +23,12 @@ Server-only variables:
 - `SLACK_CLIENT_ID`
 - `SLACK_CLIENT_SECRET`
 - `SLACK_SIGNING_SECRET`
+- `SLACK_BOT_TOKEN`
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_BOT_USERNAME`
+- `TELEGRAM_WEBHOOK_SECRET`
+- `AI_MODEL`
+- `VERCEL_OIDC_TOKEN` or `ANTHROPIC_API_KEY`
 - `RESEND_API_KEY`
 - `EMAIL_FROM`
 
@@ -33,6 +39,8 @@ Compatibility aliases currently supported:
 - `STRIPE_PRICE_ID`
 - `SLACK_BOT_TOKEN`
 - `SLACK_APP_TOKEN`
+- `CLAUDE_MODEL`
+- `ANTHROPIC_MODEL`
 - `RESEND_FROM_EMAIL`
 - `RESEND_FROM_NAME`
 
@@ -43,12 +51,16 @@ Configured in Vercel Production:
 - Supabase URL, anon/publishable key, and service-role key.
 - Stripe secret key, publishable key, webhook secret, and `$1/mo` Basic price.
 - Slack app ID, OAuth client ID, OAuth client secret, and signing secret.
+- Telegram bot token, bot username, and webhook secret.
+- `AI_MODEL`.
 - Resend API key, `EMAIL_FROM`, and legacy Resend sender aliases.
 
 Still manual:
 
+- `SLACK_BOT_TOKEN` if a global fallback bot token is required outside tenant OAuth installs.
 - `STRIPE_PRICE_PRO`
 - `STRIPE_PRICE_BUSINESS`
+- `VERCEL_OIDC_TOKEN` or `ANTHROPIC_API_KEY`
 
 Do not prefix server-only variables with `NEXT_PUBLIC_`.
 
@@ -61,5 +73,6 @@ Do not prefix server-only variables with `NEXT_PUBLIC_`.
 - Supabase service-role access is limited to trusted server-side webhook/admin code.
 - Slack OAuth starts server-side, Slack callbacks verify the expected app ID when Slack returns one, and Slack events, slash commands, and interactions verify signed raw request bodies before processing.
 - Slack tenant bot tokens are captured through OAuth and stored server-side per tenant; `SLACK_BOT_TOKEN` is only a legacy/manual fallback.
+- Telegram webhooks verify `x-telegram-bot-api-secret-token`, dedupe updates, and require explicit account linking before tenant data can be changed.
 - Product email sends are logged in Supabase with idempotency keys before provider delivery.
 - Resend sender domains must be verified before production sends.

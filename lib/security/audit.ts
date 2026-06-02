@@ -7,9 +7,12 @@ type AuditMetadata = Record<string, unknown>;
 export type AuditEventInput = {
   tenantId?: string | null;
   actorUserId?: string | null;
+  platform?: "web" | "slack" | "telegram" | null;
   eventType: string;
   targetType?: string | null;
   targetId?: string | null;
+  beforeState?: Record<string, unknown> | null;
+  afterState?: Record<string, unknown> | null;
   metadata?: AuditMetadata;
 };
 
@@ -32,6 +35,17 @@ export async function logAuditEvent(input: AuditEventInput) {
       supabase.from("admin_audit_log").insert({
         ...payload,
         action: input.eventType,
+      }),
+      supabase.from("audit_logs").insert({
+        tenant_id: input.tenantId ?? null,
+        actor_user_id: input.actorUserId ?? null,
+        platform: input.platform ?? null,
+        action: input.eventType,
+        target_type: input.targetType ?? null,
+        target_id: input.targetId ?? null,
+        before_state: input.beforeState ?? null,
+        after_state: input.afterState ?? null,
+        metadata: input.metadata ?? {},
       }),
     ]);
   } catch (error) {

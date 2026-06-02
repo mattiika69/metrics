@@ -13,13 +13,16 @@
     "playwright:install": "playwright install"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.81",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
+    "ai": "^6.0.194",
     "next": "^15.3.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "resend": "^6.12.3",
-    "stripe": "^22.1.1"
+    "stripe": "^22.1.1",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",

@@ -12,7 +12,7 @@ These are deployer steps only. App users should not paste Telegram tokens, chat 
 4. Set the Telegram webhook to:
 
    ```text
-   https://THIS_APP_DOMAIN/api/telegram/webhook
+   https://app.scalingmetrics.com/api/integrations/telegram/webhook
    ```
 
    Include the `secret_token` parameter with the same value as `TELEGRAM_WEBHOOK_SECRET`.

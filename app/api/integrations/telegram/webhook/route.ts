@@ -7,6 +7,8 @@ import {
   isAgentStatusRequest,
   resolveAgentRequestText,
 } from "@/lib/agent/channel";
+import { upsertPlatformAccount, upsertPlatformInstallation } from "@/lib/agent/platform";
+import { upsertIntegrationChannelLink } from "@/lib/integrations/channel-links";
 import { hashTelegramLinkCode, sendTelegramMessage } from "@/lib/integrations/telegram";
 import { buildChannelCommandResponse, resolveChannelCommand } from "@/lib/metrics/channel";
 import { getRequestIp } from "@/lib/request/ip";
@@ -155,6 +157,41 @@ async function consumeLinkCode({
     },
     { onConflict: "tenant_id,telegram_chat_id" },
   );
+  await upsertIntegrationChannelLink({
+    admin,
+    tenantId: link.tenant_id,
+    provider: "telegram",
+    externalChannelId: chatId,
+    displayName: chatTitle ?? "Telegram chat",
+    linkedByUserId: link.created_by,
+    metadata: {
+      linkedBy: "code",
+      fromUserId,
+    },
+  });
+  const platformInstallationId = await upsertPlatformInstallation({
+    admin,
+    tenantId: link.tenant_id,
+    platform: "telegram",
+    tenantIntegrationId: result.data.id,
+    externalWorkspaceId: chatId,
+    externalWorkspaceName: chatTitle ?? "Telegram",
+    installedByUserId: link.created_by,
+    settings: { linkedBy: "code" },
+  });
+  if (fromUserId) {
+    await upsertPlatformAccount({
+      admin,
+      tenantId: link.tenant_id,
+      platform: "telegram",
+      platformInstallationId,
+      externalWorkspaceId: chatId,
+      externalUserId: fromUserId,
+      userId: link.created_by,
+      displayName: chatTitle ?? "Telegram",
+      settings: { linkedBy: "code" },
+    });
+  }
 
   await logAuditEvent({
     tenantId: link.tenant_id,
@@ -314,6 +351,8 @@ export async function POST(request: Request) {
         tenantId: integration.tenant_id,
         provider: "telegram",
         channelId: chatId,
+        externalWorkspaceId: chatId,
+        externalMessageId: message?.message_id ? String(message.message_id) : externalEventId,
         externalUserId: message?.from?.id ? String(message.from.id) : null,
         externalUserName: telegramUserName(message),
         requestText: agentRequestText,

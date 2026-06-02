@@ -27,7 +27,7 @@ function settingText(settings: Record<string, unknown>, key: string) {
 }
 
 export default async function TelegramSettingsPage({ searchParams }: PageProps) {
-  const { supabase, tenant } = await requireTenant();
+  const { supabase, tenant, membership } = await requireTenant();
   const params = await searchParams;
   const message = param(params, "message");
   const error = param(params, "error");
@@ -46,6 +46,22 @@ export default async function TelegramSettingsPage({ searchParams }: PageProps) 
     null;
   const settings = objectSettings(connection?.settings);
   const telegramUsername = settingText(settings, "telegramUsername");
+  const botUsername = (process.env.TELEGRAM_BOT_USERNAME ?? "").replace(/^@+/, "").trim();
+  const addGroupUrl = botUsername
+    ? `https://t.me/${encodeURIComponent(botUsername)}?startgroup=link`
+    : null;
+  const openBotUrl = botUsername
+    ? `https://t.me/${encodeURIComponent(botUsername)}`
+    : null;
+  const canManage = membership.role === "owner" || membership.role === "admin";
+  const { data: channelLinks } = await supabase
+    .from("integration_channel_links")
+    .select("id, display_name, status, updated_at")
+    .eq("tenant_id", tenant.id)
+    .eq("provider", "telegram")
+    .eq("status", "active")
+    .order("updated_at", { ascending: false })
+    .limit(5);
 
   return (
     <AppShell active="settings-telegram" tenantName={tenant.name}>
@@ -91,7 +107,7 @@ export default async function TelegramSettingsPage({ searchParams }: PageProps) 
           <div className="settings-list">
             <div>
               <span>Chat</span>
-              <strong>{connection?.display_name ?? "None"}</strong>
+              <strong>{channelLinks?.[0]?.display_name ?? connection?.display_name ?? "None"}</strong>
             </div>
             <div>
               <span>Access</span>
@@ -120,8 +136,55 @@ export default async function TelegramSettingsPage({ searchParams }: PageProps) 
             Generate a short-lived code, then send /link CODE to the Telegram bot from the chat you want to connect.
           </p>
           <form action={createTelegramLinkCodeAction} className="card-action">
-            <button type="submit">Generate link code</button>
+            <button type="submit" disabled={!canManage}>Generate link code</button>
           </form>
+        </article>
+        <article className="settings-panel">
+          <div className="panel-heading">
+            <div>
+              <p className="step-label">Groups</p>
+              <h2>Add the bot</h2>
+            </div>
+          </div>
+          <p className="muted">
+            Add the bot to a Telegram group, generate a link code, then send /link CODE in that group.
+          </p>
+          <div className="settings-actions-row">
+            {addGroupUrl ? (
+              <a className="button-primary" href={addGroupUrl} target="_blank" rel="noreferrer">
+                Add to group
+              </a>
+            ) : null}
+            {openBotUrl ? (
+              <a className="button-secondary" href={openBotUrl} target="_blank" rel="noreferrer">
+                Open bot
+              </a>
+            ) : null}
+          </div>
+        </article>
+        <article className="settings-panel full-span">
+          <div className="panel-heading">
+            <div>
+              <p className="step-label">Chats</p>
+              <h2>Linked Telegram chats</h2>
+            </div>
+            <span className="pill">{channelLinks?.length ?? 0} linked</span>
+          </div>
+          <div className="settings-list">
+            {channelLinks?.length ? (
+              channelLinks.map((chat) => (
+                <div key={chat.id}>
+                  <span>{chat.display_name ?? "Telegram chat"}</span>
+                  <strong>{chat.updated_at ? new Date(chat.updated_at).toLocaleString() : "Connected"}</strong>
+                </div>
+              ))
+            ) : (
+              <div>
+                <span>Groups</span>
+                <strong>Generate a link code, add the bot, then send /link CODE</strong>
+              </div>
+            )}
+          </div>
         </article>
         <article className="settings-panel full-span">
           <div className="panel-heading">

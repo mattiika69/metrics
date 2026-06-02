@@ -15,7 +15,7 @@ function param(params: Record<string, string | string[] | undefined>, key: strin
 }
 
 export default async function SlackSettingsPage({ searchParams }: PageProps) {
-  const { supabase, tenant } = await requireTenant();
+  const { supabase, tenant, membership } = await requireTenant();
   const params = await searchParams;
   const message = param(params, "message") ?? (param(params, "connected") ? "Slack connected" : null);
   const error = param(params, "error");
@@ -26,6 +26,15 @@ export default async function SlackSettingsPage({ searchParams }: PageProps) {
     .eq("provider", "slack")
     .neq("status", "disabled")
     .maybeSingle();
+  const { data: channelLinks } = await supabase
+    .from("integration_channel_links")
+    .select("id, display_name, status, metadata, updated_at")
+    .eq("tenant_id", tenant.id)
+    .eq("provider", "slack")
+    .eq("status", "active")
+    .order("updated_at", { ascending: false })
+    .limit(5);
+  const canManage = membership.role === "owner" || membership.role === "admin";
 
   return (
     <AppShell active="settings-slack" tenantName={tenant.name}>
@@ -52,7 +61,7 @@ export default async function SlackSettingsPage({ searchParams }: PageProps) {
             </div>
             <div>
               <span>Approved channel</span>
-              <strong>{connection?.external_channel_id ? "Connected" : "Not selected yet"}</strong>
+              <strong>{channelLinks?.[0]?.display_name ?? (connection?.external_channel_id ? "Connected" : "Not selected yet")}</strong>
             </div>
             <div>
               <span>Updated</span>
@@ -72,11 +81,39 @@ export default async function SlackSettingsPage({ searchParams }: PageProps) {
             You can also ask natural questions or say “remember...” to save useful context.
           </p>
           <p className="muted">
-            Connect Slack from this app. The first Slack channel that uses the bot becomes the approved channel for this workspace.
+            Connect Slack, invite the bot to a public or private channel, then mention it once or use /agent from that channel.
           </p>
-          <Link href="/api/integrations/slack/oauth/start" className="button-primary card-action">
+          <Link
+            href="/api/integrations/slack/oauth/start"
+            className={`button-primary card-action${canManage ? "" : " disabled-link"}`}
+            aria-disabled={!canManage}
+          >
             Connect Slack
           </Link>
+        </article>
+        <article className="settings-panel full-span">
+          <div className="panel-heading">
+            <div>
+              <p className="step-label">Channels</p>
+              <h2>Linked Slack channels</h2>
+            </div>
+            <span className="pill">{channelLinks?.length ?? 0} linked</span>
+          </div>
+          <div className="settings-list">
+            {channelLinks?.length ? (
+              channelLinks.map((channel) => (
+                <div key={channel.id}>
+                  <span>{channel.display_name ?? "Slack channel"}</span>
+                  <strong>{channel.updated_at ? new Date(channel.updated_at).toLocaleString() : "Connected"}</strong>
+                </div>
+              ))
+            ) : (
+              <div>
+                <span>Private channels</span>
+                <strong>Invite the bot, then mention it or use /agent once</strong>
+              </div>
+            )}
+          </div>
         </article>
       </section>
     </AppShell>

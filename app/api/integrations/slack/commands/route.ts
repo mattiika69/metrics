@@ -8,6 +8,7 @@ import {
   isAgentStatusRequest,
 } from "@/lib/agent/channel";
 import { envErrorResponse, getRequiredServerEnv } from "@/lib/env/server";
+import { upsertIntegrationChannelLink } from "@/lib/integrations/channel-links";
 import { verifySlackSignature } from "@/lib/integrations/slack";
 import { buildChannelCommandResponse, resolveChannelCommand } from "@/lib/metrics/channel";
 import { getRequestIp } from "@/lib/request/ip";
@@ -58,6 +59,7 @@ export async function POST(request: Request) {
   const userName = params.get("user_name");
   const commandName = params.get("command");
   const commandText = params.get("text");
+  const channelName = params.get("channel_name");
   const command = parseCommand(params.get("command"), params.get("text"));
 
   if (!teamId) return Response.json({ response_type: "ephemeral", text: "Slack team could not be resolved." });
@@ -96,6 +98,19 @@ export async function POST(request: Request) {
         targetType: "slack",
         targetId: channelId,
         metadata: { teamId, userId },
+      });
+      await upsertIntegrationChannelLink({
+        admin,
+        tenantId: integration.tenant_id,
+        provider: "slack",
+        externalChannelId: channelId,
+        displayName: channelName ? `#${channelName}` : "Slack channel",
+        linkedByUserId: null,
+        metadata: {
+          teamId,
+          userId,
+          source: "slack_command",
+        },
       });
     } else {
       const { data: latestIntegration } = await admin
@@ -156,6 +171,8 @@ export async function POST(request: Request) {
       tenantId: integration.tenant_id,
       provider: "slack",
       channelId,
+      externalWorkspaceId: teamId,
+      externalMessageId: params.get("trigger_id") ?? null,
       externalUserId: userId,
       externalUserName: userName,
       requestText: agentRequestText,

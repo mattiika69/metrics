@@ -10,9 +10,14 @@ export const requiredServerEnvNames = [
   "STRIPE_PRICE_PRO",
   "STRIPE_PRICE_BUSINESS",
   "SLACK_APP_ID",
+  "SLACK_BOT_TOKEN",
   "SLACK_CLIENT_ID",
   "SLACK_CLIENT_SECRET",
   "SLACK_SIGNING_SECRET",
+  "TELEGRAM_BOT_TOKEN",
+  "TELEGRAM_BOT_USERNAME",
+  "TELEGRAM_WEBHOOK_SECRET",
+  "AI_MODEL",
   "RESEND_API_KEY",
   "EMAIL_FROM",
 ] as const;
@@ -23,8 +28,11 @@ export type ServerEnvName =
   | "STRIPE_PRICE_ID"
   | "RESEND_FROM_EMAIL"
   | "RESEND_FROM_NAME"
-  | "SLACK_BOT_TOKEN"
-  | "SLACK_APP_TOKEN";
+  | "SLACK_APP_TOKEN"
+  | "VERCEL_OIDC_TOKEN"
+  | "ANTHROPIC_API_KEY"
+  | "CLAUDE_MODEL"
+  | "ANTHROPIC_MODEL";
 
 function readEnv(name: string) {
   return process.env[name]?.trim() ?? "";

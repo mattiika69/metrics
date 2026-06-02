@@ -8,6 +8,17 @@ export const slackOAuthTenantCookie = "hom_slack_oauth_tenant";
 
 const authorizeUrl = "https://slack.com/oauth/v2/authorize";
 const tokenUrl = "https://slack.com/api/oauth.v2.access";
+const slackBotScopes = [
+  "commands",
+  "chat:write",
+  "app_mentions:read",
+  "channels:read",
+  "channels:history",
+  "groups:read",
+  "groups:history",
+  "im:history",
+  "mpim:history",
+];
 
 export function createSlackOAuthState() {
   return randomBytes(24).toString("hex");
@@ -34,7 +45,7 @@ export function buildSlackAuthorizeUrl({
   url.searchParams.set("client_id", clientId);
   url.searchParams.set("state", state);
   url.searchParams.set("redirect_uri", getSlackRedirectUri(origin));
-  url.searchParams.set("scope", "commands,chat:write,app_mentions:read,channels:read,groups:read,im:read,mpim:read");
+  url.searchParams.set("scope", slackBotScopes.join(","));
   return url.toString();
 }
 

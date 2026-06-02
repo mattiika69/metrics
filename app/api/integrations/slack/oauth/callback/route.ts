@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getAuthBypassContext, isAuthBypassEnabled } from "@/lib/auth/bypass";
+import { upsertPlatformAccount, upsertPlatformInstallation } from "@/lib/agent/platform";
 import { getOptionalServerEnv } from "@/lib/env/server";
 import {
   exchangeSlackOAuthCode,
@@ -208,6 +209,34 @@ export async function GET(request: Request) {
     },
     { onConflict: "tenant_id,provider,secret_name" },
   );
+  const platformInstallationId = await upsertPlatformInstallation({
+    admin,
+    tenantId,
+    platform: "slack",
+    tenantIntegrationId: integration.id,
+    externalWorkspaceId: teamId,
+    externalWorkspaceName: oauth.team?.name ?? "Slack",
+    externalBotUserId: oauth.bot_user_id ?? null,
+    installedByUserId: authorized.userId,
+    scopes: oauth.scope?.split(",").map((scope) => scope.trim()).filter(Boolean) ?? [],
+    settings: {
+      appId: oauth.app_id ?? null,
+      botId: oauth.bot_id ?? null,
+    },
+  });
+  if (oauth.authed_user?.id) {
+    await upsertPlatformAccount({
+      admin,
+      tenantId,
+      platform: "slack",
+      platformInstallationId,
+      externalWorkspaceId: teamId,
+      externalUserId: oauth.authed_user.id,
+      userId: authorized.userId,
+      displayName: oauth.authed_user.id,
+      settings: { linkedBy: "oauth" },
+    });
+  }
 
   await logAuditEvent({
     tenantId,

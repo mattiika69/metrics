@@ -8,6 +8,7 @@ import {
   resolveAgentRequestText,
 } from "@/lib/agent/channel";
 import { envErrorResponse, getRequiredServerEnv } from "@/lib/env/server";
+import { upsertIntegrationChannelLink } from "@/lib/integrations/channel-links";
 import { verifySlackSignature } from "@/lib/integrations/slack";
 import { sendSlackMessage } from "@/lib/integrations/slack-oauth";
 import { decodeMetricIntegrationSecret } from "@/lib/integrations/secret-store";
@@ -35,10 +36,12 @@ type SlackEventsPayload = {
     type?: string;
     event_ts?: string;
     ts?: string;
+    thread_ts?: string;
     channel?: string;
     user?: string;
     username?: string;
     text?: string;
+    channel_type?: string;
     subtype?: string;
     bot_id?: string;
   };
@@ -161,6 +164,19 @@ export async function POST(request: Request) {
         targetId: incomingChannel,
         metadata: { teamId },
       });
+      await upsertIntegrationChannelLink({
+        admin,
+        tenantId: integration.tenant_id,
+        provider: "slack",
+        externalChannelId: incomingChannel,
+        displayName: payload.event?.channel_type === "group" ? "Private Slack channel" : "Slack channel",
+        linkedByUserId: null,
+        metadata: {
+          teamId,
+          channelType: payload.event?.channel_type ?? null,
+          source: "slack_event",
+        },
+      });
     } else {
       const { data: latestIntegration } = await admin
         .from("tenant_integrations")
@@ -225,6 +241,9 @@ export async function POST(request: Request) {
           tenantId: integration.tenant_id,
           provider: "slack",
           channelId: channel,
+          externalWorkspaceId: teamId,
+          externalThreadId: payload.event?.thread_ts ?? null,
+          externalMessageId: payload.event?.ts ?? payload.event_id ?? null,
           externalUserId: payload.event?.user ?? null,
           externalUserName: payload.event?.username ?? null,
           requestText: agentRequestText,

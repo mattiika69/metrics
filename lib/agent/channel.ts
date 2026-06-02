@@ -1,7 +1,6 @@
 import "server-only";
 
-import { runAgentReply } from "@/lib/agent/assistant";
-import { logAuditEvent } from "@/lib/security/audit";
+import { runUnifiedAgent } from "@/lib/agent/runner";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type AgentChannelProvider = "slack" | "telegram";
@@ -10,8 +9,6 @@ const agentCommandPattern = /^(?:\/ai-agent|\/agent|ai agent|agent)\b/i;
 const readPattern = /\b(read|show|list|summarize|find|look up|report|what|status)\b/i;
 const writePattern = /\b(write|create|add|save|draft|generate|send)\b/i;
 const editPattern = /\b(edit|update|change|remove|delete|archive|fix|modify)\b/i;
-const highRiskPattern =
-  /\b(delete|remove|archive|cancel|revoke|disconnect|kick|demote|refund|billing|subscription|payment|wipe|reset|destroy)\b/i;
 const helpPattern = /^(?:\/help|help|what can you do)\b/i;
 const statusPattern = /^(?:\/status|status|are you connected)\b/i;
 
@@ -122,14 +119,13 @@ export async function buildAgentStatusResponse({
   ].join("\n");
 }
 
-function needsConfirmation(text: string) {
-  return highRiskPattern.test(text);
-}
-
 export async function createChannelAgentRequest({
   tenantId,
   provider,
   channelId,
+  externalWorkspaceId,
+  externalThreadId,
+  externalMessageId,
   externalUserId,
   externalUserName,
   requestText,
@@ -138,6 +134,9 @@ export async function createChannelAgentRequest({
   tenantId: string;
   provider: AgentChannelProvider;
   channelId: string | null;
+  externalWorkspaceId?: string | null;
+  externalThreadId?: string | null;
+  externalMessageId?: string | null;
   externalUserId?: string | null;
   externalUserName?: string | null;
   requestText: string;
@@ -151,90 +150,28 @@ export async function createChannelAgentRequest({
     };
   }
 
-  const admin = createAdminClient();
-  const operation = classifyAgentOperation(trimmed);
-  const requiresConfirmation = needsConfirmation(trimmed);
-  const { data, error } = await admin
-    .from("agent_requests")
-    .insert({
-      tenant_id: tenantId,
-      provider,
-      channel_id: channelId,
-      request_text: trimmed,
-      status: requiresConfirmation ? "needs_confirmation" : "requested",
-      risk_level: requiresConfirmation ? "high" : "normal",
-      metadata: {
-        source: provider,
-        operation,
-        capabilities: ["read", "write", "edit"],
-        externalUserId: externalUserId ?? null,
-        externalUserName: externalUserName ?? null,
-        requiresConfirmation,
-        ...(metadata ?? {}),
-      },
-    })
-    .select("id")
-    .single();
-
-  if (error) {
-    return {
-      ok: false as const,
-      message: "AI Agent request could not be saved.",
-      error: error.message,
-    };
-  }
-
-  await logAuditEvent({
+  const reply = await runUnifiedAgent({
     tenantId,
-    eventType: requiresConfirmation ? "agent_confirmation_required" : "agent_request_created",
-    targetType: "agent_requests",
-    targetId: data.id,
-    metadata: {
-      provider,
-      channelId,
-      externalUserId,
-      externalUserName,
-    },
-  });
-
-  if (requiresConfirmation) {
-    await admin.from("agent_actions").insert({
-      tenant_id: tenantId,
-      agent_request_id: data.id,
-      action_type: "confirmation_required",
-      status: "needs_confirmation",
-      metadata: {
-        provider,
-        channelId,
-        externalUserId: externalUserId ?? null,
-        externalUserName: externalUserName ?? null,
-        requestText: trimmed,
-      },
-    });
-
-    return {
-      ok: true as const,
-      requestId: data.id as string,
-      message: [
-        "That looks like a high-risk change, so I saved it for confirmation instead of running it.",
-        "Review it in Settings > AI Agent before I make that change.",
-      ].join("\n"),
-    };
-  }
-
-  const reply = await runAgentReply({
-    supabase: admin,
-    tenantId,
-    requestId: data.id,
-    provider,
-    channelId,
-    externalUserId,
+    platform: provider,
     requestText: trimmed,
+    externalWorkspaceId: externalWorkspaceId ?? channelId ?? null,
+    externalConversationId: channelId ?? `${provider}:direct`,
+    externalThreadId: externalThreadId ?? null,
+    externalMessageId: externalMessageId ?? null,
+    externalUserId,
+    externalUserName,
+    conversationType: provider === "slack" ? "channel" : "chat",
+    metadata: {
+      source: provider,
+      operation: classifyAgentOperation(trimmed),
+      capabilities: ["read", "write", "edit", "delete"],
+      ...(metadata ?? {}),
+    },
   });
 
   return {
     ok: true as const,
-    requestId: data.id as string,
+    requestId: reply.requestId,
     message: reply.responseText,
   };
 }

@@ -1,6 +1,11 @@
 import { AppShell } from "@/components/app-shell";
 import { SettingsHeader, SettingsTabs } from "@/components/settings/settings-tabs";
-import { createWebAgentRequestAction, saveAgentLearningAction } from "@/app/settings/agent/actions";
+import {
+  approveAgentApprovalAction,
+  createWebAgentRequestAction,
+  rejectAgentApprovalAction,
+  saveAgentLearningAction,
+} from "@/app/settings/agent/actions";
 import { requireTenant } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +37,7 @@ function requestOperation(metadata: unknown, fallback: string) {
 }
 
 export default async function AgentSettingsPage({ searchParams }: PageProps) {
-  const { supabase, tenant, membership } = await requireTenant();
+  const { supabase, tenant, user, membership } = await requireTenant();
   const params = await searchParams;
   const message = param(params, "message");
   const error = param(params, "error");
@@ -43,6 +48,23 @@ export default async function AgentSettingsPage({ searchParams }: PageProps) {
     .eq("tenant_id", tenant.id)
     .order("created_at", { ascending: false })
     .limit(8);
+  const { data: messages } = await supabase
+    .from("agent_messages")
+    .select("id, direction, body, platform, metadata, created_at")
+    .eq("tenant_id", tenant.id)
+    .eq("platform", "web")
+    .or(`actor_user_id.eq.${user.id},external_user_id.eq.${user.id}`)
+    .order("created_at", { ascending: true })
+    .limit(24);
+  const { data: approvals } = canManage
+    ? await supabase
+      .from("agent_approvals")
+      .select("id, status, action_type, decision_notes, created_at")
+      .eq("tenant_id", tenant.id)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false })
+      .limit(6)
+    : { data: [] };
   const { data: learnings } = await supabase
     .from("metric_learnings")
     .select("id, title, body, source_provider, updated_at")
@@ -67,12 +89,12 @@ export default async function AgentSettingsPage({ searchParams }: PageProps) {
               <p className="step-label">AI Agent</p>
               <h2>Workspace access</h2>
             </div>
-            <span className="pill">{canManage ? "Enabled" : "View only"}</span>
+            <span className="pill">Enabled</span>
           </div>
           <div className="settings-list">
             <div>
-              <span>Access</span>
-              <strong>{canManage ? "Owners and admins" : "Owner or admin required"}</strong>
+              <span>Your role</span>
+              <strong>{membership.role}</strong>
             </div>
             <div>
               <span>Access from</span>
@@ -80,7 +102,7 @@ export default async function AgentSettingsPage({ searchParams }: PageProps) {
             </div>
             <div>
               <span>Capabilities</span>
-              <strong>Read, write, edit</strong>
+              <strong>{canManage ? "Read, write, edit" : "Read only"}</strong>
             </div>
           </div>
         </article>
@@ -98,7 +120,7 @@ export default async function AgentSettingsPage({ searchParams }: PageProps) {
           <div className="settings-list">
             <div>
               <span>Changes</span>
-              <strong>Require approval</strong>
+              <strong>Confirmation required</strong>
             </div>
             <div>
               <span>Activity</span>
@@ -110,15 +132,31 @@ export default async function AgentSettingsPage({ searchParams }: PageProps) {
         <article className="settings-panel full-span">
           <div className="panel-heading">
             <div>
-              <p className="step-label">Request</p>
+              <p className="step-label">Chat</p>
               <h2>Ask the AI Agent</h2>
             </div>
             <span className="pill">App</span>
           </div>
+          <div className="agent-chat-log" aria-live="polite">
+            {messages?.length ? (
+              messages.map((entry) => (
+                <div
+                  className={`agent-chat-message ${entry.direction === "outbound" ? "agent-chat-message-assistant" : "agent-chat-message-user"}`}
+                  key={entry.id}
+                >
+                  <span>{entry.direction === "outbound" ? "Agent" : "You"}</span>
+                  <p>{entry.body}</p>
+                  <small>{formatDate(entry.created_at)}</small>
+                </div>
+              ))
+            ) : (
+              <p className="muted">Ask a question to start the conversation.</p>
+            )}
+          </div>
           <form action={createWebAgentRequestAction} className="agent-request-form">
             <label>
               <span>Mode</span>
-              <select name="operation" defaultValue="operate" disabled={!canManage}>
+              <select name="operation" defaultValue="operate">
                 <option value="read">Read</option>
                 <option value="write">Write</option>
                 <option value="edit">Edit</option>
@@ -130,16 +168,53 @@ export default async function AgentSettingsPage({ searchParams }: PageProps) {
               <textarea
                 name="requestText"
                 rows={4}
-                placeholder="Ask the AI Agent to read, write, or edit something in the workspace."
-                disabled={!canManage}
+                placeholder="Ask about metrics, billing status, saved learnings, or what changed recently."
                 required
               />
             </label>
-            <button type="submit" disabled={!canManage}>
-              Save request
+            <button type="submit">
+              Send
             </button>
           </form>
         </article>
+
+        {canManage ? (
+          <article className="settings-panel full-span">
+            <div className="panel-heading">
+              <div>
+                <p className="step-label">Approvals</p>
+                <h2>Pending confirmations</h2>
+              </div>
+              <span className="pill">{approvals?.length ?? 0} pending</span>
+            </div>
+            <div className="table-list">
+              {approvals?.length ? (
+                approvals.map((approval) => (
+                  <div className="table-row" key={approval.id}>
+                    <div>
+                      <strong>{approval.action_type ?? "Confirmation"}</strong>
+                      <span className="muted">
+                        {approval.decision_notes ?? "Review required"} · {formatDate(approval.created_at)}
+                      </span>
+                    </div>
+                    <div className="agent-approval-actions">
+                      <form action={approveAgentApprovalAction}>
+                        <input type="hidden" name="approvalId" value={approval.id} />
+                        <button type="submit">Approve</button>
+                      </form>
+                      <form action={rejectAgentApprovalAction}>
+                        <input type="hidden" name="approvalId" value={approval.id} />
+                        <button type="submit">Reject</button>
+                      </form>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="muted">No pending confirmations.</p>
+              )}
+            </div>
+          </article>
+        ) : null}
 
         <article className="settings-panel full-span">
           <div className="panel-heading">
