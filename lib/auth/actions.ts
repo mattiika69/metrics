@@ -1,6 +1,7 @@
 "use server";
 
 import { createHash, randomBytes } from "node:crypto";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { clearActiveTenantId } from "@/lib/auth/active-tenant";
 import {
@@ -8,6 +9,11 @@ import {
   readAuthRedirectFormValue,
   sanitizeAuthRedirect,
 } from "@/lib/auth/redirects";
+import {
+  keepSignedInCookieName,
+  keepSignedInCookieOptions,
+  readKeepSignedInFormValue,
+} from "@/lib/auth/remember-me";
 import { isValidEmailAddress, sendTenantEmail } from "@/lib/email/send";
 import {
   escapeEmailHtml,
@@ -488,6 +494,7 @@ export async function signUpAction(formData: FormData) {
 export async function signInAction(formData: FormData) {
   const email = normalizeEmail(formValue(formData, "email"));
   const password = formValue(formData, "password");
+  const keepSignedIn = readKeepSignedInFormValue(formData);
   const next = readAuthRedirectFormValue(formData, "/dashboard");
 
   if (!isValidEmailAddress(email) || !password) {
@@ -502,7 +509,7 @@ export async function signInAction(formData: FormData) {
 
   await checkAuthRateLimit("login", email, withNext("/login", next, "/dashboard"), 10, 60);
 
-  const supabase = await createClient();
+  const supabase = await createClient({ keepSignedIn });
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -534,8 +541,16 @@ export async function signInAction(formData: FormData) {
     targetId: data.user?.id ?? null,
     metadata: {
       email,
+      keepSignedIn,
     },
   });
+
+  const cookieStore = await cookies();
+  cookieStore.set(
+    keepSignedInCookieName,
+    keepSignedIn ? "1" : "0",
+    keepSignedInCookieOptions(keepSignedIn),
+  );
 
   redirect(next);
 }
@@ -551,6 +566,8 @@ export async function signOutAction(formData?: FormData) {
   } = await supabase.auth.getUser();
   await supabase.auth.signOut();
   await clearActiveTenantId();
+  const cookieStore = await cookies();
+  cookieStore.delete(keepSignedInCookieName);
   await logAuditEvent({
     actorUserId: user?.id ?? null,
     eventType: "logout",

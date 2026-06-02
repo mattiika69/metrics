@@ -8,6 +8,7 @@ test.describe("auth pages", () => {
     await expect(page.getByText("Sign in to your account")).toBeVisible();
     await expect(page.getByLabel("Email")).toBeVisible();
     await expect(page.locator('input[name="password"]')).toBeVisible();
+    await expect(page.getByLabel("Keep me logged in")).toBeChecked();
     await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
   });
 

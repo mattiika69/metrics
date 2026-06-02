@@ -71,6 +71,10 @@ export default async function LoginPage({ searchParams }: PageProps) {
             autoComplete="current-password"
             action={<Link href={forgotHref}>Forgot password?</Link>}
           />
+          <label className="auth-checkbox">
+            <input name="keepSignedIn" type="checkbox" defaultChecked />
+            <span>Keep me logged in</span>
+          </label>
           <AuthSubmitButton pendingText="Signing in...">Sign in</AuthSubmitButton>
         </form>
         <p className="auth-switch">
