@@ -1,6 +1,6 @@
 # Telegram Agent Setup
 
-HyperOptimal Metrics uses one tenant-scoped Telegram bot for this app. Telegram is only an interface; Supabase remains the source of truth for connection state, messages, actions, audit logs, and saved learnings.
+HyperOptimal Metrics uses one tenant-scoped Telegram bot for this app. Telegram is only an interface; Supabase remains the source of truth for connection state, messages, actions, and audit logs.
 
 ## Setup
 
@@ -49,10 +49,9 @@ In the configured private chat, test:
 What changed today?
 Show me this week's metrics.
 What is our biggest constraint?
-Remember that our ICP is gym owners.
 ```
 
-The bot should refuse unlinked chats, record mapped inbound and outbound messages in Supabase, save explicit learnings to AI Agent memory, and require confirmation for destructive or high-risk changes.
+The bot should refuse unlinked chats, record mapped inbound and outbound messages in Supabase, and require confirmation for destructive or high-risk changes.
 
 ## Slack Parity
 

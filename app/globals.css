@@ -9331,84 +9331,6 @@ body:has(.app-shell) .metric-edit-panel {
   background: var(--app-panel) !important;
 }
 
-body:has(.app-shell) .agent-request-form {
-  display: grid;
-  gap: 14px;
-}
-
-body:has(.app-shell) .agent-chat-log {
-  display: grid;
-  gap: 10px;
-  margin-bottom: 14px;
-  max-height: 420px;
-  overflow: auto;
-  padding: 10px;
-  border: 1px solid var(--app-line);
-  border-radius: 8px;
-  background: #f8fafc;
-}
-
-body:has(.app-shell) .agent-chat-message {
-  display: grid;
-  gap: 4px;
-  max-width: min(760px, 92%);
-  padding: 10px 12px;
-  border: 1px solid #d8e0eb;
-  border-radius: 8px;
-  background: #ffffff;
-}
-
-body:has(.app-shell) .agent-chat-message-user {
-  justify-self: end;
-  border-color: #bfd3f7;
-  background: #eef5ff;
-}
-
-body:has(.app-shell) .agent-chat-message-assistant {
-  justify-self: start;
-}
-
-body:has(.app-shell) .agent-chat-message span,
-body:has(.app-shell) .agent-chat-message small {
-  color: var(--app-muted);
-  font-size: 11px;
-  font-weight: 700;
-}
-
-body:has(.app-shell) .agent-chat-message p {
-  margin: 0;
-  color: var(--app-text);
-  font-size: 13px;
-  line-height: 1.45;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-body:has(.app-shell) .agent-request-form label {
-  display: grid;
-  gap: 6px;
-}
-
-body:has(.app-shell) .agent-request-form label > span {
-  color: #344054;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-body:has(.app-shell) .agent-request-form input,
-body:has(.app-shell) .agent-request-form textarea {
-  width: 100%;
-}
-
-body:has(.app-shell) .agent-request-form textarea {
-  min-height: 96px;
-  resize: vertical;
-}
-
-body:has(.app-shell) .agent-request-form button {
-  justify-self: start;
-}
-
 body:has(.app-shell) .settings-actions-row {
   display: flex;
   gap: 10px;
@@ -9419,35 +9341,6 @@ body:has(.app-shell) .settings-actions-row {
 body:has(.app-shell) .disabled-link {
   opacity: 0.5;
   pointer-events: none;
-}
-
-body:has(.app-shell) .agent-approval-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-}
-
-body:has(.app-shell) .agent-approval-actions form {
-  margin: 0;
-}
-
-body:has(.app-shell) .agent-approval-actions button {
-  min-height: 30px;
-  padding: 0 10px;
-  border: 1px solid #c7d2e3;
-  border-radius: 6px;
-  background: #ffffff;
-  color: var(--app-text);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-body:has(.app-shell) .agent-approval-actions form:first-child button {
-  border-color: #2563eb;
-  background: #2563eb;
-  color: #ffffff;
 }
 
 body:has(.app-shell) .metric-edit-panel summary {

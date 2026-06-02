@@ -51,7 +51,7 @@ export default async function ForgotPasswordPage({ searchParams }: PageProps) {
     <main className="auth-shell">
       <section className="auth-panel">
         <div className="auth-heading">
-          <h1>HyperOptimal</h1>
+          <h1>ScalingMetrics</h1>
           <p>Reset your password</p>
         </div>
         <p className="auth-copy">

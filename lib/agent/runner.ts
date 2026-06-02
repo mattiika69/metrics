@@ -41,7 +41,6 @@ export type UnifiedAgentResult = {
 
 const highRiskPattern =
   /\b(delete|remove|archive|cancel|revoke|disconnect|demote|refund|change plan|upgrade|downgrade|payment method|seat|invite|owner|admin|permission|wipe|reset|destroy)\b/i;
-const savePattern = /\b(save|remember|learn|store|keep this|add this)\b/i;
 const rawDataPattern = /\b(raw data|data source|source count|counts?)\b/i;
 const billingPattern = /\b(billing|subscription|invoice|payment|plan)\b/i;
 const metricPattern = /\b(metric|mrr|arr|revenue|profit|sales|finance|retention|constraint|forecast|dashboard|status|what happened|summarize)\b/i;
@@ -58,25 +57,10 @@ function buildUnifiedAgentHelpResponse() {
     "- What changed today?",
     "- Show me this week's metrics.",
     "- What is our biggest constraint?",
-    "- Remember that our ICP is gym owners.",
     "- Check billing status.",
     "",
-    "I can read workspace data, save approved learnings, and prepare risky changes for confirmation.",
+    "I can read workspace data, answer workspace questions, and prepare risky changes for confirmation.",
   ].join("\n");
-}
-
-function titleFromBody(body: string) {
-  const title = body.split(/[.\n]/)[0]?.trim() || "Saved memory";
-  return title.length > 80 ? `${title.slice(0, 77)}...` : title;
-}
-
-function learningBody(text: string) {
-  const trimmed = stripAgentPrefix(text);
-  if (!savePattern.test(trimmed)) return null;
-  return trimmed
-    .replace(/^(?:please\s+)?(?:save|remember|learn|store)\s+(?:this|that)?\s*:?\s*/i, "")
-    .replace(/^add\s+this\s*:?\s*/i, "")
-    .trim();
 }
 
 function configuredAiModel() {
@@ -155,16 +139,6 @@ async function deterministicRun({
   tools: AgentToolRegistry;
   requestText: string;
 }) {
-  const body = learningBody(requestText);
-  if (body) {
-    const output = await executeTool(tools, "create_record", {
-      recordType: "agent_memory",
-      title: titleFromBody(body),
-      body,
-    });
-    return summarizeToolOutput(output);
-  }
-
   if (billingPattern.test(requestText)) {
     const output = await executeTool(tools, "get_billing_status", {});
     return summarizeToolOutput(output);
@@ -193,7 +167,7 @@ async function deterministicRun({
   return [
     summarizeToolOutput(output),
     "",
-    "I can also save memories, summarize metrics, check billing status, and prepare risky changes for approval.",
+    "I can also summarize metrics, check billing status, and prepare risky changes for approval.",
   ].join("\n").trim();
 }
 
@@ -367,7 +341,7 @@ export async function runUnifiedAgent(input: UnifiedAgentInput): Promise<Unified
     responseText = [
       "I need explicit confirmation before making that kind of change.",
       `Approval saved: ${approvalId}`,
-      "An owner or admin can confirm it from the AI Agent approvals view.",
+      "An owner or admin can confirm it through the approval workflow.",
     ].join("\n");
   } else {
     const toolContext = createToolContext({

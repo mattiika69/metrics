@@ -1,16 +1,18 @@
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 const read = (path) => readFileSync(path, "utf8");
 
-test("web, Slack, and Telegram all use the shared unified agent runner", () => {
+test("Slack and Telegram use the shared unified agent runner, while web agent pages are removed", () => {
   const runner = read("lib/agent/runner.ts");
   const channel = read("lib/agent/channel.ts");
-  const webActions = read("app/settings/agent/actions.ts");
   const slackEvents = read("app/api/integrations/slack/events/route.ts");
   const slackCommands = read("app/api/integrations/slack/commands/route.ts");
   const telegramWebhook = read("app/api/integrations/telegram/webhook/route.ts");
+  const tabs = read("components/settings/settings-tabs.tsx");
+  const shell = read("components/app-shell.tsx");
 
   assert.match(runner, /export async function runUnifiedAgent/);
   assert.match(runner, /resolvePlatformActor/);
@@ -21,10 +23,14 @@ test("web, Slack, and Telegram all use the shared unified agent runner", () => {
 
   assert.match(channel, /runUnifiedAgent/);
   assert.doesNotMatch(channel, /runAgentReply/);
-  assert.match(webActions, /runUnifiedAgent/);
   assert.match(slackEvents, /createChannelAgentRequest/);
   assert.match(slackCommands, /createChannelAgentRequest/);
   assert.match(telegramWebhook, /createChannelAgentRequest/);
+  assert.equal(existsSync("app/settings/agent/page.tsx"), false);
+  assert.equal(existsSync("app/settings/agent/actions.ts"), false);
+  assert.equal(existsSync("app/api/agent/requests/route.ts"), false);
+  assert.doesNotMatch(tabs, /settings\/agent/);
+  assert.doesNotMatch(shell, /settings-agent/);
 });
 
 test("agent tools enforce server-side permissions, approvals, and audit logging", () => {
@@ -128,6 +134,7 @@ test("Settings exposes wired Slack private channel and Telegram group tabs", () 
   assert.match(tabs, /href: "\/settings\/slack"/);
   assert.match(tabs, /id: "telegram"/);
   assert.match(tabs, /href: "\/settings\/telegram"/);
+  assert.doesNotMatch(tabs, /settings\/agent/);
 
   assert.match(slackPage, /SettingsTabs active="slack"/);
   assert.match(slackPage, /Connect Slack/);

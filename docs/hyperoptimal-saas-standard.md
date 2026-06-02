@@ -246,7 +246,7 @@ Required integration behavior:
 - Prevent cross-provider loops.
 - Audit sensitive actions.
 
-Required shared command families include menu/help, save records, generate outputs, repurpose inputs, add learnings/feedback, search/read records, update records, review queues, ops transactions/rules/snapshots, calendar/event capture, scheduled workflows, and disconnect/cancel/skip.
+Required shared command families include menu/help, save records, generate outputs, repurpose inputs, collect feedback, search/read records, update records, review queues, ops transactions/rules/snapshots, calendar/event capture, scheduled workflows, and disconnect/cancel/skip.
 
 ## Scheduled Workflow Architecture
 

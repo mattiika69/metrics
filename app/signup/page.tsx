@@ -65,7 +65,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
     <main className="auth-shell">
       <section className="auth-panel">
         <div className="auth-heading">
-          <h1>HyperOptimal</h1>
+          <h1>ScalingMetrics</h1>
           <p>
             {isInviteFlow
               ? "Create your account to join the workspace"

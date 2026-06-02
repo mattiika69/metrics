@@ -189,13 +189,13 @@ export default async function TelegramSettingsPage({ searchParams }: PageProps) 
         <article className="settings-panel full-span">
           <div className="panel-heading">
             <div>
-              <p className="step-label">Agent</p>
-              <h2>Available in Telegram</h2>
+              <p className="step-label">Telegram</p>
+              <h2>Available commands</h2>
             </div>
           </div>
           <p className="muted">
             Use /help, /status, /metrics, /constraints, /forecast, /inputs, /sales, /retention, and /finance.
-            You can also ask natural questions or say “remember...” to save useful context.
+            You can also ask natural questions about your workspace.
           </p>
         </article>
       </section>

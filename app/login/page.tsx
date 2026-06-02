@@ -48,7 +48,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
     <main className="auth-shell">
       <section className="auth-panel">
         <div className="auth-heading">
-          <h1>HyperOptimal</h1>
+          <h1>ScalingMetrics</h1>
           <p>Sign in to your account</p>
         </div>
         {message ? <p className="notice">{message}</p> : null}

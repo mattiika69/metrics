@@ -28,10 +28,6 @@ export type AgentToolContext = {
 
 type ToolResult = Record<string, unknown>;
 
-function normalizeQuery(value: string) {
-  return value.trim().toLowerCase();
-}
-
 async function recordCapability({
   context,
   capability,
@@ -84,7 +80,7 @@ async function withToolRun(
     .maybeSingle();
 
   try {
-      const output = await run();
+    const output = await run();
     if (row?.id) {
       await context.admin
         .from("agent_tool_runs")
@@ -112,79 +108,26 @@ async function withToolRun(
   }
 }
 
-async function findLearning(
-  admin: SupabaseClient,
-  tenantId: string,
-  input: { id?: string | null; query?: string | null },
-) {
-  if (input.id) {
-    const { data, error } = await admin
-      .from("metric_learnings")
-      .select("id, title, body, archived_at")
-      .eq("tenant_id", tenantId)
-      .eq("id", input.id)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    return data ? { status: "found" as const, rows: [data] } : { status: "missing" as const, rows: [] };
-  }
-
-  const query = normalizeQuery(input.query ?? "");
-  if (!query) return { status: "ambiguous" as const, rows: [] };
-
-  const { data, error } = await admin
-    .from("metric_learnings")
-    .select("id, title, body, archived_at")
-    .eq("tenant_id", tenantId)
-    .is("archived_at", null)
-    .order("updated_at", { ascending: false })
-    .limit(50);
-  if (error) throw new Error(error.message);
-  const rows = (data ?? []).filter((row) => {
-    const haystack = `${row.title ?? ""}\n${row.body ?? ""}`.toLowerCase();
-    return haystack.includes(query);
-  }).slice(0, 5);
-  if (!rows.length) return { status: "missing" as const, rows: [] };
-  if (rows.length > 1) return { status: "ambiguous" as const, rows };
-  return { status: "found" as const, rows };
-}
-
 export function createAgentTools(context: AgentToolContext) {
   return {
     search_app_data: tool({
-      description: "Search HyperOptimal Metrics data, saved memories, metrics, and raw data counts for the current tenant.",
+      description: "Search HyperOptimal Metrics data, metrics, and raw data counts for the current tenant.",
       inputSchema: z.object({
         query: z.string().default(""),
-        area: z.enum(["all", "metrics", "learnings", "raw_data"]).default("all"),
+        area: z.enum(["all", "metrics", "raw_data"]).default("all"),
         period: z.string().optional(),
       }),
       execute: async (input) => withToolRun(context, "search_app_data", input, async () => {
         await recordCapability({ context, capability: "agent.read", allowed: true });
         const periodKey = periodFromSearch(input.period);
-        const [snapshot, rawCounts, learnings] = await Promise.all([
+        const [snapshot, rawCounts] = await Promise.all([
           input.area === "all" || input.area === "metrics"
             ? loadMetricSnapshotPayload({ supabase: context.admin, tenantId: context.tenantId, periodKey })
             : null,
           input.area === "all" || input.area === "raw_data"
             ? loadRawDataCounts(context.admin, context.tenantId)
             : [],
-          input.area === "all" || input.area === "learnings"
-            ? context.admin
-              .from("metric_learnings")
-              .select("id, title, body, source_provider, updated_at")
-              .eq("tenant_id", context.tenantId)
-              .is("archived_at", null)
-              .order("updated_at", { ascending: false })
-              .limit(50)
-            : Promise.resolve({ data: [] }),
         ]);
-        const query = normalizeQuery(input.query);
-        const matchingLearnings = (learnings.data ?? [])
-          .filter((learning) => {
-            if (!query) return true;
-            const haystack = `${learning.title ?? ""}\n${learning.body ?? ""}`.toLowerCase();
-            return haystack.includes(query);
-          })
-          .slice(0, 10);
 
         const metricSummary = snapshot
           ? metricDefinitions.slice(0, 16).map((definition) => ({
@@ -201,7 +144,6 @@ export function createAgentTools(context: AgentToolContext) {
           period: periodKey,
           metrics: metricSummary,
           rawCounts,
-          learnings: matchingLearnings,
         };
       }),
     }),
@@ -209,7 +151,7 @@ export function createAgentTools(context: AgentToolContext) {
     get_record: tool({
       description: "Get a specific supported app record by type and id.",
       inputSchema: z.object({
-        recordType: z.enum(["metric_learning", "agent_memory", "billing_status"]),
+        recordType: z.enum(["agent_memory", "billing_status"]),
         id: z.string().optional(),
       }),
       execute: async (input) => withToolRun(context, "get_record", input, async () => {
@@ -225,9 +167,8 @@ export function createAgentTools(context: AgentToolContext) {
           return { ok: true, recordType: input.recordType, record: data ?? null };
         }
 
-        const table = input.recordType === "agent_memory" ? "agent_memories" : "metric_learnings";
         const { data, error } = await context.admin
-          .from(table)
+          .from("agent_memories")
           .select("*")
           .eq("tenant_id", context.tenantId)
           .eq("id", input.id ?? "")
@@ -238,9 +179,9 @@ export function createAgentTools(context: AgentToolContext) {
     }),
 
     create_record: tool({
-      description: "Create a safe supported record. Use agent_memory or metric_learning for durable agent memory.",
+      description: "Create a safe supported record.",
       inputSchema: z.object({
-        recordType: z.enum(["agent_memory", "metric_learning"]),
+        recordType: z.literal("agent_memory"),
         title: z.string().min(1),
         body: z.string().min(1),
       }),
@@ -254,41 +195,22 @@ export function createAgentTools(context: AgentToolContext) {
         });
         if (!allowed) return { ok: false, error: "Owner or admin role required." };
 
-        let data: Record<string, unknown>;
-        if (input.recordType === "agent_memory") {
-          const { data: inserted, error } = await context.admin.from("agent_memories").insert({
-            tenant_id: context.tenantId,
-            created_by_user_id: context.actorUserId,
-            source_platform: context.platform,
-            title: input.title,
-            body: input.body,
-            memory_type: "preference",
-            metadata: { agentRequestId: context.agentRequestId ?? null },
-          }).select("*").single();
-          if (error) throw new Error(error.message);
-          data = inserted;
-        } else {
-          const { data: inserted, error } = await context.admin.from("metric_learnings").insert({
-            tenant_id: context.tenantId,
-            created_by_user_id: context.actorUserId,
-            updated_by_user_id: context.actorUserId,
-            source_provider: context.platform,
-            source_channel: context.platformConversationId ?? null,
-            title: input.title,
-            source: "AI Agent",
-            body: input.body,
-            metadata: { agentRequestId: context.agentRequestId ?? null },
-          }).select("*").single();
-          if (error) throw new Error(error.message);
-          data = inserted;
-        }
-        const table = input.recordType === "agent_memory" ? "agent_memories" : "metric_learnings";
+        const { data, error } = await context.admin.from("agent_memories").insert({
+          tenant_id: context.tenantId,
+          created_by_user_id: context.actorUserId,
+          source_platform: context.platform,
+          title: input.title,
+          body: input.body,
+          memory_type: "preference",
+          metadata: { agentRequestId: context.agentRequestId ?? null },
+        }).select("*").single();
+        if (error) throw new Error(error.message);
         await logAuditEvent({
           tenantId: context.tenantId,
           actorUserId: context.actorUserId,
           platform: context.platform,
           eventType: `${input.recordType}_created`,
-          targetType: table,
+          targetType: "agent_memories",
           targetId: String(data.id),
           afterState: data,
         });
@@ -297,11 +219,10 @@ export function createAgentTools(context: AgentToolContext) {
     }),
 
     update_record: tool({
-      description: "Update a supported memory/learning record after identifying exactly one target.",
+      description: "Update a supported memory record after identifying exactly one target.",
       inputSchema: z.object({
-        recordType: z.enum(["agent_memory", "metric_learning"]),
+        recordType: z.literal("agent_memory"),
         id: z.string().optional(),
-        query: z.string().optional(),
         title: z.string().optional(),
         body: z.string().optional(),
       }),
@@ -311,32 +232,22 @@ export function createAgentTools(context: AgentToolContext) {
         if (!allowed) return { ok: false, error: "Owner or admin role required." };
         if (!input.title && !input.body) return { ok: false, error: "Nothing to update." };
 
-        const table = input.recordType === "agent_memory" ? "agent_memories" : "metric_learnings";
-        const target = input.recordType === "metric_learning"
-          ? await findLearning(context.admin, context.tenantId, { id: input.id, query: input.query })
-          : { status: "found" as const, rows: [] };
-        let existing = target.rows[0] as Record<string, unknown> | undefined;
-        if (input.recordType === "agent_memory") {
-          const { data, error } = await context.admin
-            .from("agent_memories")
-            .select("*")
-            .eq("tenant_id", context.tenantId)
-            .eq("id", input.id ?? "")
-            .maybeSingle();
-          if (error) throw new Error(error.message);
-          existing = data ?? undefined;
-        }
+        const { data: existing, error: existingError } = await context.admin
+          .from("agent_memories")
+          .select("*")
+          .eq("tenant_id", context.tenantId)
+          .eq("id", input.id ?? "")
+          .maybeSingle();
+        if (existingError) throw new Error(existingError.message);
         if (!existing) return { ok: false, needsClarification: true, error: "I could not find exactly one record to update." };
-        if (target.status === "ambiguous") return { ok: false, needsClarification: true, matches: target.rows };
 
         const patch = {
           ...(input.title ? { title: input.title } : {}),
           ...(input.body ? { body: input.body } : {}),
-          updated_by_user_id: input.recordType === "metric_learning" ? context.actorUserId : undefined,
           updated_at: new Date().toISOString(),
         };
         const { data, error } = await context.admin
-          .from(table)
+          .from("agent_memories")
           .update(patch)
           .eq("tenant_id", context.tenantId)
           .eq("id", String(existing.id))
@@ -348,7 +259,7 @@ export function createAgentTools(context: AgentToolContext) {
           actorUserId: context.actorUserId,
           platform: context.platform,
           eventType: `${input.recordType}_updated`,
-          targetType: table,
+          targetType: "agent_memories",
           targetId: String(existing.id),
           beforeState: existing,
           afterState: data,
@@ -360,7 +271,7 @@ export function createAgentTools(context: AgentToolContext) {
     delete_record: tool({
       description: "Request approval for deleting or archiving supported records. Destructive actions are never performed without confirmation.",
       inputSchema: z.object({
-        recordType: z.enum(["agent_memory", "metric_learning"]),
+        recordType: z.literal("agent_memory"),
         id: z.string().optional(),
         query: z.string().optional(),
         reason: z.string().optional(),

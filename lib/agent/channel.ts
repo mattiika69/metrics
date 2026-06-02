@@ -79,10 +79,9 @@ export function buildAgentHelpResponse() {
     "- What changed today?",
     "- Show me this week's metrics.",
     "- What is our biggest constraint?",
-    "- Remember that our ICP is gym owners.",
     "- Create a task to follow up with Sarah tomorrow.",
     "",
-    "I can read metrics and constraints, save approved learnings, and ask for confirmation before risky changes.",
+    "I can read metrics and constraints, answer workspace questions, and ask for confirmation before risky changes.",
   ].join("\n");
 }
 

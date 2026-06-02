@@ -362,8 +362,8 @@ const integrationDetailCopy: Record<string, IntegrationDetailCopy> = {
       "Return to HyperOptimal Metrics and test commands from Slack.",
     ],
     links: [],
-    dataRead: ["Commands", "Channel messages sent to the app", "Agent requests", "Responses"],
-    destination: "AI Agent, Metrics, Constraints, Forecasting",
+    dataRead: ["Commands", "Channel messages sent to the app", "Metrics requests", "Responses"],
+    destination: "Metrics, Constraints, Forecasting",
   },
   telegram: {
     accent: "#229ed9",
@@ -375,8 +375,8 @@ const integrationDetailCopy: Record<string, IntegrationDetailCopy> = {
       "Return to HyperOptimal Metrics and test commands from Telegram.",
     ],
     links: [],
-    dataRead: ["Commands", "Chat messages sent to the app", "Agent requests", "Responses"],
-    destination: "AI Agent, Metrics, Constraints, Forecasting",
+    dataRead: ["Commands", "Chat messages sent to the app", "Metrics requests", "Responses"],
+    destination: "Metrics, Constraints, Forecasting",
   },
 };
 

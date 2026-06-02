@@ -72,13 +72,13 @@ export default async function SlackSettingsPage({ searchParams }: PageProps) {
         <article className="settings-panel">
           <div className="panel-heading">
             <div>
-              <p className="step-label">Agent</p>
-              <h2>Available in Slack</h2>
+              <p className="step-label">Slack</p>
+              <h2>Available commands</h2>
             </div>
           </div>
           <p className="muted">
             Use /help, /status, /metrics, /constraints, /forecast, /inputs, /sales, /retention, and /finance.
-            You can also ask natural questions or say “remember...” to save useful context.
+            You can also ask natural questions about your workspace.
           </p>
           <p className="muted">
             Connect Slack, invite the bot to a public or private channel, then mention it once or use /agent from that channel.

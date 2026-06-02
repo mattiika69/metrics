@@ -142,7 +142,7 @@ export default async function IntegrationDetailPage({ params, searchParams }: Pa
             <h2>Configuration</h2>
             {definition.id === "slack" ? (
               <div className="integration-action-stack">
-                <p>Connect Slack to ask for metrics, constraints, forecasts, and AI Agent updates from your workspace.</p>
+                <p>Connect Slack to ask for metrics, constraints, and forecasts from your workspace.</p>
                 <Link href="/api/integrations/slack/oauth/start" className="button-primary">Connect Slack</Link>
                 {connected ? (
                   <form action={disconnectIntegrationAction}>

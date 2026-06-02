@@ -37,7 +37,7 @@ export function AppSidebar({ active, items, logoutAction }: AppSidebarProps) {
             <span className="brand-mark" aria-hidden="true">
               H
             </span>
-            <span>HyperOptimal</span>
+            <span>ScalingMetrics</span>
           </Link>
           <button
             type="button"
