@@ -1,9 +1,9 @@
 export const defaultBillingPlan = {
   id: "v1",
   name: "HyperOptimal Metrics",
-  priceCents: 9700,
+  priceCents: 100,
   currency: "usd",
   interval: "month",
-  displayPrice: "$97/mo",
+  displayPrice: "$1/mo",
   seatBased: true,
 } as const;

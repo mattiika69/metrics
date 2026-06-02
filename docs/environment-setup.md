@@ -41,7 +41,7 @@ Compatibility aliases currently supported:
 Configured in Vercel Production:
 
 - Supabase URL, anon/publishable key, and service-role key.
-- Stripe secret key, publishable key, webhook secret, and `$97/mo` Basic price.
+- Stripe secret key, publishable key, webhook secret, and `$1/mo` Basic price.
 - Slack app ID, OAuth client ID, OAuth client secret, and signing secret.
 - Resend API key, `EMAIL_FROM`, and legacy Resend sender aliases.
 

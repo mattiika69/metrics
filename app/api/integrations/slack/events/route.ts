@@ -57,18 +57,6 @@ export async function POST(request: Request) {
     return envErrorResponse(error);
   }
 
-  const rateLimit = await checkRateLimit({
-    route: "webhook:slack:events",
-    key: `slack:events:${await getRequestIp()}`,
-    limit: 120,
-    windowSeconds: 60,
-    metadata: { provider: "slack" },
-  });
-
-  if (!rateLimit.allowed) {
-    return Response.json({ error: "Too many requests." }, { status: 429 });
-  }
-
   const body = await request.text();
   const headerStore = await headers();
   const verified = verifySlackSignature({
@@ -85,7 +73,23 @@ export async function POST(request: Request) {
   } catch {
     return Response.json({ error: "Invalid Slack payload." }, { status: 400 });
   }
-  if (payload.type === "url_verification") return Response.json({ challenge: payload.challenge });
+  if (payload.type === "url_verification" && typeof payload.challenge === "string") {
+    return new Response(payload.challenge, {
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
+
+  const rateLimit = await checkRateLimit({
+    route: "webhook:slack:events",
+    key: `slack:events:${await getRequestIp()}`,
+    limit: 120,
+    windowSeconds: 60,
+    metadata: { provider: "slack" },
+  });
+
+  if (!rateLimit.allowed) {
+    return Response.json({ error: "Too many requests." }, { status: 429 });
+  }
 
   const externalEventId = payload.event_id ?? `${payload.team_id ?? "unknown"}:${payload.event?.event_ts ?? Date.now()}`;
   const eventType = payload.event?.type ?? payload.type ?? "unknown";

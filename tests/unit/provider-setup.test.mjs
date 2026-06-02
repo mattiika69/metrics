@@ -84,6 +84,13 @@ test("Slack OAuth and webhook handlers validate server-only environment", () => 
     assert.match(route, /verifySlackSignature/);
     assert.match(route, /await request\.text\(\)/);
   }
+  assert.match(events, /payload\.type === "url_verification"/);
+  assert.match(events, /new Response\(payload\.challenge/);
+  assert.match(events, /text\/plain; charset=utf-8/);
+  assert.ok(
+    events.indexOf("url_verification") < events.indexOf("const rateLimit = await checkRateLimit"),
+    "Slack URL verification must return before rate limit/database work",
+  );
 });
 
 test("checkout uses server-created subscription sessions with tenant metadata", () => {

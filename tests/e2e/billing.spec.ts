@@ -9,10 +9,10 @@ test.describe("billing", () => {
     expect(payload.plans[0]).toMatchObject({
       id: "v1",
       name: "HyperOptimal Metrics",
-      priceCents: 9700,
+      priceCents: 100,
       currency: "usd",
       interval: "month",
-      displayPrice: "$97/mo",
+      displayPrice: "$1/mo",
       seatBased: true,
     });
   });

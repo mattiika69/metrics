@@ -40,7 +40,7 @@ Do not save product state only to local files, browser storage, memory, or build
 
 Stripe billing is implemented as a tenant-scoped foundation.
 
-- Default paid plan: `$97/mo`.
+- Default paid plan: `$1/mo`.
 - Data model: `billing_customers`, `billing_subscriptions`, `billing_subscription_items`, `billing_events`, `billing_usage_records`.
 - Checkout flow: `startStripeCheckoutAction()`.
 - Webhook route: `POST /api/stripe/webhook`.
@@ -169,7 +169,7 @@ The app shell is implemented to match the Scaling Metrics design system.
 Configured in Vercel as of verification:
 
 - Supabase URL, publishable/anon key, and service-role key.
-- Stripe live secret key, publishable key, webhook secret, and Basic price ID. Stripe API access was verified against account `acct_1SvoHh53gChGC5HS`; default price `price_1Tddwo53gChGC5HSQ4IbYksj` is active at `$97/mo`; the deployed webhook runtime loads `STRIPE_WEBHOOK_SECRET`; a request without a Stripe signature returns `400 Missing Stripe signature`.
+- Stripe live secret key, publishable key, webhook secret, and Basic price ID. Stripe API access was verified against account `acct_1SvoHh53gChGC5HS`; the default Basic price is active at `$1/mo`; the deployed webhook runtime loads `STRIPE_WEBHOOK_SECRET`; a request without a Stripe signature returns `400 Missing Stripe signature`.
 - Stripe Dashboard webhook endpoint `we_1TdcgP53gChGC5HSwinO6OFl` is enabled and points to `https://metrics-ten-lovat.vercel.app/api/stripe/webhook` until Vercel domain ownership for `app.scalingmetrics.com` is available under the deployment account.
 - Resend API key and sender email.
 - Roezan API key and API base URL.

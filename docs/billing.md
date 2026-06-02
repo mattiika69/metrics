@@ -14,7 +14,7 @@ Billing is tenant-scoped. A Stripe customer represents a tenant workspace, and s
 - `STRIPE_PRICE_ID`: legacy default subscription price alias.
 - `SUPABASE_SERVICE_ROLE_KEY`: server-only key used by trusted webhook/admin paths.
 
-The default paid plan is `$97/mo`. The app prefers `STRIPE_PRICE_BASIC` and falls back to the legacy aliases for existing deployments.
+The default paid plan is `$1/mo`. The app prefers `STRIPE_PRICE_BASIC` and falls back to the legacy aliases for existing deployments.
 
 ## Data Model
 
