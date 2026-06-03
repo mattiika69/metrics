@@ -181,7 +181,7 @@ export function SidebarNav({
                           return (
                             <Link
                               href={child.href}
-                              prefetch
+                              prefetch={false}
                               aria-label={child.label}
                               aria-current={isChildActive(child) ? "page" : undefined}
                               className={[
@@ -201,7 +201,7 @@ export function SidebarNav({
                   <>
                     <Link
                       href={item.href}
-                      prefetch
+                      prefetch={false}
                       aria-label={item.label}
                       aria-current={itemActive ? "page" : undefined}
                       className={[
