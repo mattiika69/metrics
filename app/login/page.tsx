@@ -69,7 +69,11 @@ export default async function LoginPage({ searchParams }: PageProps) {
             name="password"
             label="Password"
             autoComplete="current-password"
-            action={<Link href={forgotHref}>Forgot password?</Link>}
+            action={(
+              <Link href={forgotHref} prefetch={false}>
+                Forgot password?
+              </Link>
+            )}
           />
           <label className="auth-checkbox">
             <input name="keepSignedIn" type="checkbox" defaultChecked />
@@ -78,7 +82,10 @@ export default async function LoginPage({ searchParams }: PageProps) {
           <AuthSubmitButton pendingText="Signing in...">Sign in</AuthSubmitButton>
         </form>
         <p className="auth-switch">
-          Don&apos;t have an account? <Link href={signupHref}>Sign up</Link>
+          Don&apos;t have an account?{" "}
+          <Link href={signupHref} prefetch={false}>
+            Sign up
+          </Link>
         </p>
       </section>
     </main>

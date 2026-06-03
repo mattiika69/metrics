@@ -53,7 +53,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
               Please click the link to continue setup.
             </p>
           </div>
-          <Link href={loginHref} className="auth-link-button">
+          <Link href={loginHref} prefetch={false} className="auth-link-button">
             Back to Sign In
           </Link>
         </section>
@@ -133,7 +133,10 @@ export default async function SignupPage({ searchParams }: PageProps) {
           </AuthSubmitButton>
         </form>
         <p className="auth-switch">
-          Already have an account? <Link href={loginHref}>Sign in</Link>
+          Already have an account?{" "}
+          <Link href={loginHref} prefetch={false}>
+            Sign in
+          </Link>
         </p>
       </section>
     </main>

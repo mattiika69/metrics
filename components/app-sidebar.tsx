@@ -33,7 +33,7 @@ export function AppSidebar({ active, items, logoutAction }: AppSidebarProps) {
     <aside className="side-nav">
       <div className="side-shell-header">
         <div className="side-brand-row">
-          <Link href="/dashboard" className="side-brand">
+          <Link href="/dashboard" prefetch={false} className="side-brand">
             <span className="brand-mark" aria-hidden="true">
               H
             </span>

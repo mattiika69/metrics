@@ -101,7 +101,12 @@ export default async function SettingsIntegrationsPage({ searchParams }: PagePro
                     ? "integration-card connected"
                     : "integration-card";
                 return (
-                  <Link href={`/integrations/${integration.id}`} className={cardClass} key={integration.id}>
+                  <Link
+                    href={`/integrations/${integration.id}`}
+                    prefetch={false}
+                    className={cardClass}
+                    key={integration.id}
+                  >
                     <span
                       className="integration-logo"
                       style={{ background: logoColors[integration.id] ?? "#2f7dff" }}
