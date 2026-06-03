@@ -1,8 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import {
   connectIntegrationAction,
-  createTelegramLinkCodeAction,
   disconnectIntegrationAction,
   importCsvBankingAction,
   syncIntegrationAction,
@@ -53,9 +53,12 @@ export default async function IntegrationDetailPage({ params, searchParams }: Pa
   const query = await searchParams;
   const message = param(query, "message");
   const pageError = param(query, "error");
-  const code = param(query, "code");
-  const expires = param(query, "expires");
   const definition = getIntegrationDefinition(id);
+
+  if (definition?.group === "Messaging") {
+    redirect("/settings/integrations");
+  }
+
   const { supabase, tenant } = await requireTenant();
 
   if (!definition) {
@@ -71,21 +74,12 @@ export default async function IntegrationDetailPage({ params, searchParams }: Pa
   }
 
   const detail = getIntegrationDetailCopy(definition);
-  const table = definition.group === "Messaging" ? "tenant_integrations" : "metric_integrations";
-  const { data: connection } = definition.group === "Messaging"
-    ? await supabase
-      .from(table)
-      .select("id, status, display_name, external_team_id, external_channel_id, settings, updated_at")
-      .eq("tenant_id", tenant.id)
-      .eq("provider", definition.id)
-      .neq("status", "disabled")
-      .maybeSingle()
-    : await supabase
-      .from(table)
-      .select("id, status, display_name, external_account_id, settings, last_sync_at, last_event_at, last_error, updated_at")
-      .eq("tenant_id", tenant.id)
-      .eq("provider", definition.id)
-      .maybeSingle();
+  const { data: connection } = await supabase
+    .from("metric_integrations")
+    .select("id, status, display_name, external_account_id, settings, last_sync_at, last_event_at, last_error, updated_at")
+    .eq("tenant_id", tenant.id)
+    .eq("provider", definition.id)
+    .maybeSingle();
   const connectionRecord = connection as Record<string, unknown> | null;
   const lastSyncAt = typeof connectionRecord?.last_sync_at === "string" ? connectionRecord.last_sync_at : null;
   const lastError = typeof connectionRecord?.last_error === "string" ? connectionRecord.last_error : null;
@@ -127,11 +121,7 @@ export default async function IntegrationDetailPage({ params, searchParams }: Pa
                 ? `Connected on ${formatDate(connectionRecord?.updated_at)}`
                 : definition.comingSoon
                   ? "This connection will be available soon."
-                  : definition.id === "slack"
-                    ? "Connect through Slack to approve this workspace."
-                    : definition.id === "telegram"
-                      ? "Generate a code and send it to the Telegram bot from the chat you want to connect."
-                      : "Add the connection details to start syncing data."}
+                  : "Add the connection details to start syncing data."}
             </span>
           </div>
           {lastSyncAt ? <span>Last refreshed {formatDateTime(lastSyncAt)}</span> : null}
@@ -140,38 +130,7 @@ export default async function IntegrationDetailPage({ params, searchParams }: Pa
         <section className="integration-detail-grid">
           <article className="integration-detail-card">
             <h2>Configuration</h2>
-            {definition.id === "slack" ? (
-              <div className="integration-action-stack">
-                <p>Connect Slack to ask for metrics, constraints, and forecasts from your workspace.</p>
-                <Link href="/api/integrations/slack/oauth/start" className="button-primary">Connect Slack</Link>
-                {connected ? (
-                  <form action={disconnectIntegrationAction}>
-                    <input type="hidden" name="provider" value={definition.id} />
-                    <button type="submit" className="button-danger">Disconnect</button>
-                  </form>
-                ) : null}
-              </div>
-            ) : definition.id === "telegram" ? (
-              <div className="integration-action-stack">
-                <p>Generate a link code, then send /link CODE to the Telegram bot from the chat you want to connect.</p>
-                {code ? (
-                  <p className="integration-code">
-                    <span>Link code</span>
-                    <strong>{code}</strong>
-                    {expires ? <small>Expires {formatDateTime(expires)}</small> : null}
-                  </p>
-                ) : null}
-                <form action={createTelegramLinkCodeAction}>
-                  <button type="submit">Generate link code</button>
-                </form>
-                {connected ? (
-                  <form action={disconnectIntegrationAction}>
-                    <input type="hidden" name="provider" value={definition.id} />
-                    <button type="submit" className="button-danger">Disconnect</button>
-                  </form>
-                ) : null}
-              </div>
-            ) : definition.comingSoon ? (
+            {definition.comingSoon ? (
               <p>This connection is not available yet.</p>
             ) : definition.id === "csv-banking" ? (
               <>

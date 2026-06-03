@@ -2138,8 +2138,6 @@ const integrationColors: Record<string, string> = {
   twitter: "#000000",
   instagram: "#e4405f",
   facebook: "#1877f2",
-  slack: "#4a154b",
-  telegram: "#229ed9",
 };
 
 const integrationSections = [
@@ -2149,7 +2147,6 @@ const integrationSections = [
   { title: "Social", ids: ["linkedin", "twitter", "instagram", "facebook"] },
   { title: "Payment Processors", ids: ["stripe", "fanbasis", "whop"] },
   { title: "Banking", ids: ["plaid", "csv-banking", "quickbooks"] },
-  { title: "Messaging", ids: ["slack", "telegram"] },
 ];
 
 const integrationDisplayNames: Record<string, string> = {
@@ -2179,8 +2176,6 @@ const integrationDescriptions: Record<string, string> = {
   plaid: "Connect bank accounts to track revenue and expenses",
   "csv-banking": "Upload monthly bank CSVs with overlap-safe dedupe to track cash in and cash out",
   quickbooks: "Banking sync is coming soon",
-  slack: "Ask for metrics, constraints, forecasts, and department views from Slack",
-  telegram: "Ask for metrics, constraints, forecasts, and department views from Telegram",
 };
 
 export async function ScalingIntegrationsPage({ active = "settings-integrations" }: { active?: ActiveRoute }) {
@@ -2222,7 +2217,7 @@ export async function ScalingIntegrationsPage({ active = "settings-integrations"
                   const description = integrationDescriptions[id] ?? integration.description;
                   return (
                     <Link
-                      href={id === "slack" || id === "telegram" ? `/settings/${id}` : `/integrations/${id}`}
+                      href={`/integrations/${id}`}
                       className={[
                         "integration-card",
                         connected ? "connected" : "",

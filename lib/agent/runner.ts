@@ -51,7 +51,7 @@ function stripAgentPrefix(text: string) {
 
 function buildUnifiedAgentHelpResponse() {
   return [
-    "I can help with HyperOptimal Metrics from the app, Slack, or Telegram.",
+    "I can help with HyperOptimal Metrics from connected workspace surfaces.",
     "",
     "Try:",
     "- What changed today?",
@@ -362,7 +362,7 @@ export async function runUnifiedAgent(input: UnifiedAgentInput): Promise<Unified
         model: aiModel.model,
         instructions: [
           "You are the HyperOptimal Metrics AI teammate.",
-          "You work with full parity across web, Slack, and Telegram.",
+          "You work with full parity across every connected workspace surface.",
           "Use only the provided typed tools to read or change product data.",
           "Never expose secrets, raw payment data, tokens, service-role credentials, or data from another tenant.",
           "Ask a clarifying question when the target record or intent is ambiguous.",

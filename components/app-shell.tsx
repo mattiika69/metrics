@@ -28,8 +28,6 @@ export type ActiveRoute =
   | "settings-billing"
   | "settings-integrations"
   | "settings-scheduling"
-  | "settings-slack"
-  | "settings-telegram"
   | "help"
   | "account"
   | "admin";
@@ -110,15 +108,6 @@ const primaryItems: SidebarItem[] = [
     label: "Settings",
     href: "/settings/account",
     section: "settings",
-    children: [
-      { id: "settings-account", label: "Account", href: "/settings/account", activeRoutes: ["settings-account"] },
-      { id: "settings-team", label: "Team", href: "/settings/team", activeRoutes: ["settings-team"] },
-      { id: "settings-billing", label: "Billing", href: "/settings/billing", activeRoutes: ["settings-billing"] },
-      { id: "settings-integrations", label: "Integrations", href: "/settings/integrations", activeRoutes: ["settings-integrations"] },
-      { id: "settings-scheduling", label: "Scheduling", href: "/settings/scheduling", activeRoutes: ["settings-scheduling"] },
-      { id: "settings-slack", label: "Slack", href: "/settings/slack", activeRoutes: ["settings-slack"] },
-      { id: "settings-telegram", label: "Telegram", href: "/settings/telegram", activeRoutes: ["settings-telegram"] },
-    ],
   },
   {
     id: "account",

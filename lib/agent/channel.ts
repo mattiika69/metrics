@@ -112,7 +112,7 @@ export async function buildAgentStatusResponse({
     .maybeSingle();
 
   return [
-    `${provider === "telegram" ? "Telegram" : "Slack"} is connected to HyperOptimal Metrics.`,
+    "This workspace connection is active in HyperOptimal Metrics.",
     `Messages recorded for this channel: ${recentCount ?? 0}`,
     `Last activity: ${latest?.created_at ? new Date(latest.created_at).toLocaleString("en-US") : "No activity yet"}`,
   ].join("\n");

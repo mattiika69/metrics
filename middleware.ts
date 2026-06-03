@@ -38,6 +38,13 @@ const PUBLIC_PAGE_PREFIXES = [
   "/terms",
 ];
 
+const HIDDEN_MESSAGING_UI_PATHS = [
+  "/integrations/slack",
+  "/integrations/telegram",
+  "/settings/slack",
+  "/settings/telegram",
+];
+
 function withSecurityHeaders(response: NextResponse) {
   response.headers.set("content-security-policy", "base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'");
   response.headers.set("cross-origin-opener-policy", "same-origin");
@@ -106,7 +113,18 @@ function redirectToLogin(request: NextRequest) {
   return withSecurityHeaders(NextResponse.redirect(loginUrl));
 }
 
+function redirectHiddenMessagingUiPath(request: NextRequest) {
+  if (!HIDDEN_MESSAGING_UI_PATHS.includes(request.nextUrl.pathname)) return null;
+
+  return withSecurityHeaders(
+    NextResponse.redirect(new URL("/settings/integrations", request.url)),
+  );
+}
+
 export async function middleware(request: NextRequest) {
+  const hiddenMessagingRedirect = redirectHiddenMessagingUiPath(request);
+  if (hiddenMessagingRedirect) return hiddenMessagingRedirect;
+
   const publishableKey =
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

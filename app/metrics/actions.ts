@@ -8,8 +8,6 @@ import {
   loadMetricIntegrationSecret,
   storeMetricIntegrationSecret,
 } from "@/lib/integrations/secret-store";
-import { sendTelegramMessage } from "@/lib/integrations/telegram";
-import { createTelegramLinkCode, hashTelegramLinkCode } from "@/lib/integrations/telegram";
 import { calculateForecast, normalizeForecastAssumptions } from "@/lib/metrics/forecasting";
 import { generateAndStoreRecommendation } from "@/lib/metrics/recommendations";
 import { getMetricDefinition } from "@/lib/metrics/definitions";
@@ -256,26 +254,6 @@ export async function createMetricRequestAction(formData: FormData) {
     .single();
 
   if (error) redirectWith(next, "error", error.message);
-
-  const adminChatId = process.env.INTERNAL_TELEGRAM_CHAT_ID ?? process.env.ADMIN_TELEGRAM_CHAT_ID;
-  if (adminChatId && process.env.TELEGRAM_BOT_TOKEN) {
-    const result = await sendTelegramMessage({
-      chatId: adminChatId,
-      text: [
-        "New HyperOptimal Metrics request",
-        `Tenant: ${tenant.name}`,
-        `Metric: ${requestedMetric}`,
-        context ? `Context: ${context}` : null,
-      ].filter(Boolean).join("\n"),
-    });
-    if (result.ok) {
-      await supabase
-        .from("metric_requests")
-        .update({ notified_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-        .eq("id", data.id)
-        .eq("tenant_id", tenant.id);
-    }
-  }
 
   await logAuditEvent({
     tenantId: tenant.id,
@@ -554,47 +532,4 @@ export async function importCsvBankingAction(formData: FormData) {
     redirectWith("/integrations/csv-banking", "error", error instanceof Error ? error.message : "CSV import failed");
   }
   redirectWith("/integrations/csv-banking", "message", resultMessage);
-}
-
-export async function createTelegramLinkCodeAction() {
-  const { tenant, user, membership } = await requireTenant();
-  if (membership.role !== "owner" && membership.role !== "admin") {
-    redirect("/settings/telegram?message=Only admins can create Telegram link codes");
-  }
-
-  let code = createTelegramLinkCode();
-  let codeHash = hashTelegramLinkCode(code);
-  let expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-  const admin = createAdminClient();
-  let insert = await admin.from("telegram_link_codes").insert({
-    tenant_id: tenant.id,
-    created_by: user.id,
-    code: codeHash,
-    expires_at: expiresAt,
-  });
-
-  if (insert.error?.code === "23505") {
-    code = createTelegramLinkCode();
-    codeHash = hashTelegramLinkCode(code);
-    expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-    insert = await admin.from("telegram_link_codes").insert({
-      tenant_id: tenant.id,
-      created_by: user.id,
-      code: codeHash,
-      expires_at: expiresAt,
-    });
-  }
-
-  if (insert.error) {
-    redirectWith("/settings/telegram", "error", "Could not create a Telegram link code. Try again.");
-  }
-
-  await logAuditEvent({
-    tenantId: tenant.id,
-    actorUserId: user.id,
-    eventType: "telegram_link_code_created",
-    targetType: "telegram",
-    metadata: { expiresAt },
-  });
-  redirect(`/settings/telegram?code=${code}&expires=${encodeURIComponent(expiresAt)}`);
 }

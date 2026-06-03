@@ -250,17 +250,10 @@ export default async function GetStartedPage({ searchParams }: PageProps) {
           </form>
         </SetupCard>
 
-        <SetupCard step="Step 6" title="Messaging">
-          <div className="integration-health-grid">
-            <Link href="/settings/slack" className="integration-health-row">
-              <span>Slack</span>
-              <strong>Connect</strong>
-            </Link>
-            <Link href="/settings/telegram" className="integration-health-row">
-              <span>Telegram</span>
-              <strong>Connect</strong>
-            </Link>
-          </div>
+        <SetupCard step="Step 6" title="Finish setup">
+          <p className="muted">
+            Open the metrics workspace when your core data sources and team settings are ready.
+          </p>
           <Link href="/dashboard" className="button-primary card-action">Open Metrics</Link>
         </SetupCard>
       </section>

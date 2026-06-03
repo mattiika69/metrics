@@ -5,9 +5,7 @@ export type SettingsTab =
   | "team"
   | "billing"
   | "integrations"
-  | "scheduling"
-  | "slack"
-  | "telegram";
+  | "scheduling";
 
 const settingsTabs = [
   { id: "account", label: "Account", href: "/settings/account" },
@@ -15,8 +13,6 @@ const settingsTabs = [
   { id: "billing", label: "Billing", href: "/settings/billing" },
   { id: "integrations", label: "Integrations", href: "/settings/integrations" },
   { id: "scheduling", label: "Scheduling", href: "/settings/scheduling" },
-  { id: "slack", label: "Slack", href: "/settings/slack" },
-  { id: "telegram", label: "Telegram", href: "/settings/telegram" },
 ] as const;
 
 export function SettingsTabs({ active }: { active: SettingsTab }) {

@@ -26,10 +26,10 @@ export function isAdminRole(role: string | null | undefined) {
 
 function linkPrompt(platform: AgentPlatform) {
   if (platform === "slack") {
-    return "Please link your Slack account from HyperOptimal Metrics > Settings > Slack before I can read or change workspace data.";
+    return "Please connect this workspace before I can read or change workspace data.";
   }
   if (platform === "telegram") {
-    return "Please link your Telegram account from HyperOptimal Metrics > Settings > Telegram before I can read or change workspace data.";
+    return "Please connect this workspace before I can read or change workspace data.";
   }
   return "Please sign in to HyperOptimal Metrics before I can read or change workspace data.";
 }

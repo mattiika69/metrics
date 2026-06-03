@@ -23,9 +23,9 @@ export default function TermsPage() {
         </p>
         <h2>Messaging and communications</h2>
         <p>
-          Email, SMS, Slack, and Telegram features must be used lawfully and with
-          appropriate consent. Users are responsible for honoring opt-outs and
-          communication preferences.
+          Email and SMS features must be used lawfully and with appropriate
+          consent. Users are responsible for honoring opt-outs and communication
+          preferences.
         </p>
         <h2>Billing</h2>
         <p>

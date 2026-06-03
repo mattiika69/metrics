@@ -121,33 +121,32 @@ test("agent persistence migration creates tenant-scoped RLS tables", () => {
   assert.match(migration, /public\.has_tenant_role/);
 });
 
-test("Settings exposes wired Slack private channel and Telegram group tabs", () => {
+test("Settings hides messaging tabs while channel plumbing remains wired", () => {
   const tabs = read("components/settings/settings-tabs.tsx");
+  const shell = read("components/app-shell.tsx");
   const slackPage = read("app/settings/slack/page.tsx");
   const telegramPage = read("app/settings/telegram/page.tsx");
+  const integrationsPage = read("app/integrations/[id]/page.tsx");
   const channelLinks = read("lib/integrations/channel-links.ts");
   const slackEvents = read("app/api/integrations/slack/events/route.ts");
   const slackCommands = read("app/api/integrations/slack/commands/route.ts");
   const telegramWebhook = read("app/api/integrations/telegram/webhook/route.ts");
 
-  assert.match(tabs, /id: "slack"/);
-  assert.match(tabs, /href: "\/settings\/slack"/);
-  assert.match(tabs, /id: "telegram"/);
-  assert.match(tabs, /href: "\/settings\/telegram"/);
+  assert.doesNotMatch(tabs, /id: "slack"/);
+  assert.doesNotMatch(tabs, /href: "\/settings\/slack"/);
+  assert.doesNotMatch(tabs, /id: "telegram"/);
+  assert.doesNotMatch(tabs, /href: "\/settings\/telegram"/);
   assert.doesNotMatch(tabs, /settings\/agent/);
 
-  assert.match(slackPage, /SettingsTabs active="slack"/);
-  assert.match(slackPage, /Connect Slack/);
-  assert.match(slackPage, /private channel/i);
-  assert.match(slackPage, /integration_channel_links/);
+  assert.doesNotMatch(shell, /settings-slack/);
+  assert.doesNotMatch(shell, /settings-telegram/);
+  assert.match(slackPage, /redirect\("\/settings\/integrations"\)/);
+  assert.match(telegramPage, /redirect\("\/settings\/integrations"\)/);
+  assert.match(integrationsPage, /definition\?\.group === "Messaging"/);
+  assert.match(integrationsPage, /redirect\("\/settings\/integrations"\)/);
+
   assert.match(slackEvents, /upsertIntegrationChannelLink/);
   assert.match(slackCommands, /upsertIntegrationChannelLink/);
-
-  assert.match(telegramPage, /SettingsTabs active="telegram"/);
-  assert.match(telegramPage, /Generate link code/);
-  assert.match(telegramPage, /Add to group/);
-  assert.match(telegramPage, /TELEGRAM_BOT_USERNAME/);
-  assert.match(telegramPage, /integration_channel_links/);
   assert.match(telegramWebhook, /upsertIntegrationChannelLink/);
 
   assert.match(channelLinks, /integration_channel_links/);

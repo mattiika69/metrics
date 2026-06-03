@@ -17,8 +17,6 @@ type ScheduleRow = {
   timezone: string;
   target_providers: string[] | null;
   enabled: boolean;
-  slack_channel_id: string | null;
-  telegram_chat_id: string | null;
 };
 
 type RunRow = {
@@ -75,10 +73,7 @@ function workflowLabel(value: string) {
 
 function providerLabel(schedule: ScheduleRow) {
   const providers = schedule.target_providers?.filter(Boolean) ?? [];
-  if (providers.length) return providers.join(", ");
-  if (schedule.slack_channel_id && schedule.telegram_chat_id) return "slack, telegram";
-  if (schedule.slack_channel_id) return "slack";
-  if (schedule.telegram_chat_id) return "telegram";
+  if (providers.length) return "Delivery configured";
   return "No delivery target";
 }
 
@@ -95,7 +90,7 @@ export default async function DailySchedulePage({ searchParams }: PageProps) {
   const [{ data: schedules }, { data: runs }] = await Promise.all([
     supabase
       .from("integration_workflow_schedules")
-      .select("id, name, workflow_key, cadence, timezone, target_providers, enabled, slack_channel_id, telegram_chat_id")
+      .select("id, name, workflow_key, cadence, timezone, target_providers, enabled")
       .eq("tenant_id", tenant.id)
       .is("archived_at", null)
       .order("created_at", { ascending: false }),

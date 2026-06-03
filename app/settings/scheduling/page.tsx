@@ -36,13 +36,6 @@ function runDate(value: string | null | undefined, fallback: string) {
   return value?.slice(0, 10) ?? fallback;
 }
 
-function deliveryTargetLabel(provider: string | null, displayName: string | null) {
-  if (displayName) return displayName;
-  if (provider === "telegram") return "Connected Telegram chat";
-  if (provider === "slack") return "Connected Slack channel";
-  return "Connected destination";
-}
-
 export default async function SchedulingSettingsPage({ searchParams }: PageProps) {
   const { supabase, tenant, membership } = await requireTenant();
   const params = await searchParams;
@@ -50,10 +43,10 @@ export default async function SchedulingSettingsPage({ searchParams }: PageProps
   const error = param(params, "error");
   const selectedDate = normalizeDate(param(params, "date"));
   const isAdmin = canManage(membership.role);
-  const [{ data: schedules }, { data: runs }, { data: channels }] = await Promise.all([
+  const [{ data: schedules }, { data: runs }] = await Promise.all([
     supabase
       .from("integration_workflow_schedules")
-      .select("id, name, workflow_key, target_providers, cadence, timezone, enabled, archived_at, slack_channel_id, telegram_chat_id, created_at")
+      .select("id, name, workflow_key, target_providers, cadence, timezone, enabled, archived_at, created_at")
       .eq("tenant_id", tenant.id)
       .is("archived_at", null)
       .order("created_at", { ascending: false }),
@@ -63,14 +56,7 @@ export default async function SchedulingSettingsPage({ searchParams }: PageProps
       .eq("tenant_id", tenant.id)
       .order("created_at", { ascending: false })
       .limit(8),
-    supabase
-      .from("tenant_integrations")
-      .select("provider, external_channel_id, display_name, status")
-      .eq("tenant_id", tenant.id)
-      .neq("status", "disabled"),
   ]);
-  const slackChannels = (channels ?? []).filter((channel) => channel.provider === "slack");
-  const telegramChats = (channels ?? []).filter((channel) => channel.provider === "telegram");
 
   return (
     <AppShell active="settings-scheduling" tenantName={tenant.name}>
@@ -152,6 +138,7 @@ export default async function SchedulingSettingsPage({ searchParams }: PageProps
           </div>
           {isAdmin ? (
             <form action={createScheduleAction} className="form-stack compact">
+              <input type="hidden" name="targetProviders" value="workspace" />
               <label>
                 Name
                 <input name="name" placeholder="Weekly CEO report" required />
@@ -177,39 +164,6 @@ export default async function SchedulingSettingsPage({ searchParams }: PageProps
               <label>
                 Timezone
                 <input name="timezone" defaultValue="America/New_York" />
-              </label>
-              <fieldset className="metric-selector-group">
-                <legend>Targets</legend>
-                <label className="metric-checkbox-row">
-                  <input name="targetProviders" type="checkbox" value="slack" />
-                  Slack
-                </label>
-                <label className="metric-checkbox-row">
-                  <input name="targetProviders" type="checkbox" value="telegram" />
-                  Telegram
-                </label>
-              </fieldset>
-              <label>
-                Slack channel
-                <select name="slackChannelId" defaultValue="">
-                  <option value="">Choose when connected</option>
-                  {slackChannels.map((channel) => (
-                    <option value={channel.external_channel_id ?? ""} key={channel.external_channel_id}>
-                      {deliveryTargetLabel(channel.provider, channel.display_name)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Telegram chat
-                <select name="telegramChatId" defaultValue="">
-                  <option value="">Choose when connected</option>
-                  {telegramChats.map((channel) => (
-                    <option value={channel.external_channel_id ?? ""} key={channel.external_channel_id}>
-                      {deliveryTargetLabel(channel.provider, channel.display_name)}
-                    </option>
-                  ))}
-                </select>
               </label>
               <label>
                 Message
@@ -239,7 +193,7 @@ export default async function SchedulingSettingsPage({ searchParams }: PageProps
                   <div>
                     <strong>{run.status}</strong>
                     <span className="muted">
-                      {run.target_provider ?? "Workflow"} · {new Date(run.created_at).toLocaleString()}
+                      Workflow · {new Date(run.created_at).toLocaleString()}
                     </span>
                   </div>
                   <span className="muted">
