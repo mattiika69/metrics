@@ -5,7 +5,8 @@ export type SettingsTab =
   | "team"
   | "billing"
   | "integrations"
-  | "scheduling";
+  | "scheduling"
+  | "logout";
 
 const settingsTabs = [
   { id: "account", label: "Account", href: "/settings/account" },
@@ -13,6 +14,7 @@ const settingsTabs = [
   { id: "billing", label: "Billing", href: "/settings/billing" },
   { id: "integrations", label: "Integrations", href: "/settings/integrations" },
   { id: "scheduling", label: "Scheduling", href: "/settings/scheduling" },
+  { id: "logout", label: "Log out", href: "/settings/logout" },
 ] as const;
 
 export function SettingsTabs({ active }: { active: SettingsTab }) {

@@ -1,6 +1,5 @@
 import { AppShell } from "@/components/app-shell";
 import { SettingsHeader, SettingsTabs } from "@/components/settings/settings-tabs";
-import { signOutAction } from "@/lib/auth/actions";
 import { requireTenant } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -40,18 +39,6 @@ export default async function AccountSettingsPage() {
               <strong>{tenant.name}</strong>
             </div>
           </div>
-        </article>
-        <article className="settings-panel">
-          <div className="panel-heading">
-            <div>
-              <p className="step-label">Login</p>
-              <h2>Sign out</h2>
-            </div>
-          </div>
-          <p className="muted">Sign out when you are done working on this device.</p>
-          <form action={signOutAction} className="card-action">
-            <button type="submit">Log out</button>
-          </form>
         </article>
       </section>
     </AppShell>

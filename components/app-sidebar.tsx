@@ -8,10 +8,9 @@ import type { ActiveRoute } from "@/components/app-shell";
 type AppSidebarProps = {
   active: ActiveRoute;
   items: SidebarItem[];
-  logoutAction?: () => void | Promise<void>;
 };
 
-export function AppSidebar({ active, items, logoutAction }: AppSidebarProps) {
+export function AppSidebar({ active, items }: AppSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
 
   if (collapsed) {
@@ -51,7 +50,7 @@ export function AppSidebar({ active, items, logoutAction }: AppSidebarProps) {
       </div>
 
       <nav className="sidebar-sections" aria-label="Primary navigation">
-        <SidebarNav active={active} items={items} logoutAction={logoutAction} />
+        <SidebarNav active={active} items={items} />
       </nav>
     </aside>
   );

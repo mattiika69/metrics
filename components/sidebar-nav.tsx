@@ -11,8 +11,6 @@ export type SidebarChildItem = {
   label: string;
   href?: string;
   activeRoutes?: ActiveRoute[];
-  action?: "logout";
-  danger?: boolean;
 };
 
 export type SidebarItem = {
@@ -37,11 +35,9 @@ function moveItem(items: SidebarItem[], draggedId: string, targetId: string) {
 export function SidebarNav({
   active,
   items,
-  logoutAction,
 }: {
   active: ActiveRoute;
   items: SidebarItem[];
-  logoutAction?: () => void | Promise<void>;
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -159,23 +155,6 @@ export function SidebarNav({
                     {itemExpanded ? (
                       <div className="sidebar-child-nav">
                         {item.children.map((child) => {
-                          if (child.action === "logout") {
-                            return logoutAction ? (
-                              <form action={logoutAction} key={child.id}>
-                                <button
-                                  type="submit"
-                                  className={[
-                                    "sidebar-sub-link",
-                                    "sidebar-action-link",
-                                    child.danger ? "danger" : "",
-                                  ].filter(Boolean).join(" ")}
-                                >
-                                  {child.label}
-                                </button>
-                              </form>
-                            ) : null;
-                          }
-
                           if (!child.href) return null;
 
                           return (

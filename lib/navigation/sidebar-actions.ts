@@ -10,7 +10,6 @@ const allowedSidebarItemIds = [
   "metrics-sales",
   "metrics-inputs",
   "settings",
-  "account",
   "help",
 ] as const;
 

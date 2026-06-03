@@ -1,37 +1,5 @@
-import Link from "next/link";
-import { AppShell } from "@/components/app-shell";
-import { requireTenant } from "@/lib/auth/session";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-
-export default async function AccountPage() {
-  const { user, tenant, membership } = await requireTenant();
-
-  return (
-    <AppShell active="account" tenantName={tenant.name}>
-      <section className="page-header">
-        <p className="eyebrow">Account</p>
-        <h1>Profile and access</h1>
-        <p className="lede">Your profile, company, and access level.</p>
-      </section>
-      <section className="settings-list">
-        <div>
-          <span>Email</span>
-          <strong>{user.email}</strong>
-        </div>
-        <div>
-          <span>Company</span>
-          <strong>{tenant.name}</strong>
-        </div>
-        <div>
-          <span>Role</span>
-          <strong>{membership.role === "owner" ? "Owner" : membership.role === "admin" ? "Admin" : "Member"}</strong>
-        </div>
-        <div>
-          <span>Password</span>
-          <Link href="/forgot-password">Reset password</Link>
-        </div>
-      </section>
-    </AppShell>
-  );
+export default function AccountPage() {
+  redirect("/settings/account");
 }

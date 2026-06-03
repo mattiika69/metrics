@@ -1,6 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import type { SidebarItem } from "@/components/sidebar-nav";
-import { signOutAction } from "@/lib/auth/actions";
 import { loadSidebarOrder } from "@/lib/navigation/sidebar-actions";
 
 export type ActiveRoute =
@@ -28,8 +27,8 @@ export type ActiveRoute =
   | "settings-billing"
   | "settings-integrations"
   | "settings-scheduling"
+  | "settings-logout"
   | "help"
-  | "account"
   | "admin";
 
 type AppShellProps = {
@@ -110,12 +109,6 @@ const primaryItems: SidebarItem[] = [
     section: "settings",
   },
   {
-    id: "account",
-    label: "Account",
-    href: "/account",
-    section: "settings",
-  },
-  {
     id: "help",
     label: "Help",
     href: "/help",
@@ -136,7 +129,7 @@ export async function AppShell({ active, children }: AppShellProps) {
 
   return (
     <main className="app-shell">
-      <AppSidebar active={active} items={sidebarItems} logoutAction={signOutAction} />
+      <AppSidebar active={active} items={sidebarItems} />
       <section className="app-main">
         <div className="app-content">{children}</div>
       </section>
