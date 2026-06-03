@@ -14,6 +14,7 @@ import {
   keepSignedInCookieOptions,
   readKeepSignedInFormValue,
 } from "@/lib/auth/remember-me";
+import { clearSupabaseAuthCookieArtifacts } from "@/lib/auth/supabase-cookies";
 import { isValidEmailAddress, sendTenantEmail } from "@/lib/email/send";
 import {
   escapeEmailHtml,
@@ -508,6 +509,7 @@ export async function signInAction(formData: FormData) {
   }
 
   await checkAuthRateLimit("login", email, withNext("/login", next, "/dashboard"), 10, 60);
+  await clearSupabaseAuthCookieArtifacts();
 
   const supabase = await createClient({ keepSignedIn });
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -566,6 +568,7 @@ export async function signOutAction(formData?: FormData) {
   } = await supabase.auth.getUser();
   await supabase.auth.signOut();
   await clearActiveTenantId();
+  await clearSupabaseAuthCookieArtifacts();
   const cookieStore = await cookies();
   cookieStore.delete(keepSignedInCookieName);
   await logAuditEvent({
