@@ -65,12 +65,12 @@ test.describe("app shell sidebar", () => {
     });
     expect(childStyles.color).toBe("rgb(219, 234, 254)");
     expect(childStyles.height).toBe("48px");
-    expect(childStyles.fontSize).toBe("17px");
+    expect(childStyles.fontSize).toBe("16px");
     expect(childStyles.fontWeight).toBe("650");
     expect(childStyles.paddingTop).toBe("0px");
-    expect(childStyles.paddingRight).toBe("16px");
+    expect(childStyles.paddingRight).toBe("12px");
     expect(childStyles.paddingBottom).toBe("0px");
-    expect(childStyles.paddingLeft).toBe("16px");
+    expect(childStyles.paddingLeft).toBe("12px");
     expect(childStyles.borderRadius).toBe("10px");
 
     await page.getByRole("button", { name: "Financials" }).click();

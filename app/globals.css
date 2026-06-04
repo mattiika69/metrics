@@ -9727,10 +9727,10 @@ body:has(.app-shell) .sidebar-parent-trigger span {
     width: 100% !important;
     flex: 1 1 auto !important;
     border-radius: 10px !important;
-    font-size: 17px !important;
+    font-size: 16px !important;
     font-weight: 650 !important;
     line-height: 1.15 !important;
-    padding: 0 16px !important;
+    padding: 0 12px !important;
   }
 
   body:has(.app-shell) .sidebar-sub-link.active,
