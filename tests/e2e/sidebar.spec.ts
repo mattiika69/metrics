@@ -19,7 +19,7 @@ test.describe("app shell sidebar", () => {
         backgroundImage: styles.backgroundImage,
       };
     });
-    expect(shell.width).toBe("266px");
+    expect(shell.width).toBe("280px");
     expect(shell.backgroundImage).toContain("linear-gradient");
 
     const metricsParent = page.locator(".sidebar-parent-trigger", { hasText: "Metrics" });
