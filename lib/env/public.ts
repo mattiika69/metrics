@@ -7,6 +7,14 @@ export const requiredPublicEnvNames = [
 
 export type PublicEnvName = typeof requiredPublicEnvNames[number] | "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY";
 
+const publicEnvValues: Record<PublicEnvName, string | undefined> = {
+  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+};
+
 export class EnvConfigurationError extends Error {
   readonly missing: string[];
 
@@ -18,7 +26,7 @@ export class EnvConfigurationError extends Error {
 }
 
 function readEnv(name: string) {
-  return process.env[name]?.trim() ?? "";
+  return publicEnvValues[name as PublicEnvName]?.trim() ?? "";
 }
 
 export function getRequiredPublicEnv(name: PublicEnvName) {

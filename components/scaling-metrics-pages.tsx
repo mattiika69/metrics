@@ -1770,7 +1770,7 @@ export async function ScalingReverseEngineeringPage() {
             {reRow("Appt Setters Required", (callsPerWeek / 50).toFixed(2))}
             <div className="re-row">
               <span>Acquisition Source</span>
-              <strong className="source-toggle">Ads <em>Email</em> <em>Call</em> <em>DMs</em></strong>
+              <strong className="source-toggle">Ads <em>Email</em> <em>Calls</em> <em>DMs</em></strong>
             </div>
             {reRow("Cost Per Call (Ads)", money(assumptions.costPerCall), "readonly")}
             {reRow("Daily Ad Spend Required", money(outputs.dailySpendRequired), "editable")}

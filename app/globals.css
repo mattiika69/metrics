@@ -4077,8 +4077,12 @@ body {
 }
 
 .re-row strong.source-toggle {
-  gap: 5px;
+  flex-wrap: wrap;
+  gap: 4px;
+  row-gap: 4px;
   background: #ffffff;
+  line-height: 1.1;
+  white-space: normal;
 }
 
 .source-toggle::before {
@@ -4094,8 +4098,12 @@ body {
 }
 
 .source-toggle em {
+  display: inline-flex;
+  align-items: center;
   color: #475467;
   background: #ffffff;
+  border-radius: 4px;
+  padding: 1px 5px;
 }
 
 .integrations-page {

@@ -63,6 +63,8 @@ test("runtime env validation names missing variables without logging values", ()
 
   assert.match(publicEnv, /class EnvConfigurationError/);
   assert.match(publicEnv, /Missing required environment variable/);
+  assert.match(publicEnv, /const publicEnvValues/);
+  assert.doesNotMatch(publicEnv, /process\.env\[name\]/);
   assert.match(publicEnv, /NEXT_PUBLIC_APP_URL/);
   assert.match(serverEnv, /SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(serverEnv, /STRIPE_SECRET_KEY/);
